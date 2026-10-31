@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hem Vinäs</title>
+<meta name="description" content="Belysning, temperatur och energi från Homey Pro.">
+<meta name="theme-color" content="#0a0f17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hem Vinäs">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column home control app. Header with live chips, a segmented switch (Belysning / Temperatur / Energi) and one panel at a time. Dark energy-app ground, teal accent; sun amber, grid blue, battery green as the energy colours. */
+:root{
+  --bg:#0a0f17; --bg-2:#0f1622; --card:#131c2a; --card-2:#1a2536; --line:#22304a;
+  --fg:#eaf1f8; --muted:#8696ab; --faint:#33435c;
+  --accent:#1fd3b0; --accent-ink:#04231d; --accent-soft:rgba(31,211,176,.14);
+  --sun:#ffb547; --grid:#5aa9ff; --batt:#4be08a; --ev:#b28cff; --home:#eaf1f8;
+  --warm:#ffbf5a; --cold:#7fc4ff; --danger:#ff6b6b; --warn:#ffc94d; --ok:#4be08a;
+  --f-disp:"Sora","Manrope",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:22px; color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#eef2f6; --bg-2:#e6ecf2; --card:#ffffff; --card-2:#f2f5f9; --line:#dbe3ec;
+  --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
+  --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
+  --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
+  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --ok:#1aa45a; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#eef2f6; --bg-2:#e6ecf2; --card:#ffffff; --card-2:#f2f5f9; --line:#dbe3ec;
+  --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
+  --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
+  --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
+  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --ok:#1aa45a; color-scheme:light}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.4}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.app{max-width:36rem;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+.num{font-variant-numeric:tabular-nums}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.eyebrow{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-disp);font-weight:300;font-size:2rem;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;text-wrap:balance}
+h1 b{font-weight:600}
+.live{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--muted);white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.live.on .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.live.err .dot{background:var(--danger)}
+.glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.gl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;min-width:0}
+.gl .k{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.gl .v{font-family:var(--f-disp);font-size:1.25rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl .v small{font-size:.75rem;color:var(--muted);font-family:var(--f-body)}
+
+/* segmented switch */
+.seg{display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);position:relative}
+.seg button{font:inherit;font-weight:600;font-size:.9rem;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:999px;cursor:pointer;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
+.seg button[aria-selected="true"]{color:var(--accent-ink)}
+.seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px;background:var(--accent);transition:transform .28s cubic-bezier(.3,.7,.2,1);box-shadow:0 6px 18px -6px var(--accent)}
+.seg svg{width:16px;height:16px}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.banner{border:1px solid var(--line);border-left:3px solid var(--danger);background:var(--card);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.h2{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 2px -4px}
+.panel{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px}
+button.chip{cursor:pointer}
+.chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--danger)} .chip.acc{color:var(--accent)}
+.chip.busy{opacity:.55}
+.chip .cd{width:7px;height:7px;border-radius:50%;background:currentColor}
+.empty{color:var(--muted);font-size:.9rem;padding:16px}
+.skel{height:76px;border-radius:var(--r);background:linear-gradient(90deg,var(--card),var(--card-2),var(--card));background-size:200% 100%;animation:sk 1.4s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+
+/* buttons, switches, sliders */
+.btn{font:inherit;font-weight:700;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
+.btn.warnb{color:var(--danger)}
+.btn.confirm{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sw{position:relative;width:52px;height:30px;border-radius:999px;border:0;background:var(--faint);cursor:pointer;transition:background .2s;flex:none;padding:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .2s}
+.sw[aria-checked="true"]{background:var(--accent)}
+.sw[aria-checked="true"]::after{transform:translateX(22px)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--card-2),var(--warm))}
+input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--card-2),var(--warm))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.35);margin-top:-7px}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line)}
+
+/* lighting */
+.rh{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.rh .t{flex:1;min-width:0}
+.rh .n{font-family:var(--f-disp);font-weight:600;font-size:1rem}
+.rh .c{font-size:.8rem;color:var(--muted)}
+.card.lit .rh{background:linear-gradient(90deg,color-mix(in srgb,var(--warm) 14%,transparent),transparent 70%)}
+.lamp{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)}
+.lamp:last-child{border-bottom:0}
+.bulb{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--muted);transition:box-shadow .3s,background .3s}
+.bulb svg{width:19px;height:19px}
+.lamp.on .bulb{color:var(--lc,var(--warm));background:color-mix(in srgb,var(--lc,var(--warm)) 20%,var(--card-2));box-shadow:0 0 18px 1px color-mix(in srgb,var(--lc,var(--warm)) 55%,transparent)}
+.ln .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln .st{font-size:.8rem;color:var(--muted)}
+.dimrow{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:.8rem;color:var(--muted)}
+.dimrow .v{text-align:right}
+
+/* temperature */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:18px;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--cold) 18%,transparent),transparent 60%),var(--card)}
+.hero .big{font-family:var(--f-disp);font-weight:300;font-size:3.2rem;line-height:1;letter-spacing:-.03em}
+.hero .big sup{font-size:1.2rem;color:var(--muted);vertical-align:top;margin-left:2px}
+.hero .meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tc .n{font-size:.82rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc .t{font-family:var(--f-disp);font-size:1.6rem;font-weight:400;line-height:1.1}
+.tc .t small{font-size:.8rem;color:var(--muted)}
+.tc .s{display:flex;gap:10px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.tc .s .lowb{color:var(--danger);font-weight:700}
+.thermo{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.thermo:last-child{border-bottom:0}
+.thermo .n{font-family:var(--f-disp);font-weight:600}
+.thermo .s{font-size:.8rem;color:var(--muted)}
+.thermo .heat{color:var(--warm);font-weight:700}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card-2);color:var(--fg);font:inherit;font-size:1.2rem;font-weight:600;cursor:pointer}
+.step .tv{font-family:var(--f-disp);font-size:1.25rem;min-width:62px;text-align:center}
+
+/* energy */
+.flow{padding:12px 8px 6px}
+.flow svg{display:block;width:100%;height:auto;max-width:100%}
+.flow .lbl{font-family:var(--f-body);font-size:11px;fill:var(--muted);font-weight:600;letter-spacing:.06em}
+.flow .val{font-family:var(--f-disp);font-size:15px;fill:var(--fg)}
+.flow .ring{fill:var(--card-2);stroke-width:2}
+.flow .wire{fill:none;stroke:var(--line);stroke-width:2}
+.flow .run{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:2 12;animation:run 1.1s linear infinite}
+.flow .run.rev{animation-direction:reverse}
+@keyframes run{to{stroke-dashoffset:-28}}
+.flow .idle{opacity:0}
+.estm{font-size:.74rem;color:var(--muted);text-align:center;padding:0 12px 12px}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;font-size:.9rem}
+.kv .k{color:var(--muted)}
+.kv .v{text-align:right;font-weight:600}
+.price{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:16px}
+.price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
+.price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
+.range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
+.range i{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:var(--fg);transform:translateX(-50%)}
+.rangel{grid-column:1/3;display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px 16px}
+.ph{background:var(--card-2);border-radius:12px;padding:8px 10px}
+.ph .k{font-size:.72rem;color:var(--muted);font-weight:700}
+.ph .v{font-family:var(--f-disp);font-size:1.05rem}
+.socbar{height:10px;border-radius:5px;background:var(--card-2);overflow:hidden;margin:0 16px 14px}
+.socbar i{display:block;height:100%;background:var(--batt);border-radius:5px}
+
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:20;max-width:calc(100% - 32px)}
+.foot{font-size:.76rem;color:var(--muted);text-align:center}
+@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.82rem}}
+@media (prefers-reduced-motion: reduce){.skel,.flow .run{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
+
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:radial-gradient(80% 60% at 50% 0%,var(--accent-soft),transparent 70%),var(--bg)}
+.loginbox{max-width:22rem;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.logo{width:72px;height:72px;border-radius:22px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--accent);box-shadow:0 10px 40px -12px var(--accent)}
+.logo svg{width:34px;height:34px}
+.lsub{color:var(--muted);margin:0}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);width:100%;font-size:1rem}
+.lmsg{color:var(--danger);font-size:.88rem;margin:0}
+.lfine{color:var(--muted);font-size:.78rem;margin:0}
+.more{font:inherit;font-size:inherit;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+</style>
+</head>
+<body>
+
+
+<section class="login" id="login" hidden>
+  <div class="loginbox">
+    <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5M10 21v-6h4v6"/></svg></div>
+    <h1>Hem <b>Vinäs</b></h1>
+    <p class="lsub">Belysning, temperatur och energi från er Homey Pro.</p>
+    <button class="btn primary" id="loginBtn" type="button">Logga in med Homey</button>
+    <p class="lmsg" id="loginMsg" hidden></p>
+    <p class="lfine">Bara den som är användare på er Homey kan se eller styra något.</p>
+  </div>
+</section>
+<main class="app" id="appMain" hidden>
+  <header class="top">
+    <div>
+      <div class="eyebrow" id="date">Hem</div>
+      <h1>Hem <b>Vinäs</b></h1>
+    </div>
+    <div class="live" id="live"><span class="dot"></span><span id="liveTxt">Ansluter</span></div>
+  </header>
+
+  <div class="glance">
+    <div class="gl"><div class="k">Lampor tända</div><div class="v num" id="gLights">–</div></div>
+    <div class="gl"><div class="k">Ute</div><div class="v num" id="gOut">–</div></div>
+    <div class="gl"><div class="k">Huset drar</div><div class="v num" id="gLoad">–</div></div>
+  </div>
+
+  <nav class="seg" role="tablist" aria-label="Välj vy">
+    <span class="pill" id="pill"></span>
+    <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Belysning</span></button>
+    <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Temperatur</span></button>
+    <button role="tab" id="t-energi" aria-controls="p-energi" data-v="energi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Energi</span></button>
+  </nav>
+
+  <div class="banner" id="banner" hidden></div>
+
+  <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
+    <div class="chips" id="lightStatus"></div>
+    <div class="quick">
+      <button class="btn" id="offInside" type="button">Släck allt inne</button>
+      <button class="btn warnb" id="offAll" type="button">Släck allt</button>
+    </div>
+    <div id="scenesWrap" hidden><div class="h2">Scener</div><div class="chips" id="scenes" style="margin-top:10px"></div></div>
+    <div class="panel" id="rooms"><div class="skel"></div><div class="skel"></div></div>
+  </section>
+
+  <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
+    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div></div>
+    <div class="h2">Värme</div>
+    <div class="card" id="thermos"><div class="empty">Hämtar termostater…</div></div>
+    <div class="h2">Rum</div>
+    <div class="grid2" id="sensors"><div class="skel"></div><div class="skel"></div></div>
+  </section>
+
+  <section class="panel" id="p-energi" role="tabpanel" aria-labelledby="t-energi" hidden>
+    <div class="card flow">
+      <svg viewBox="0 0 340 300" role="img" aria-labelledby="flowT">
+        <title id="flowT">Energiflöde mellan sol, nät, batteri, hus och laddbox</title>
+        <path class="wire" d="M170 62 V128"/><path class="wire" d="M62 150 H140"/><path class="wire" d="M200 150 H278"/><path class="wire" d="M170 172 V238"/>
+        <path class="run idle" id="fSun" stroke="var(--sun)" d="M170 62 V128"/>
+        <path class="run idle" id="fGrid" stroke="var(--grid)" d="M62 150 H140"/>
+        <path class="run idle" id="fBatt" stroke="var(--batt)" d="M278 150 H200"/>
+        <path class="run idle" id="fEv" stroke="var(--ev)" d="M170 172 V238"/>
+        <circle class="ring" cx="170" cy="36" r="26" stroke="var(--sun)"/>
+        <circle class="ring" cx="36" cy="150" r="26" stroke="var(--grid)"/>
+        <circle class="ring" cx="304" cy="150" r="26" stroke="var(--batt)"/>
+        <circle class="ring" cx="170" cy="264" r="26" stroke="var(--ev)"/>
+        <circle class="ring" cx="170" cy="150" r="30" stroke="var(--accent)" stroke-width="3"/>
+        <g fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <g stroke="var(--sun)"><circle cx="170" cy="36" r="6"/><path d="M170 23v4M170 45v4M157 36h4M179 36h4M161 27l3 3M176 42l3 3M161 45l3-3M176 30l3-3"/></g>
+          <path stroke="var(--grid)" d="M30 162l6-24 6 24M32 152h8M28 144h16"/>
+          <g stroke="var(--batt)"><rect x="295" y="141" width="18" height="11" rx="2"/><path d="M313 144.5v4"/></g>
+          <path stroke="var(--ev)" d="M159 268v-6l3-6h16l3 6v6zM163 268v3M177 268v3"/>
+          <path stroke="var(--accent)" d="M158 154l12-11 12 11M162 151v11h16v-11"/>
+        </g>
+        <text class="lbl" x="214" y="30">SOL</text><text class="val num" id="vSun" x="214" y="48">–</text>
+        <text class="lbl" x="18" y="196">NÄT</text><text class="val num" id="vGrid" x="18" y="214">–</text>
+        <text class="lbl" x="322" y="196" text-anchor="end">BATTERI</text><text class="val num" id="vBatt" x="322" y="214" text-anchor="end">–</text>
+        <text class="lbl" x="214" y="258">LADDBOX</text><text class="val num" id="vEv" x="214" y="276">–</text>
+        <text class="lbl" x="214" y="120">HUS</text><text class="val num" id="vHome" x="214" y="138">–</text>
+      </svg>
+      <div class="estm">Husets förbrukning är beräknad: nät + sol + batteri.</div>
+    </div>
+
+    <div class="h2">Elpris</div>
+    <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
+
+    <div class="h2">Idag</div>
+    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div></div>
+
+    <div class="h2">Batteri &amp; laddbox</div>
+    <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
+
+    <div class="h2">Solceller</div>
+    <div class="card"><div class="kv num" id="solar"></div></div>
+  </section>
+
+  <p class="foot">Data direkt från er Homey Pro. Uppdateras var 15:e sekund. <button class="more" id="logout" type="button">Logga ut</button></p>
+</main>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="homey.js"></script>
+<script>
+(() => {
+  const S = 'Homey';
+  const $ = (id) => document.getElementById(id);
+  const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const nf = (d) => new Intl.NumberFormat('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const f0 = nf(0), f1 = nf(1), f2 = nf(2);
+  const pct = (v) => Math.round(Number(v) * 100);
+  const W = (w) => w == null || isNaN(w) ? '–' : Math.abs(w) >= 1000 ? f2.format(w / 1000) + ' kW' : f0.format(w) + ' W';
+  const EXCLUDE = /värmefläkt/i;
+  const OUTSIDE = /utomhus/i;
+
+  const api = window.HomeyClient;
+  let devices = [], moods = [], vars = [];
+  const pending = {};
+
+  /* ---------- tabs (hash + remembered) ---------- */
+  const VIEWS = ['belysning', 'temperatur', 'energi'];
+  function show(v) {
+    if (!VIEWS.includes(v)) v = 'belysning';
+    VIEWS.forEach((x, i) => {
+      const on = x === v;
+      $('t-' + x).setAttribute('aria-selected', on ? 'true' : 'false');
+      $('t-' + x).tabIndex = on ? 0 : -1;
+      $('p-' + x).hidden = !on;
+      if (on) $('pill').style.transform = 'translateX(' + (i * 100) + '%)';
+    });
+    try { localStorage.setItem('hemvinas.view', v); } catch (e) {}
+  }
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); }));
+  $('pill').parentElement.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const cur = VIEWS.findIndex((x) => $('t-' + x).getAttribute('aria-selected') === 'true');
+    const nx = VIEWS[(cur + (e.key === 'ArrowRight' ? 1 : 2)) % 3];
+    location.hash = nx; $('t-' + nx).focus();
+  });
+  window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+  let startView = location.hash.slice(1);
+  if (!VIEWS.includes(startView)) { try { startView = localStorage.getItem('hemvinas.view') || 'belysning'; } catch (e) { startView = 'belysning'; } }
+  show(startView);
+  $('date').textContent = new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  /* ---------- helpers ---------- */
+  function toast(t) { const e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { e.hidden = true; }, 2600); }
+  function status(kind, text) { const l = $('live'); l.classList.toggle('on', kind === 'on'); l.classList.toggle('err', kind === 'err'); $('liveTxt').textContent = text; }
+  function banner(t) { const b = $('banner'); b.hidden = !t; b.textContent = t || ''; }
+  function parseList(p, key) {
+    if (p && Array.isArray(p[key])) return p[key];
+    if (Array.isArray(p)) return p;
+    if (typeof p === 'string') { const a = p.indexOf('{'), b = p.lastIndexOf('}'); try { const o = JSON.parse(p.slice(a, b + 1)); if (Array.isArray(o[key])) return o[key]; } catch (e) {} }
+    return [];
+  }
+  function val(d, cap) {
+    const p = pending[d.id] && pending[d.id][cap];
+    if (p && Date.now() < p.until) return p.value;
+    return d.state ? d.state[cap] : undefined;
+  }
+  const has = (d, cap) => d.state && d.state[cap] !== undefined && d.state[cap] !== null;
+  const zparts = (z) => String(z || 'Hem').split(' > ').map((s) => s.trim());
+  const floorOf = (z) => { const p = zparts(z); return p.length > 1 ? p[1] : 'Hem'; };
+  const roomOf = (z) => { const p = zparts(z); return p.length > 2 ? p[2] : p[p.length - 1]; };
+  const floorOrder = (r) => /^Bottenvåning/.test(r) ? 0 : /^Övervåning/.test(r) ? 1 : /^Utomhus/.test(r) ? 2 : 3;
+  const mixRgb = (a, b, f) => a.map((x, i) => Math.round(x + (b[i] - x) * f));
+  const tempRgb = (t) => { const C = [207, 227, 255], N = [255, 243, 223], Wm = [255, 179, 92]; return 'rgb(' + (t < 0.5 ? mixRgb(C, N, t * 2) : mixRgb(N, Wm, (t - 0.5) * 2)).join(',') + ')'; };
+  function lampColor(d) {
+    if (val(d, 'light_mode') === 'color' && val(d, 'light_hue') != null) return 'hsl(' + Math.round(val(d, 'light_hue') * 360) + ' ' + Math.round((val(d, 'light_saturation') ?? 1) * 100) + '% 60%)';
+    const t = val(d, 'light_temperature');
+    return t != null ? tempRgb(t) : 'var(--warm)';
+  }
+  const varVal = (name) => { const v = vars.find((x) => x.name === name); return v ? v.value : undefined; };
+
+  /* ---------- actions ---------- */
+  async function setCaps(map, label) {
+    if (!api.loggedIn()) return false;
+    const until = Date.now() + 15000;
+    for (const [id, caps] of Object.entries(map)) { pending[id] = pending[id] || {}; for (const [c, v] of Object.entries(caps)) pending[id][c] = { value: v, until }; }
+    renderAll();
+    try {
+      await api.setCaps(map);
+      setTimeout(refresh, 1500);
+      return true;
+    } catch (e) {
+      for (const id of Object.keys(map)) delete pending[id];
+      renderAll();
+      toast((label || 'Ändringen') + ' gick inte fram. Försök igen.');
+      return false;
+    }
+  }
+  const thr = {};
+  function throttled(key, fn, ms = 450) {
+    const t = thr[key] || (thr[key] = { last: 0, timer: null, fn: null });
+    t.fn = fn; const now = Date.now();
+    if (now - t.last > ms) { t.last = now; fn(); }
+    else { clearTimeout(t.timer); t.timer = setTimeout(() => { t.last = Date.now(); t.fn(); }, ms - (now - t.last)); }
+  }
+  function sw(on, label, onClick) {
+    const b = mk('button', 'sw'); b.type = 'button'; b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', on ? 'true' : 'false'); b.setAttribute('aria-label', label);
+    b.addEventListener('click', onClick); return b;
+  }
+  const bulbSvg = () => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor'); s.setAttribute('stroke-width', '1.8'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.innerHTML = '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'; return s; };
+
+  /* ---------- lighting ---------- */
+  const lights = () => devices.filter((d) => d.type === 'light' && has(d, 'onoff') && !EXCLUDE.test(d.name));
+  function lampRow(d) {
+    const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
+    const row = mk('div', 'lamp' + (on ? ' on' : ''));
+    row.style.setProperty('--lc', lampColor(d));
+    const b = mk('div', 'bulb'); b.append(bulbSvg());
+    const ln = mk('div', 'ln');
+    ln.append(mk('div', 'name', String(d.name).trim()), mk('div', 'st', on ? (dimmable ? 'På · ' + pct(val(d, 'dim')) + ' %' : 'På') : 'Av'));
+    row.append(b, ln, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
+    if (dimmable && on) {
+      const r = mk('div', 'dimrow'); const v = mk('span', 'v num', pct(val(d, 'dim')) + ' %');
+      const s = mk('input'); s.type = 'range'; s.min = 1; s.max = 100; s.value = pct(val(d, 'dim')) || 1; s.id = 'dim-' + d.id; s.setAttribute('aria-label', 'Ljusstyrka ' + d.name);
+      s.addEventListener('input', () => { v.textContent = s.value + ' %'; throttled(d.id, () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen')); });
+      r.append(s, v); row.append(r);
+    }
+    return row;
+  }
+  function renderLights() {
+    const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
+    $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–';
+    const st = $('lightStatus'); st.replaceChildren();
+    const sk = varVal('AI Skumt ute');
+    if (sk !== undefined) { const c = mk('span', 'chip ' + (sk ? 'acc' : '')); c.append(mk('span', 'cd'), document.createTextNode(sk ? 'Skumt ute, automatiken tänder' : 'Ljust ute')); st.append(c); }
+    const wd = varVal('AI Arbetsdag idag');
+    if (wd !== undefined) st.append(mk('span', 'chip', wd ? 'Arbetsdag' : 'Ledig dag'));
+    const lm = varVal('AI Ledig dag imorgon');
+    if (lm !== undefined) st.append(mk('span', 'chip', 'Kvällsljus släcks ' + (lm ? '22:30' : '22:00')));
+
+    const floors = {};
+    L.forEach((d) => { const f = floorOf(d.zone), r = roomOf(d.zone); ((floors[f] = floors[f] || {})[r] = floors[f][r] || []).push(d); });
+    const frag = document.createDocumentFragment();
+    Object.keys(floors).sort((a, b) => floorOrder(a) - floorOrder(b) || a.localeCompare(b, 'sv')).forEach((f) => {
+      frag.append(mk('div', 'h2', f));
+      Object.keys(floors[f]).sort((a, b) => a.localeCompare(b, 'sv')).forEach((r) => {
+        const ds = floors[f][r].sort((a, b) => String(a.name).localeCompare(String(b.name), 'sv'));
+        const lit = ds.filter((d) => val(d, 'onoff') === true).length;
+        const card = mk('section', 'card' + (lit ? ' lit' : '')); card.setAttribute('aria-label', f + ', ' + r);
+        const h = mk('div', 'rh'); const t = mk('div', 't');
+        t.append(mk('div', 'n', r), mk('div', 'c', lit ? lit + ' av ' + ds.length + ' tända' : 'Alla släckta'));
+        h.append(t, sw(lit > 0, (lit ? 'Släck ' : 'Tänd ') + r, () => setCaps(Object.fromEntries(ds.map((d) => [d.id, { onoff: !lit }])), lit ? 'Släckningen' : 'Tändningen')));
+        card.append(h); ds.forEach((d) => card.append(lampRow(d))); frag.append(card);
+      });
+    });
+    const focusId = document.activeElement && document.activeElement.id;
+    if (!(focusId && focusId.startsWith('dim-'))) $('rooms').replaceChildren(frag);
+    if (!L.length && devices.length) $('rooms').replaceChildren(mk('p', 'empty', 'Inga lampor hittades i Homey.'));
+    $('offInside').disabled = !L.some((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone));
+    $('offAll').disabled = !onCount;
+    $('scenesWrap').hidden = !moods.length;
+    const sc = $('scenes'); sc.replaceChildren();
+    moods.forEach((m) => {
+      const c = mk('button', 'chip', '✦ ' + m.name); c.type = 'button';
+      c.addEventListener('click', async () => {
+        c.classList.add('busy');
+        try { await api.setMood(m.id); toast('Scen ' + m.name + ' aktiverad'); setTimeout(refresh, 1500); }
+        catch (e) { toast('Scenen gick inte att aktivera'); }
+        c.classList.remove('busy');
+      });
+      sc.append(c);
+    });
+  }
+  function offAll(inside) {
+    const L = lights().filter((d) => val(d, 'onoff') === true && (!inside || !OUTSIDE.test(d.zone)));
+    if (!L.length) return;
+    setCaps(Object.fromEntries(L.map((d) => [d.id, { onoff: false }])), 'Släckningen').then((ok) => ok && toast(L.length + ' lampor släckta'));
+  }
+  $('offInside').addEventListener('click', () => offAll(true));
+  const allBtn = $('offAll');
+  allBtn.addEventListener('click', () => {
+    if (allBtn.classList.contains('confirm')) { allBtn.classList.remove('confirm'); allBtn.textContent = 'Släck allt'; offAll(false); return; }
+    allBtn.classList.add('confirm'); allBtn.textContent = 'Tryck igen, även ute';
+    clearTimeout(allBtn.t); allBtn.t = setTimeout(() => { allBtn.classList.remove('confirm'); allBtn.textContent = 'Släck allt'; }, 4000);
+  });
+
+  /* ---------- temperature ---------- */
+  const ENERGY_TYPES = /battery|solarpanel|evcharger/;
+  function renderTemp() {
+    const T = devices.filter((d) => has(d, 'measure_temperature') && !ENERGY_TYPES.test(d.type));
+    const outs = T.filter((d) => OUTSIDE.test(d.zone) && d.type === 'sensor');
+    const out = outs.find((d) => has(d, 'measure_luminance') && /temp/i.test(d.name)) || outs[0];
+    if (out) {
+      const t = val(out, 'measure_temperature');
+      $('outT').replaceChildren(document.createTextNode(f1.format(t)), Object.assign(mk('sup'), { textContent: '°C' }));
+      $('gOut').textContent = f1.format(t) + '°';
+      const meta = $('outMeta'); meta.replaceChildren();
+      if (has(out, 'measure_luminance')) meta.append(mk('span', 'chip', f0.format(val(out, 'measure_luminance')) + ' lux'));
+      const sk = varVal('AI Skumt ute'); if (sk !== undefined) meta.append(mk('span', 'chip ' + (sk ? 'acc' : ''), sk ? 'Skumt' : 'Dagsljus'));
+      if (has(out, 'measure_battery') && val(out, 'measure_battery') < 20) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %'));
+    }
+    // thermostats
+    const th = T.filter((d) => d.type === 'thermostat');
+    const tc = $('thermos'); tc.replaceChildren();
+    if (!th.length) tc.append(mk('div', 'empty', devices.length ? 'Inga termostater i Homey.' : 'Hämtar termostater…'));
+    th.forEach((d) => {
+      const row = mk('div', 'thermo'); const left = mk('div');
+      const name = String(d.name).replace(/^Z-TRM6\s*/i, 'Golvvärme ');
+      left.append(mk('div', 'n', name));
+      const parts = ['Nu ' + f1.format(val(d, 'measure_temperature')) + '°'];
+      if (has(d, 'measure_temperature.floor')) parts.push('golv ' + f1.format(val(d, 'measure_temperature.floor')) + '°');
+      if (has(d, 'measure_humidity')) parts.push(f0.format(val(d, 'measure_humidity')) + ' % fukt');
+      const s = mk('div', 's num', parts.join(' · '));
+      const heating = val(d, 'thermostat_state_IdleHeatCool') === 'Heating' || (has(d, 'measure_power') && val(d, 'measure_power') > 5);
+      if (has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power')) { s.append(document.createTextNode(' · ')); s.append(heating ? mk('span', 'heat', 'Värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : '')) : document.createTextNode('Vilar')); }
+      left.append(s);
+      if (has(d, 'se_onoff') || has(d, 'thermostat_mode')) {
+        const mode = val(d, 'thermostat_mode'), onoff = val(d, 'se_onoff');
+        const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
+        const ML = { off: 'Av', heat: 'Värme', cool: 'Kyla', auto: 'Auto', dry: 'Avfukta', fan: 'Fläkt' };
+        chips.append(mk('span', 'chip ' + (onoff ? 'acc' : ''), onoff === false ? 'Avstängd' : (ML[mode] || mode || 'På')));
+        if (val(d, 'alarm_filter')) chips.append(mk('span', 'chip warn', 'Filter behöver rengöras'));
+        left.append(chips);
+      }
+      const right = mk('div', 'step');
+      if (has(d, 'target_temperature')) {
+        const tv = mk('span', 'tv num', f1.format(val(d, 'target_temperature')) + '°');
+        const step = (delta) => () => {
+          const nv = Math.round((Number(val(d, 'target_temperature')) + delta) * 2) / 2;
+          tv.textContent = f1.format(nv) + '°';
+          throttled('t' + d.id, () => setCaps({ [d.id]: { target_temperature: nv } }, 'Temperaturändringen'), 700);
+        };
+        const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.5));
+        const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
+        right.append(minus, tv, plus);
+      }
+      if (has(d, 'se_onoff')) right.append(sw(!!val(d, 'se_onoff'), (val(d, 'se_onoff') ? 'Stäng av ' : 'Starta ') + name, () => setCaps({ [d.id]: { se_onoff: !val(d, 'se_onoff') } }, 'Ändringen')));
+      row.append(left, right); tc.append(row);
+    });
+    // room sensors
+    const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id))
+      .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
+    const sg = $('sensors'); sg.replaceChildren();
+    rooms.forEach((d) => {
+      const c = mk('div', 'tc');
+      const room = roomOf(d.zone);
+      c.append(mk('div', 'n', room === String(d.name) ? room : room + ' · ' + d.name));
+      const t = mk('div', 't num'); t.append(document.createTextNode(f1.format(val(d, 'measure_temperature'))), mk('small', '', ' °C')); c.append(t);
+      const s = mk('div', 's num');
+      if (has(d, 'measure_humidity')) s.append(mk('span', '', f0.format(val(d, 'measure_humidity')) + ' % fukt'));
+      const lowB = val(d, 'alarm_battery') === true || (has(d, 'measure_battery') && val(d, 'measure_battery') < 25);
+      if (lowB) s.append(mk('span', 'lowb', 'Batteri ' + (has(d, 'measure_battery') ? f0.format(val(d, 'measure_battery')) + ' %' : 'lågt')));
+      c.append(s); sg.append(c);
+    });
+    if (!rooms.length && devices.length) sg.append(mk('p', 'empty', 'Inga temperaturgivare hittades.'));
+  }
+
+  /* ---------- energy ---------- */
+  function setFlow(id, w, towardHome) {
+    const el = $(id);
+    el.classList.toggle('idle', !(Math.abs(w) > 15));
+    el.classList.toggle('rev', !towardHome);
+    el.style.animationDuration = (Math.max(0.45, 1.6 - Math.min(Math.abs(w), 6000) / 5000)) + 's';
+  }
+  function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k', k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
+  function renderEnergy() {
+    const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
+    const sun = devices.find((d) => d.type === 'solarpanel');
+    const batt = devices.find((d) => d.type === 'battery');
+    const ev = devices.find((d) => d.type === 'evcharger');
+    const price = devices.find((d) => has(d, 'measure_price_total'));
+    const g = grid ? Number(val(grid, 'measure_power')) || 0 : 0;
+    const s = sun ? Math.max(0, Number(val(sun, 'measure_power')) || 0) : 0;
+    const b = batt ? -(Number(val(batt, 'measure_power')) || 0) : 0;   // + = batteriet levererar till huset
+    const e = ev ? Math.max(0, Number(val(ev, 'measure_power')) || 0) : 0;
+    const home = Math.max(0, g + s + b - e);
+    $('vSun').textContent = sun ? W(s) : '–';
+    $('vGrid').textContent = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '–';
+    $('vBatt').textContent = batt ? (has(batt, 'measure_battery') ? f0.format(val(batt, 'measure_battery')) + ' % · ' : '') + W(Math.abs(b)) : '–';
+    $('vEv').textContent = ev ? (e > 15 ? W(e) : 'Vilar') : '–';
+    $('vHome').textContent = grid || sun ? W(home) : '–';
+    $('gLoad').textContent = grid || sun ? W(home) : '–';
+    setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
+
+    const pc = $('priceCard'); pc.replaceChildren();
+    if (price) {
+      const now = Number(val(price, 'measure_price_total')), lo = Number(val(price, 'measure_price_lowest')), hi = Number(val(price, 'measure_price_highest'));
+      const lvl = String(val(price, 'price_level') || val(price, 'measure_price_level') || '').toUpperCase();
+      const LV = { VERY_CHEAP: ['Mycket billigt', 'ok'], CHEAP: ['Billigt', 'ok'], NORMAL: ['Normalt', 'acc'], EXPENSIVE: ['Dyrt', 'warn'], VERY_EXPENSIVE: ['Mycket dyrt', 'bad'] };
+      const [lt, lc] = LV[lvl] || [lvl || '–', ''];
+      const big = mk('div', 'big num'); big.append(document.createTextNode(f2.format(now)), mk('small', '', ' kr/kWh'));
+      pc.append(big, mk('span', 'chip ' + lc, lt));
+      if (!isNaN(lo) && !isNaN(hi) && hi > lo) {
+        const r = mk('div', 'range'); const i = mk('i'); i.style.left = Math.max(0, Math.min(100, (now - lo) / (hi - lo) * 100)) + '%'; r.append(i);
+        const rl = mk('div', 'rangel num'); rl.append(mk('span', '', 'Lägst idag ' + f2.format(lo)), mk('span', '', 'Högst ' + f2.format(hi)));
+        pc.append(r, rl);
+      }
+    } else pc.append(mk('div', 'empty', devices.length ? 'Ingen elprisenhet i Homey.' : 'Hämtar elpris…'));
+
+    kv($('today'), [
+      grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
+      grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
+      sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
+      grid && has(grid, 'meter_power.imported') && ['Köpt totalt', f0.format(val(grid, 'meter_power.imported')) + ' kWh'],
+      grid && has(grid, 'meter_power.exported') && ['Sålt totalt', f0.format(val(grid, 'meter_power.exported')) + ' kWh'],
+    ]);
+    const ph = $('phases'); ph.replaceChildren();
+    ['L1', 'L2', 'L3'].forEach((L) => { if (grid && has(grid, 'measure_current.' + L)) { const c = mk('div', 'ph'); c.append(mk('div', 'k', 'Fas ' + L), mk('div', 'v', f1.format(val(grid, 'measure_current.' + L)) + ' A')); ph.append(c); } });
+    ph.hidden = !ph.children.length;
+
+    kv($('batt'), batt ? [
+      ['Batteri', String(val(batt, 'battery_status') || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar'))],
+      has(batt, 'measure_battery') && ['Laddnivå', f0.format(val(batt, 'measure_battery')) + ' %'],
+      ['Effekt', W(Math.abs(b))],
+      has(batt, 'meter_power.available') && ['Tillgängligt', f1.format(val(batt, 'meter_power.available')) + ' kWh'],
+      has(batt, 'measure_temperature') && ['Temperatur', f1.format(val(batt, 'measure_temperature')) + ' °C'],
+    ] : [['Batteri', 'Hittades inte']]);
+    const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
+    if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
+    const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
+    kv($('ev'), ev ? [
+      ['Laddbox', EVS[val(ev, 'evcharger_charging_state')] || String(val(ev, 'charger_status') || '–')],
+      ['Effekt', W(e)],
+      has(ev, 'target_charger_current') && ['Max laddström', f0.format(val(ev, 'target_charger_current')) + ' A'],
+      has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
+      has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh'],
+    ] : [['Laddbox', 'Hittades inte']]);
+    kv($('solar'), sun ? [
+      ['Effekt nu', W(s)],
+      has(sun, 'meter_power') && ['Idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
+      has(sun, 'meter_power.YEAR') && ['I år', f0.format(val(sun, 'meter_power.YEAR')) + ' kWh'],
+      has(sun, 'meter_power.TOTAL') && ['Totalt', f1.format(val(sun, 'meter_power.TOTAL') / 1000) + ' MWh'],
+    ] : [['Solceller', 'Hittades inte']]);
+  }
+
+  function renderAll() { renderLights(); renderTemp(); renderEnergy(); }
+
+  /* ---------- live data ---------- */
+  let busy = false, timers = [];
+  function showLogin(msg) {
+    timers.forEach(clearInterval); timers = [];
+    $('appMain').hidden = true; $('login').hidden = false;
+    $('loginMsg').textContent = msg || ''; $('loginMsg').hidden = !msg;
+  }
+  async function refresh() {
+    if (busy || !api.loggedIn() || document.hidden) return; busy = true;
+    try {
+      devices = await api.devices();
+      const now = Date.now();
+      for (const id of Object.keys(pending)) for (const c of Object.keys(pending[id])) if (pending[id][c].until < now) delete pending[id][c];
+      renderAll(); banner('');
+      const w = api.where();
+      status('on', 'Live ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) + (w ? ' · ' + w : ''));
+    } catch (e) {
+      if (!api.loggedIn()) showLogin('Inloggningen har gått ut. Logga in igen.');
+      else { status('err', devices.length ? 'Uppdatering misslyckades' : 'Når inte Homey'); if (!devices.length) banner('Når inte er Homey just nu: ' + (e.message || 'okänt fel') + '. Försöker igen automatiskt.'); }
+    } finally { busy = false; }
+  }
+  async function slow() {
+    if (!api.loggedIn() || document.hidden) return;
+    try { vars = await api.variables(); } catch (e) {}
+    try { moods = await api.moods(); } catch (e) {}
+    renderLights(); renderTemp();
+  }
+  function start() {
+    $('login').hidden = true; $('appMain').hidden = false;
+    refresh(); slow();
+    timers = [setInterval(refresh, 15000), setInterval(slow, 120000)];
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && api.loggedIn()) { refresh(); slow(); } });
+  $('loginBtn').addEventListener('click', () => api.login());
+  $('logout').addEventListener('click', () => { api.logout(); location.reload(); });
+  (async () => {
+    try { await api.handleRedirect(); } catch (e) { return showLogin('Inloggningen misslyckades: ' + (e.message || 'okänt fel')); }
+    if (!api.loggedIn()) return showLogin();
+    start();
+  })();
+})();
+</script>
+</body>
+</html>
