@@ -167,6 +167,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .ph .k{font-size:.72rem;color:var(--muted);font-weight:700}
 .ph .v{font-family:var(--f-disp);font-size:1.05rem}
 .socbar{height:10px;border-radius:5px;background:var(--card-2);overflow:hidden;margin:0 16px 14px}
+.kv .v.bad{color:var(--danger)} .kv .v.okc{color:var(--ok)}
+.blog{padding:0 16px 14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.blog .lh{font-weight:700;color:var(--fg);font-size:.78rem;letter-spacing:.04em}
 .socbar i{display:block;height:100%;background:var(--batt);border-radius:5px}
 
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:20;max-width:calc(100% - 32px)}
@@ -295,7 +298,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div></div>
 
     <div class="h2">Batteri &amp; laddbox</div>
-    <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
+    <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
 
     <div class="h2">Solceller</div>
     <div class="card"><div class="kv num" id="solar"></div></div>
@@ -577,6 +580,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     el.style.animationDuration = (Math.max(0.45, 1.6 - Math.min(Math.abs(w), 6000) / 5000)) + 's';
   }
   function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k', k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
+  // När en enhet senast skickade ett värde till Homey (nyaste tidsstämpeln bland dess funktioner).
+  const lastSeen = (d) => Math.max(0, ...Object.values(d.caps || {}).map((c) => c.at || 0));
+  const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'nyss' : m < 60 ? 'för ' + m + ' min sedan' : m < 1440 ? 'för ' + f1.format(m / 60) + ' h sedan' : 'för ' + Math.round(m / 1440) + ' dygn sedan'; };
   function renderEnergy() {
     const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
     const sun = devices.find((d) => d.type === 'solarpanel');
@@ -622,13 +628,19 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ['L1', 'L2', 'L3'].forEach((L) => { if (grid && has(grid, 'measure_current.' + L)) { const c = mk('div', 'ph'); c.append(mk('div', 'k', 'Fas ' + L), mk('div', 'v', f1.format(val(grid, 'measure_current.' + L)) + ' A')); ph.append(c); } });
     ph.hidden = !ph.children.length;
 
+    const bSeen = batt ? lastSeen(batt) : 0, bStale = batt && (batt.available === false || (bSeen && Date.now() - bSeen > 15 * 60000));
+    if (batt && bStale) { $('vBatt').textContent = 'Ingen kontakt'; setFlow('fBatt', 0, true); }
     kv($('batt'), batt ? [
+      ['Kontakt', batt.available === false ? 'Otillgänglig i Homey' : bSeen ? (bStale ? 'Ingen data ' : 'OK, data ') + ago(bSeen) : '–', bStale ? 'bad' : 'okc'],
       ['Batteri', String(val(batt, 'battery_status') || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar'))],
       has(batt, 'measure_battery') && ['Laddnivå', f0.format(val(batt, 'measure_battery')) + ' %'],
       ['Effekt', W(Math.abs(b))],
       has(batt, 'meter_power.available') && ['Tillgängligt', f1.format(val(batt, 'meter_power.available')) + ' kWh'],
       has(batt, 'measure_temperature') && ['Temperatur', f1.format(val(batt, 'measure_temperature')) + ' °C'],
     ] : [['Batteri', 'Hittades inte']]);
+    const lg = $('battLog'), logTxt = String(varVal('AI Homevolt logg') || '').split('\n').filter((l) => l && l !== '-');
+    lg.hidden = !logTxt.length; lg.replaceChildren();
+    if (logTxt.length) { lg.append(mk('div', 'lh', 'Avbrott (senaste)')); logTxt.slice(0, 5).forEach((l) => lg.append(mk('div', 'll', l))); }
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
     if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
@@ -843,7 +855,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!api.loggedIn() || document.hidden) return;
     try { vars = await api.variables(); } catch (e) {}
     try { moods = await api.moods(); } catch (e) {}
-    renderLights(); renderTemp();
+    renderLights(); renderTemp(); renderEnergy();
   }
   function start() {
     $('login').hidden = true; $('appMain').hidden = false;

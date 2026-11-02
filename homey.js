@@ -118,7 +118,7 @@
       Object.entries(d.capabilitiesObj || {}).forEach(([k, c]) => {
         state[k] = c ? c.value : null;
         // Namn, typ och valbara lägen per funktion, så appen kan bygga knappar (t.ex. för robotdammsugaren)
-        if (c) caps[k] = { title: txt(c.title), type: c.type, setable: c.setable !== false, units: txt(c.units), values: Array.isArray(c.values) ? c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) : null };
+        if (c) caps[k] = { title: txt(c.title), type: c.type, setable: c.setable !== false, units: txt(c.units), at: c.lastUpdated ? new Date(c.lastUpdated).getTime() : 0, values: Array.isArray(c.values) ? c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) : null };
       });
       // Bilder som enheten publicerar i Homey, t.ex. robotens karta
       const images = (d.images || []).map((x) => ({ id: x.id, title: txt(x.title), url: x.imageObj && x.imageObj.url, at: x.imageObj && x.imageObj.lastUpdated })).filter((x) => x.url);
