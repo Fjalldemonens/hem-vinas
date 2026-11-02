@@ -6,6 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
+<meta name="app-version" content="2026-11-02.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -75,6 +76,7 @@ button.live{font:inherit;font-size:.76rem;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 .banner{border:1px solid var(--line);border-left:3px solid var(--danger);background:var(--card);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.banner.upd{border-left-color:var(--accent)}
 .h2{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 2px -4px}
 .panel{display:flex;flex-direction:column;gap:12px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
@@ -241,6 +243,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <button role="tab" id="t-stad" aria-controls="p-stad" data-v="stad" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="2.5"/><path d="M7 16h10"/></svg><span>Städ</span></button>
   </nav>
 
+  <div class="banner upd" id="upd" hidden></div>
   <div class="banner" id="banner" hidden></div>
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
@@ -312,8 +315,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js"></script>
-<script src="homey.js"></script>
+<script src="config.js?v=2026-11-02.1"></script>
+<script src="homey.js?v=2026-11-02.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -867,6 +870,22 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const l = $('live'); l.classList.add('spin');
     Promise.all([refresh(), slow()]).finally(() => setTimeout(() => l.classList.remove('spin'), 400));
   });
+  // Ny version av appen? Jämför versionen i den här sidan med den som ligger på GitHub Pages.
+  const myVer = (document.querySelector('meta[name=app-version]') || {}).content || '';
+  async function checkVersion() {
+    try {
+      const t = await (await fetch('index.html?check=' + Date.now(), { cache: 'no-store' })).text();
+      const m = t.match(/name="app-version" content="([^"]+)"/);
+      if (m && m[1] !== myVer) {
+        const b = $('upd'); b.hidden = false; b.replaceChildren(document.createTextNode('Ny version av appen finns. '));
+        const go = mk('button', 'more', 'Uppdatera nu'); go.type = 'button';
+        go.addEventListener('click', () => { location.href = location.pathname + '?v=' + encodeURIComponent(m[1]) + location.hash; });
+        b.append(go);
+      }
+    } catch (e) {}
+  }
+  checkVersion(); setInterval(checkVersion, 600000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkVersion(); });
   $('loginBtn').addEventListener('click', () => api.login());
   $('logout').addEventListener('click', () => { api.logout(); location.reload(); });
   (async () => {
