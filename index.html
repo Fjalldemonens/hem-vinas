@@ -55,6 +55,11 @@ h1 b{font-weight:600}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
 .live.on .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
 .live.err .dot{background:var(--danger)}
+.live.stale .dot{background:var(--warn)}
+button.live{font:inherit;font-size:.76rem;cursor:pointer}
+.live .ic{width:12px;height:12px;opacity:.7}
+.live.spin .ic{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .gl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;min-width:0}
 .gl .k{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
@@ -182,7 +187,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mapc .empty{color:#9aa}
 @media (max-width:440px){.seg svg{display:none}.seg button{font-size:.84rem;padding:10px 2px}}
 @media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.78rem}}
-@media (prefers-reduced-motion: reduce){.skel,.flow .run{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
+@media (prefers-reduced-motion: reduce){.skel,.flow .run,.live.spin .ic{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
 
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;-webkit-tap-highlight-color:transparent}
@@ -216,7 +221,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       <div class="eyebrow" id="date">Hem</div>
       <h1>Hem <b>Vinäs</b></h1>
     </div>
-    <div class="live" id="live"><span class="dot"></span><span id="liveTxt">Ansluter</span></div>
+    <button class="live" id="live" type="button" aria-label="Uppdatera nu"><span class="dot"></span><span id="liveTxt">Ansluter</span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></button>
   </header>
 
   <div class="glance">
@@ -300,7 +305,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="panel" id="robots"><div class="skel"></div></div>
   </section>
 
-  <p class="foot">Data direkt från er Homey Pro. Uppdateras var 15:e sekund. <button class="more" id="logout" type="button">Logga ut</button></p>
+  <p class="foot">Data direkt från er Homey Pro. Uppdateras automatiskt var 15:e sekund, tryck på statusen uppe till höger för att uppdatera direkt. <button class="more" id="logout" type="button">Logga ut</button></p>
 </main>
 <div class="toast" id="toast" hidden></div>
 
@@ -351,7 +356,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 
   /* ---------- helpers ---------- */
   function toast(t) { const e = $('toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { e.hidden = true; }, 2600); }
-  function status(kind, text) { const l = $('live'); l.classList.toggle('on', kind === 'on'); l.classList.toggle('err', kind === 'err'); $('liveTxt').textContent = text; }
+  function status(kind, text) { const l = $('live'); ['on', 'err', 'stale'].forEach((k) => l.classList.toggle(k, kind === k)); $('liveTxt').textContent = text; }
+  // Hur färsk datan är: räknas upp varje sekund sedan senaste lyckade hämtning från Homey.
+  let lastOk = 0, lastWhere = '', lastErr = '';
+  function tick() {
+    if (!lastOk && !lastErr) return;
+    const sec = lastOk ? Math.round((Date.now() - lastOk) / 1000) : 0;
+    const age = !lastOk ? '' : sec < 5 ? 'Just nu' : sec < 60 ? 'För ' + sec + ' s sedan' : 'För ' + Math.round(sec / 60) + ' min sedan';
+    if (lastErr) status('err', lastErr + (age ? ' · ' + age.toLowerCase() : ''));
+    else status(sec > 60 ? 'stale' : 'on', age + (lastWhere ? ' · ' + lastWhere : ''));
+  }
+  setInterval(tick, 1000);
   function banner(t) { const b = $('banner'); b.hidden = !t; b.textContent = t || ''; }
   function parseList(p, key) {
     if (p && Array.isArray(p[key])) return p[key];
@@ -818,10 +833,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       for (const id of Object.keys(pending)) for (const c of Object.keys(pending[id])) if (pending[id][c].until < now) delete pending[id][c];
       renderAll(); banner('');
       const w = api.where();
-      status('on', 'Live ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }) + (w ? ' · ' + w : ''));
+      lastOk = Date.now(); lastWhere = w; lastErr = ''; tick();
     } catch (e) {
       if (!api.loggedIn()) showLogin('Inloggningen har gått ut. Logga in igen.');
-      else { status('err', devices.length ? 'Uppdatering misslyckades' : 'Når inte Homey'); if (!devices.length) banner('Når inte er Homey just nu: ' + (e.message || 'okänt fel') + '. Försöker igen automatiskt.'); }
+      else { lastErr = devices.length ? 'Uppdatering misslyckades' : 'Når inte Homey'; tick(); if (!lastOk) status('err', lastErr); if (!devices.length) banner('Når inte er Homey just nu: ' + (e.message || 'okänt fel') + '. Försöker igen automatiskt.'); }
     } finally { busy = false; }
   }
   async function slow() {
@@ -836,6 +851,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     timers = [setInterval(refresh, 15000), setInterval(slow, 120000)];
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && api.loggedIn()) { refresh(); slow(); } });
+  $('live').addEventListener('click', () => {
+    const l = $('live'); l.classList.add('spin');
+    Promise.all([refresh(), slow()]).finally(() => setTimeout(() => l.classList.remove('spin'), 400));
+  });
   $('loginBtn').addEventListener('click', () => api.login());
   $('logout').addEventListener('click', () => { api.logout(); location.reload(); });
   (async () => {
