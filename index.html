@@ -686,17 +686,39 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return [mk('div', 'h2', heading), c];
   }
 
+  // Senaste städningen: clean_last = timmar sedan den avslutades, clean_time = städtid i timmar, clean_area = m².
+  // Vilka rum som städades och om det var schemalagt skickar Roborock-appen inte till Homey.
+  const dur = (h) => { const m = Math.round(h * 60); return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + (m % 60) + ' min'; };
+  function when(t) {
+    const d = new Date(t), now = new Date(), day = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((day(now) - day(d)) / 864e5), hm = d.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    if (diff === 0) return 'Idag ' + hm;
+    if (diff === 1) return 'Igår ' + hm;
+    if (diff < 7) return d.toLocaleDateString('sv-SE', { weekday: 'long' }).replace(/^./, (c) => c.toUpperCase()) + ' ' + hm;
+    return d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
+  }
+  function lastJob(d) {
+    if (!has(d, 'clean_last') && !has(d, 'clean_area')) return null;
+    const card = mk('div', 'card');
+    const rows = [];
+    if (has(d, 'clean_last') && val(d, 'clean_last') >= 0) {
+      const end = Date.now() - val(d, 'clean_last') * 36e5;
+      rows.push(['Avslutad', when(end)]);
+      if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Städtid', dur(val(d, 'clean_time'))]);
+    } else if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Städtid', dur(val(d, 'clean_time'))]);
+    if (has(d, 'clean_area') && val(d, 'clean_area') > 0) rows.push(['Yta', f0.format(val(d, 'clean_area')) + ' m²']);
+    if (!rows.length) return null;
+    const k = mk('div', 'kv num'); kv(k, rows); card.append(k);
+    return [mk('div', 'h2', 'Senaste städning'), card];
+  }
   function rrCard(d) {
     const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
     const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true, docked = val(d, 'dock') === true;
     const charging = /charg/i.test(String(val(d, 'battery_charging_state') || '')) && !/dis/i.test(String(val(d, 'battery_charging_state')));
     const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
-    const extra = [];
-    if (has(d, 'clean_area') && val(d, 'clean_area') > 0) extra.push('Senast ' + f0.format(val(d, 'clean_area')) + ' m²');
-    if (has(d, 'clean_time') && val(d, 'clean_time') > 0) { const u = (meta(d, 'clean_time') || {}).units; extra.push(f1.format(val(d, 'clean_time')) + ' ' + (u || 'h')); }
-    if (has(d, 'clean_mode')) extra.push(sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))));
-    wrap.append(roboHero(d, st, cls, extra));
+    wrap.append(roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode')))]));
     const al = alarmChips(d); if (al) wrap.append(al);
+    const last = lastJob(d); if (last) wrap.append(...last);
 
     const B = [];
     if (cleaning && !paused) {
