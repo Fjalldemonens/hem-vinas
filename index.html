@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Hem Vinäs</title>
-<meta name="description" content="Belysning, temperatur och energi från Homey Pro.">
+<meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -62,10 +62,10 @@ h1 b{font-weight:600}
 .gl .v small{font-size:.75rem;color:var(--muted);font-family:var(--f-body)}
 
 /* segmented switch */
-.seg{display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);position:relative}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);position:relative}
 .seg button{font:inherit;font-weight:600;font-size:.9rem;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:999px;cursor:pointer;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
 .seg button[aria-selected="true"]{color:var(--accent-ink)}
-.seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/3);border-radius:999px;background:var(--accent);transition:transform .28s cubic-bezier(.3,.7,.2,1);box-shadow:0 6px 18px -6px var(--accent)}
+.seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/4);border-radius:999px;background:var(--accent);transition:transform .28s cubic-bezier(.3,.7,.2,1);box-shadow:0 6px 18px -6px var(--accent)}
 .seg svg{width:16px;height:16px}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
@@ -166,7 +166,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:20;max-width:calc(100% - 32px)}
 .foot{font-size:.76rem;color:var(--muted);text-align:center}
-@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.82rem}}
+/* robot vacuum */
+.robo{display:flex;flex-direction:column;gap:10px;padding:18px 18px 14px;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--card)}
+.robo .big{font-family:var(--f-disp);font-weight:300;font-size:1.8rem;line-height:1.1;letter-spacing:-.02em}
+.robo .meta{display:flex;flex-wrap:wrap;gap:6px}
+.robo.run .big{color:var(--accent)} .robo.err .big{color:var(--danger)}
+.robo .socbar{margin:0}
+.quick .btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.quick .btn.wide{grid-column:1/3}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.fine{font-size:.8rem;color:var(--muted);margin:0 2px}
+@media (max-width:440px){.seg svg{display:none}.seg button{font-size:.84rem;padding:10px 2px}}
+@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.78rem}}
 @media (prefers-reduced-motion: reduce){.skel,.flow .run{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
 
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -189,7 +200,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   <div class="loginbox">
     <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8M5 9.5V21h14V9.5M10 21v-6h4v6"/></svg></div>
     <h1>Hem <b>Vinäs</b></h1>
-    <p class="lsub">Belysning, temperatur och energi från er Homey Pro.</p>
+    <p class="lsub">Belysning, temperatur, energi och städning från er Homey Pro.</p>
     <button class="btn primary" id="loginBtn" type="button">Logga in med Homey</button>
     <p class="lmsg" id="loginMsg" hidden></p>
     <p class="lfine">Bara den som är användare på er Homey kan se eller styra något.</p>
@@ -215,6 +226,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Belysning</span></button>
     <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Temperatur</span></button>
     <button role="tab" id="t-energi" aria-controls="p-energi" data-v="energi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Energi</span></button>
+    <button role="tab" id="t-stad" aria-controls="p-stad" data-v="stad" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="2.5"/><path d="M7 16h10"/></svg><span>Städ</span></button>
   </nav>
 
   <div class="banner" id="banner" hidden></div>
@@ -280,6 +292,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card"><div class="kv num" id="solar"></div></div>
   </section>
 
+  <section class="panel" id="p-stad" role="tabpanel" aria-labelledby="t-stad" hidden>
+    <div class="panel" id="robots"><div class="skel"></div></div>
+  </section>
+
   <p class="foot">Data direkt från er Homey Pro. Uppdateras var 15:e sekund. <button class="more" id="logout" type="button">Logga ut</button></p>
 </main>
 <div class="toast" id="toast" hidden></div>
@@ -303,7 +319,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   const pending = {};
 
   /* ---------- tabs (hash + remembered) ---------- */
-  const VIEWS = ['belysning', 'temperatur', 'energi'];
+  const VIEWS = ['belysning', 'temperatur', 'energi', 'stad'];
   function show(v) {
     if (!VIEWS.includes(v)) v = 'belysning';
     VIEWS.forEach((x, i) => {
@@ -319,7 +335,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   $('pill').parentElement.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     const cur = VIEWS.findIndex((x) => $('t-' + x).getAttribute('aria-selected') === 'true');
-    const nx = VIEWS[(cur + (e.key === 'ArrowRight' ? 1 : 2)) % 3];
+    const nx = VIEWS[(cur + (e.key === 'ArrowRight' ? 1 : VIEWS.length - 1)) % VIEWS.length];
     location.hash = nx; $('t-' + nx).focus();
   });
   window.addEventListener('hashchange', () => show(location.hash.slice(1)));
@@ -611,7 +627,72 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ] : [['Solceller', 'Hittades inte']]);
   }
 
-  function renderAll() { renderLights(); renderTemp(); renderEnergy(); }
+  /* ---------- robot vacuum (Matter RVC via Homey) ---------- */
+  const OPS = { 0: ['Stoppad', ''], 1: ['Städar', 'run'], 2: ['Pausad', ''], 3: ['Fel', 'err'], 64: ['Åker hem', 'run'], 65: ['Laddar', ''], 66: ['I laddstationen', ''] };
+  const ALARMS = { alarm_stuck: ['Roboten har fastnat', 'bad'], alarm_lost: ['Roboten hittar inte hem', 'bad'], alarm_bin_full: ['Dammbehållaren är full', 'warn'], alarm_bin_missing: ['Dammbehållaren saknas', 'bad'], alarm_tank_empty: ['Rentvattentanken är tom', 'warn'], alarm_tank_missing: ['Vattentanken saknas', 'bad'], alarm_tank_open: ['Vattentanken är öppen', 'warn'], alarm_cleaning_pad_missing: ['Moppduken saknas', 'warn'] };
+  const MODE_SV = [[/vac\w*.*(and|&|\+|then).*mop|mop.*(and|&|\+).*vac|sweep.*mop|both/i, 'Dammsug och moppa'], [/deep/i, 'Djupstädning'], [/quick|fast/i, 'Snabb'], [/quiet|silent/i, 'Tyst'], [/max|turbo/i, 'Max'], [/mop/i, 'Moppa'], [/vac|sweep/i, 'Dammsug'], [/idle/i, 'Vila'], [/map/i, 'Kartlägg'], [/clean/i, 'Städa'], [/auto/i, 'Auto']];
+  const sv = (t) => { const s = String(t ?? ''); const m = MODE_SV.find(([r]) => r.test(s)); return m ? m[1] : s; };
+  const opts = (d, cap) => (d.caps && d.caps[cap] && d.caps[cap].values) || [];
+  const hasBtn = (d, cap) => !!d.state && Object.prototype.hasOwnProperty.call(d.state, cap);
+  const capTitle = (d, cap, v) => { const o = opts(d, cap).find((x) => x.id === String(v)); return o ? o.title : ''; };
+  function robotCard(d) {
+    const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
+    const op = Number(val(d, 'operational_state'));
+    const [stTxt, stCls] = OPS[op] || [sv(capTitle(d, 'operational_state', val(d, 'operational_state'))) || 'Okänt läge', ''];
+    const hero = mk('div', 'card robo' + (stCls ? ' ' + stCls : ''));
+    const left = mk('div'); left.append(mk('div', 'eyebrow', String(d.name).trim()), mk('div', 'big', d.available === false ? 'Ej nåbar' : stTxt));
+    const meta = mk('div', 'meta');
+    if (has(d, 'measure_battery')) meta.append(mk('span', 'chip ' + (val(d, 'measure_battery') < 20 ? 'bad' : 'ok'), f0.format(val(d, 'measure_battery')) + ' %'));
+    const cm = val(d, 'vacuumcleaner_job_mode.clean_mode'), cmT = capTitle(d, 'vacuumcleaner_job_mode.clean_mode', cm);
+    if (cmT) meta.append(mk('span', 'chip', sv(cmT)));
+    hero.append(left, meta);
+    if (has(d, 'measure_battery')) { const b = mk('div', 'socbar'); const i = mk('i'); i.style.width = Math.max(1, Math.min(100, val(d, 'measure_battery'))) + '%'; b.append(i); hero.append(b); }
+    wrap.append(hero);
+
+    const al = Object.keys(ALARMS).filter((k) => val(d, k) === true);
+    if (al.length) { const c = mk('div', 'chips'); al.forEach((k) => { const ch = mk('span', 'chip ' + ALARMS[k][1]); ch.append(mk('span', 'cd'), document.createTextNode(ALARMS[k][0])); c.append(ch); }); wrap.append(c); }
+
+    const act = mk('div', 'quick');
+    const btn = (label, cls, map, done) => { const b = mk('button', 'btn' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.disabled = d.available === false; b.addEventListener('click', () => setCaps({ [d.id]: map }, label).then((ok) => ok && done && toast(done))); return b; };
+    const running = op === 1 || op === 64, paused = op === 2;
+    if (running) {
+      if (hasBtn(d, 'button.operational_state_pause')) act.append(btn('Pausa', '', { 'button.operational_state_pause': true }, 'Roboten pausas'));
+      if (op === 1 && hasBtn(d, 'button.operational_state_go_home')) act.append(btn('Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+    } else if (paused) {
+      if (hasBtn(d, 'button.operational_state_resume')) act.append(btn('Fortsätt', 'go', { 'button.operational_state_resume': true }, 'Roboten fortsätter'));
+      if (hasBtn(d, 'button.operational_state_go_home')) act.append(btn('Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+    } else {
+      const run = opts(d, 'vacuumcleaner_job_mode').filter((x) => !/idle|vila|map|kart/i.test(x.title));
+      if (run.length) run.forEach((x) => act.append(btn(run.length === 1 ? 'Starta städning' : 'Starta: ' + sv(x.title), 'go', { vacuumcleaner_job_mode: x.id }, 'Roboten startar')));
+      else if (has(d, 'vacuumcleaner_job_mode')) act.append(btn('Starta städning', 'go', { vacuumcleaner_job_mode: '1' }, 'Roboten startar'));
+    }
+    if (hasBtn(d, 'button.identify')) act.append(btn('Hitta roboten', '', { 'button.identify': true }, 'Roboten piper'));
+    if (act.children.length % 2) act.lastElementChild.classList.add('wide');
+    if (act.children.length) wrap.append(act);
+
+    const cmo = opts(d, 'vacuumcleaner_job_mode.clean_mode');
+    if (cmo.length > 1 && d.caps['vacuumcleaner_job_mode.clean_mode'].setable) {
+      wrap.append(mk('div', 'h2', 'Städläge'));
+      const c = mk('div', 'chips'); c.style.marginTop = '10px';
+      cmo.forEach((x) => {
+        const on = String(cm) === x.id;
+        const b = mk('button', 'chip', sv(x.title)); b.type = 'button'; b.title = x.title; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.addEventListener('click', () => !on && setCaps({ [d.id]: { 'vacuumcleaner_job_mode.clean_mode': x.id } }, 'Lägesbytet').then((ok) => ok && toast('Städläge: ' + sv(x.title))));
+        c.append(b);
+      });
+      wrap.append(c);
+    }
+    wrap.append(mk('p', 'fine', 'Rumsval och karta finns inte via Homey än. Använd Roborock-appen för det.'));
+    return wrap;
+  }
+  function renderRobot() {
+    const R = devices.filter((d) => d.type === 'vacuumcleaner');
+    const box = $('robots');
+    if (!R.length) { box.replaceChildren(devices.length ? mk('p', 'empty', 'Ingen robotdammsugare hittades i Homey.') : mk('div', 'skel')); return; }
+    box.replaceChildren(...R.map(robotCard));
+  }
+
+  function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
 
   /* ---------- live data ---------- */
   let busy = false, timers = [];

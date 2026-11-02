@@ -113,9 +113,14 @@
     if (!zoneCache || Date.now() - zoneAt > 600000) { zoneCache = await homey('/api/manager/zones/zone/'); zoneAt = Date.now(); }
     const raw = await homey('/api/manager/devices/device/');
     return Object.values(raw || {}).map((d) => {
-      const state = {};
-      Object.entries(d.capabilitiesObj || {}).forEach(([k, c]) => { state[k] = c ? c.value : null; });
-      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state };
+      const state = {}, caps = {};
+      const txt = (t) => (t && typeof t === 'object' ? (t.sv || t.en || Object.values(t)[0]) : t);
+      Object.entries(d.capabilitiesObj || {}).forEach(([k, c]) => {
+        state[k] = c ? c.value : null;
+        // Valbara lägen (t.ex. robotens städlägen) med sina namn, så appen kan visa knappar för dem
+        if (c && Array.isArray(c.values)) caps[k] = { title: txt(c.title), setable: c.setable !== false, values: c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) };
+      });
+      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps };
     });
   }
   async function variables() { const v = await homey('/api/manager/logic/variable/'); return Object.values(v || {}); }

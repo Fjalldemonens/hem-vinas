@@ -7,7 +7,7 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 - Ingen byggprocess: ren HTML/CSS/JS. Inga bibliotek utöver Google Fonts.
 
 ## Filer
-- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur, Energi).
+- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur, Energi, Städ).
 - `homey.js` – Homey Web API-klient: OAuth via Workern, delegationstoken, session mot Homey Pro (lokalt först, annars moln), enheter, zoner, variabler, moods.
 - `config.js` – Client ID, Worker-adress, Redirect URL. Inga hemligheter.
 - `worker/worker.js` – Cloudflare Worker `hem-vinas-auth` (https://hem-vinas-auth.uffes-mora.workers.dev). Ändringar här måste klistras in manuellt i Cloudflare (Edit code → Deploy) av användaren.
