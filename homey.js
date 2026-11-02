@@ -117,8 +117,8 @@
       const txt = (t) => (t && typeof t === 'object' ? (t.sv || t.en || Object.values(t)[0]) : t);
       Object.entries(d.capabilitiesObj || {}).forEach(([k, c]) => {
         state[k] = c ? c.value : null;
-        // Valbara lägen (t.ex. robotens städlägen) med sina namn, så appen kan visa knappar för dem
-        if (c && Array.isArray(c.values)) caps[k] = { title: txt(c.title), setable: c.setable !== false, values: c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) };
+        // Namn, typ och valbara lägen per funktion, så appen kan bygga knappar (t.ex. för robotdammsugaren)
+        if (c) caps[k] = { title: txt(c.title), type: c.type, setable: c.setable !== false, units: txt(c.units), values: Array.isArray(c.values) ? c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) : null };
       });
       return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps };
     });

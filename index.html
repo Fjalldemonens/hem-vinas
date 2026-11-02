@@ -176,6 +176,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .quick .btn.wide{grid-column:1/3}
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .fine{font-size:.8rem;color:var(--muted);margin:0 2px}
+#robots{gap:30px}
 @media (max-width:440px){.seg svg{display:none}.seg button{font-size:.84rem;padding:10px 2px}}
 @media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.78rem}}
 @media (prefers-reduced-motion: reduce){.skel,.flow .run{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
@@ -627,69 +628,134 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ] : [['Solceller', 'Hittades inte']]);
   }
 
-  /* ---------- robot vacuum (Matter RVC via Homey) ---------- */
+  /* ---------- robot vacuums ---------- */
+  // Två sorters robotar i Homey: Roborock-appen (is_cleaning, rum, sugkraft …) och Matter (operational_state).
+  // Finns samma robot via båda visas bara Roborock-appens, som kan mer.
   const OPS = { 0: ['Stoppad', ''], 1: ['Städar', 'run'], 2: ['Pausad', ''], 3: ['Fel', 'err'], 64: ['Åker hem', 'run'], 65: ['Laddar', ''], 66: ['I laddstationen', ''] };
-  const ALARMS = { alarm_stuck: ['Roboten har fastnat', 'bad'], alarm_lost: ['Roboten hittar inte hem', 'bad'], alarm_bin_full: ['Dammbehållaren är full', 'warn'], alarm_bin_missing: ['Dammbehållaren saknas', 'bad'], alarm_tank_empty: ['Rentvattentanken är tom', 'warn'], alarm_tank_missing: ['Vattentanken saknas', 'bad'], alarm_tank_open: ['Vattentanken är öppen', 'warn'], alarm_cleaning_pad_missing: ['Moppduken saknas', 'warn'] };
-  const MODE_SV = [[/vac\w*.*(and|&|\+|then).*mop|mop.*(and|&|\+).*vac|sweep.*mop|both/i, 'Dammsug och moppa'], [/deep/i, 'Djupstädning'], [/quick|fast/i, 'Snabb'], [/quiet|silent/i, 'Tyst'], [/max|turbo/i, 'Max'], [/mop/i, 'Moppa'], [/vac|sweep/i, 'Dammsug'], [/idle/i, 'Vila'], [/map/i, 'Kartlägg'], [/clean/i, 'Städa'], [/auto/i, 'Auto']];
-  const sv = (t) => { const s = String(t ?? ''); const m = MODE_SV.find(([r]) => r.test(s)); return m ? m[1] : s; };
-  const opts = (d, cap) => (d.caps && d.caps[cap] && d.caps[cap].values) || [];
-  const hasBtn = (d, cap) => !!d.state && Object.prototype.hasOwnProperty.call(d.state, cap);
+  const ALARMS = { alarm_stuck: ['Roboten har fastnat', 'bad'], alarm_lost: ['Roboten hittar inte hem', 'bad'], alarm_problem: ['Roboten har ett problem', 'bad'], alarm_bin_full: ['Dammbehållaren är full', 'warn'], alarm_bin_missing: ['Dammbehållaren saknas', 'bad'], alarm_tank_empty: ['Rentvattentanken är tom', 'warn'], alarm_water_box_empty: ['Vattentanken är tom', 'warn'], alarm_tank_full: ['Smutsvattentanken är full', 'warn'], alarm_tank_missing: ['Vattentanken saknas', 'bad'], alarm_tank_open: ['Vattentanken är öppen', 'warn'], alarm_cleaning_pad_missing: ['Moppduken saknas', 'warn'] };
+  // Engelska namn översätts; svenska namn från Homey används som de är (vakuum → dammsugning).
+  const EN = [[/vac\w*.*(and|&|\+|then).*mop|mop.*(and|&|\+).*vac|both/i, 'Dammsug och moppa'], [/deep/i, 'Djupstädning'], [/quick|fast/i, 'Snabb'], [/quiet|silent/i, 'Tyst'], [/^max/i, 'Max'], [/mop/i, 'Moppa'], [/vac|sweep/i, 'Dammsug'], [/idle/i, 'Vila'], [/map/i, 'Kartlägg'], [/clean/i, 'Städa'], [/auto/i, 'Auto']];
+  const sv = (t) => {
+    const s = String(t ?? '');
+    if (/[åäö]/i.test(s) || /vakuum|mopp|dammsug|städ|rengör|tyst|djup|balans/i.test(s)) return s.replace(/vakuum/gi, (m) => m[0] === 'V' ? 'Dammsugning' : 'dammsugning');
+    const m = EN.find(([r]) => r.test(s)); return m ? m[1] : s;
+  };
+  const meta = (d, cap) => (d.caps && d.caps[cap]) || null;
+  const opts = (d, cap) => (meta(d, cap) && meta(d, cap).values) || [];
+  const settable = (d, cap) => !!d.state && Object.prototype.hasOwnProperty.call(d.state, cap) && (!meta(d, cap) || meta(d, cap).setable);
   const capTitle = (d, cap, v) => { const o = opts(d, cap).find((x) => x.id === String(v)); return o ? o.title : ''; };
-  function robotCard(d) {
-    const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
-    const op = Number(val(d, 'operational_state'));
-    const [stTxt, stCls] = OPS[op] || [sv(capTitle(d, 'operational_state', val(d, 'operational_state'))) || 'Okänt läge', ''];
+  const isRR = (d) => has(d, 'is_cleaning') || has(d, 'dock');
+
+  function roboHero(d, stTxt, stCls, extra) {
     const hero = mk('div', 'card robo' + (stCls ? ' ' + stCls : ''));
-    const left = mk('div'); left.append(mk('div', 'eyebrow', String(d.name).trim()), mk('div', 'big', d.available === false ? 'Ej nåbar' : stTxt));
-    const meta = mk('div', 'meta');
-    if (has(d, 'measure_battery')) meta.append(mk('span', 'chip ' + (val(d, 'measure_battery') < 20 ? 'bad' : 'ok'), f0.format(val(d, 'measure_battery')) + ' %'));
-    const cm = val(d, 'vacuumcleaner_job_mode.clean_mode'), cmT = capTitle(d, 'vacuumcleaner_job_mode.clean_mode', cm);
-    if (cmT) meta.append(mk('span', 'chip', sv(cmT)));
-    hero.append(left, meta);
+    hero.append(mk('div', 'eyebrow', String(d.name).trim() + (d.zone ? ' · ' + roomOf(d.zone) : '')), mk('div', 'big', d.available === false ? 'Ej nåbar' : stTxt));
+    const m = mk('div', 'meta');
+    if (has(d, 'measure_battery')) m.append(mk('span', 'chip ' + (val(d, 'measure_battery') < 20 ? 'bad' : 'ok'), f0.format(val(d, 'measure_battery')) + ' %'));
+    (extra || []).forEach((t) => t && m.append(mk('span', 'chip', t)));
+    hero.append(m);
     if (has(d, 'measure_battery')) { const b = mk('div', 'socbar'); const i = mk('i'); i.style.width = Math.max(1, Math.min(100, val(d, 'measure_battery'))) + '%'; b.append(i); hero.append(b); }
-    wrap.append(hero);
-
+    return hero;
+  }
+  function alarmChips(d) {
     const al = Object.keys(ALARMS).filter((k) => val(d, k) === true);
-    if (al.length) { const c = mk('div', 'chips'); al.forEach((k) => { const ch = mk('span', 'chip ' + ALARMS[k][1]); ch.append(mk('span', 'cd'), document.createTextNode(ALARMS[k][0])); c.append(ch); }); wrap.append(c); }
+    if (!al.length) return null;
+    const c = mk('div', 'chips'); al.forEach((k) => { const ch = mk('span', 'chip ' + ALARMS[k][1]); ch.append(mk('span', 'cd'), document.createTextNode(ALARMS[k][0])); c.append(ch); });
+    return c;
+  }
+  function actBtn(d, label, cls, map, done) {
+    const b = mk('button', 'btn' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.disabled = d.available === false;
+    b.addEventListener('click', () => setCaps({ [d.id]: map }, label).then((ok) => ok && done && toast(done)));
+    return b;
+  }
+  function quick(btns) {
+    const q = mk('div', 'quick'); btns.filter(Boolean).forEach((b) => q.append(b));
+    if (q.children.length % 2) q.lastElementChild.classList.add('wide');
+    return q.children.length ? q : null;
+  }
+  function choice(d, cap, heading, prefix) {
+    const o = opts(d, cap);
+    if (o.length < 2 || !settable(d, cap)) return [];
+    const cur = String(val(d, cap));
+    const c = mk('div', 'chips'); c.style.marginTop = '10px';
+    o.forEach((x) => {
+      const on = cur === x.id;
+      const b = mk('button', 'chip', sv(x.title)); b.type = 'button'; b.title = x.title; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.addEventListener('click', () => !on && setCaps({ [d.id]: { [cap]: x.id } }, heading).then((ok) => ok && toast((prefix || heading) + ': ' + sv(x.title))));
+      c.append(b);
+    });
+    return [mk('div', 'h2', heading), c];
+  }
 
-    const act = mk('div', 'quick');
-    const btn = (label, cls, map, done) => { const b = mk('button', 'btn' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.disabled = d.available === false; b.addEventListener('click', () => setCaps({ [d.id]: map }, label).then((ok) => ok && done && toast(done))); return b; };
-    const running = op === 1 || op === 64, paused = op === 2;
-    if (running) {
-      if (hasBtn(d, 'button.operational_state_pause')) act.append(btn('Pausa', '', { 'button.operational_state_pause': true }, 'Roboten pausas'));
-      if (op === 1 && hasBtn(d, 'button.operational_state_go_home')) act.append(btn('Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+  function rrCard(d) {
+    const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
+    const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true, docked = val(d, 'dock') === true;
+    const charging = /charg/i.test(String(val(d, 'battery_charging_state') || '')) && !/dis/i.test(String(val(d, 'battery_charging_state')));
+    const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
+    const extra = [];
+    if (has(d, 'clean_area') && val(d, 'clean_area') > 0) extra.push('Senast ' + f0.format(val(d, 'clean_area')) + ' m²');
+    if (has(d, 'clean_time') && val(d, 'clean_time') > 0) { const u = (meta(d, 'clean_time') || {}).units; extra.push(f1.format(val(d, 'clean_time')) + ' ' + (u || 'h')); }
+    if (has(d, 'clean_mode')) extra.push(sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))));
+    wrap.append(roboHero(d, st, cls, extra));
+    const al = alarmChips(d); if (al) wrap.append(al);
+
+    const B = [];
+    if (cleaning && !paused) {
+      if (settable(d, 'pause_clean')) B.push(actBtn(d, 'Pausa', '', { pause_clean: true }, 'Roboten pausas'));
     } else if (paused) {
-      if (hasBtn(d, 'button.operational_state_resume')) act.append(btn('Fortsätt', 'go', { 'button.operational_state_resume': true }, 'Roboten fortsätter'));
-      if (hasBtn(d, 'button.operational_state_go_home')) act.append(btn('Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
-    } else {
-      const run = opts(d, 'vacuumcleaner_job_mode').filter((x) => !/idle|vila|map|kart/i.test(x.title));
-      if (run.length) run.forEach((x) => act.append(btn(run.length === 1 ? 'Starta städning' : 'Starta: ' + sv(x.title), 'go', { vacuumcleaner_job_mode: x.id }, 'Roboten startar')));
-      else if (has(d, 'vacuumcleaner_job_mode')) act.append(btn('Starta städning', 'go', { vacuumcleaner_job_mode: '1' }, 'Roboten startar'));
-    }
-    if (hasBtn(d, 'button.identify')) act.append(btn('Hitta roboten', '', { 'button.identify': true }, 'Roboten piper'));
-    if (act.children.length % 2) act.lastElementChild.classList.add('wide');
-    if (act.children.length) wrap.append(act);
+      if (settable(d, 'pause_clean')) B.push(actBtn(d, 'Fortsätt', 'go', { pause_clean: false }, 'Roboten fortsätter'));
+    } else if (settable(d, 'clean_full')) B.push(actBtn(d, 'Städa allt', 'go', { clean_full: true }, 'Roboten startar'));
+    if ((cleaning || paused || !docked) && settable(d, 'cancel_and_dock')) B.push(actBtn(d, 'Åk hem', '', { cancel_and_dock: true }, 'Roboten åker hem'));
+    if (!cleaning && settable(d, 'spot_clean')) B.push(actBtn(d, 'Punktstäda', '', { spot_clean: true }, 'Punktstädning startar'));
+    if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
+    const q = quick(B); if (q) wrap.append(q);
 
-    const cmo = opts(d, 'vacuumcleaner_job_mode.clean_mode');
-    if (cmo.length > 1 && d.caps['vacuumcleaner_job_mode.clean_mode'].setable) {
-      wrap.append(mk('div', 'h2', 'Städläge'));
-      const c = mk('div', 'chips'); c.style.marginTop = '10px';
-      cmo.forEach((x) => {
-        const on = String(cm) === x.id;
-        const b = mk('button', 'chip', sv(x.title)); b.type = 'button'; b.title = x.title; b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        b.addEventListener('click', () => !on && setCaps({ [d.id]: { 'vacuumcleaner_job_mode.clean_mode': x.id } }, 'Lägesbytet').then((ok) => ok && toast('Städläge: ' + sv(x.title))));
-        c.append(b);
-      });
-      wrap.append(c);
-    }
-    wrap.append(mk('p', 'fine', 'Rumsval och karta finns inte via Homey än. Använd Roborock-appen för det.'));
+    wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
+    wrap.append(...choice(d, 'clean_mode', 'Städläge'));
+    wrap.append(...choice(d, 'suction_power', 'Sugkraft'));
+    wrap.append(...choice(d, 'scrub_intensity', 'Moppning'));
+    wrap.append(...choice(d, 'mop_route', 'Mopprutt'));
+
+    const S = [];
+    if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm dammbehållaren', '', { empty_dustbin: true }, 'Stationen tömmer'));
+    if (docked && settable(d, 'wash_mop')) S.push(actBtn(d, 'Tvätta moppen', '', { wash_mop: true }, 'Moppen tvättas'));
+    if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
+    const qs = quick(S); if (qs) { wrap.append(mk('div', 'h2', 'Station')); wrap.append(qs); }
     return wrap;
   }
+
+  function matterCard(d) {
+    const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
+    const op = Number(val(d, 'operational_state'));
+    const [st, cls] = OPS[op] || [sv(capTitle(d, 'operational_state', val(d, 'operational_state'))) || 'Okänt läge', ''];
+    const cm = 'vacuumcleaner_job_mode.clean_mode';
+    wrap.append(roboHero(d, st, cls, [sv(capTitle(d, cm, val(d, cm)))]));
+    const al = alarmChips(d); if (al) wrap.append(al);
+    const B = [], running = op === 1 || op === 64, paused = op === 2;
+    if (running) {
+      if (settable(d, 'button.operational_state_pause')) B.push(actBtn(d, 'Pausa', '', { 'button.operational_state_pause': true }, 'Roboten pausas'));
+      if (op === 1 && settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+    } else if (paused) {
+      if (settable(d, 'button.operational_state_resume')) B.push(actBtn(d, 'Fortsätt', 'go', { 'button.operational_state_resume': true }, 'Roboten fortsätter'));
+      if (settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+    } else {
+      const run = opts(d, 'vacuumcleaner_job_mode').filter((x) => !/idle|vila|tomgång|map|kart/i.test(x.title));
+      if (run.length) run.forEach((x) => B.push(actBtn(d, run.length === 1 ? 'Starta städning' : 'Starta: ' + sv(x.title), 'go', { vacuumcleaner_job_mode: x.id }, 'Roboten startar')));
+      else if (settable(d, 'vacuumcleaner_job_mode')) B.push(actBtn(d, 'Starta städning', 'go', { vacuumcleaner_job_mode: '1' }, 'Roboten startar'));
+    }
+    if (settable(d, 'button.identify')) B.push(actBtn(d, 'Hitta roboten', '', { 'button.identify': true }, 'Roboten piper'));
+    const q = quick(B); if (q) wrap.append(q);
+    wrap.append(...choice(d, cm, 'Städläge'));
+    return wrap;
+  }
+
   function renderRobot() {
-    const R = devices.filter((d) => d.type === 'vacuumcleaner');
+    const all = devices.filter((d) => d.type === 'vacuumcleaner');
+    const rrNames = new Set(all.filter(isRR).map((d) => String(d.name).trim().toLowerCase()));
+    const R = all.filter((d) => isRR(d) || !rrNames.has(String(d.name).trim().toLowerCase()))
+      .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
     const box = $('robots');
     if (!R.length) { box.replaceChildren(devices.length ? mk('p', 'empty', 'Ingen robotdammsugare hittades i Homey.') : mk('div', 'skel')); return; }
-    box.replaceChildren(...R.map(robotCard));
+    box.replaceChildren(...R.map((d) => (isRR(d) ? rrCard(d) : matterCard(d))));
   }
 
   function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
