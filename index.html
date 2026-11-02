@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-02.2">
+<meta name="app-version" content="2026-11-02.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -315,8 +315,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-02.2"></script>
-<script src="homey.js?v=2026-11-02.2"></script>
+<script src="config.js?v=2026-11-02.3"></script>
+<script src="homey.js?v=2026-11-02.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -509,6 +509,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   // Bergvärmepump (Thermia): inomhus börvärde, framledning/retur, köldbärare, varmvatten och status.
   const TH_ST = [[/no demand|idle|standby/i, 'Inget värmebehov'], [/hot ?water/i, 'Gör varmvatten'], [/heat/i, 'Värmer'], [/defrost/i, 'Avfrostning'], [/alarm|error/i, 'Larm']];
   const thSv = (v) => { const s = String(v ?? ''); const m = TH_ST.find(([r]) => r.test(s)); return m ? m[1] : s; };
+  const hpOpen = {};
   function heatPumpRow(d) {
     const name = String(d.name).trim();
     const row = mk('div', 'thermo'); const left = mk('div');
@@ -518,14 +519,40 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     s.append(working ? mk('span', 'heat', st) : document.createTextNode(st || 'Status okänd'));
     if (has(d, 'thermia_opmode')) s.append(document.createTextNode(' · ' + String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').replace(/^auto$/i, 'Auto')));
     left.append(s);
-    const g = mk('div', 'kv num'); g.style.padding = '0 16px 14px'; g.style.fontSize = '.86rem';
+    const g = mk('div', 'kv num'); g.style.padding = '0 16px 6px'; g.style.fontSize = '.86rem';
     const T = (c) => has(d, c) ? f0.format(val(d, c)) + '°' : null;
-    kv(g, [
-      T('measure_temperature.supply') && ['Framledning / retur', T('measure_temperature.supply') + ' / ' + (T('measure_temperature.return') || '–')],
-      T('measure_temperature.brine_in') && ['Köldbärare in / ut', T('measure_temperature.brine_in') + ' / ' + (T('measure_temperature.brine_out') || '–')],
-      T('measure_temperature.hotwater') && ['Varmvatten', T('measure_temperature.hotwater') + (val(d, 'hotwater_boost') ? ' · extra varmvatten på' : '')],
-      T('measure_temperature') && ['Utetemp enligt pumpen', T('measure_temperature')],
-    ]);
+    const open = !!hpOpen[d.id];
+    const KNOWN = ['target_temperature', 'measure_temperature', 'measure_temperature.supply', 'measure_temperature.return', 'measure_temperature.brine_in', 'measure_temperature.brine_out', 'measure_temperature.hotwater', 'thermia_status', 'thermia_opmode', 'hotwater_status', 'hotwater_boost'];
+    const dT = (a, b) => has(d, a) && has(d, b) ? f1.format(val(d, a) - val(d, b)) + '°' : null;
+    const onoff = (c) => has(d, c) ? (val(d, c) ? 'På' : 'Av') : null;
+    const rows = open ? [
+      T('measure_temperature.supply') && ['Framledning', T('measure_temperature.supply')],
+      T('measure_temperature.return') && ['Retur', T('measure_temperature.return')],
+      dT('measure_temperature.supply', 'measure_temperature.return') && ['Skillnad fram/retur', dT('measure_temperature.supply', 'measure_temperature.return')],
+      T('measure_temperature.brine_in') && ['Köldbärare in (från borrhålet)', T('measure_temperature.brine_in')],
+      T('measure_temperature.brine_out') && ['Köldbärare ut (till borrhålet)', T('measure_temperature.brine_out')],
+      dT('measure_temperature.brine_in', 'measure_temperature.brine_out') && ['Skillnad köldbärare', dT('measure_temperature.brine_in', 'measure_temperature.brine_out')],
+      T('measure_temperature.hotwater') && ['Varmvatten', T('measure_temperature.hotwater')],
+      onoff('hotwater_status') && ['Varmvattenproduktion', onoff('hotwater_status')],
+      onoff('hotwater_boost') && ['Extra varmvatten', onoff('hotwater_boost')],
+      T('measure_temperature') && ['Ute (pumpens givare)', T('measure_temperature')],
+      has(d, 'target_temperature') && ['Önskad inne', f1.format(val(d, 'target_temperature')) + '°'],
+      has(d, 'thermia_opmode') && ['Driftläge', String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').replace(/^./, (c) => c.toUpperCase())],
+      has(d, 'thermia_status') && ['Status', thSv(val(d, 'thermia_status'))],
+      // Övriga värden som pumpen skickar, med Homeys egna namn
+      ...Object.keys(d.state || {}).filter((k) => !KNOWN.includes(k) && d.state[k] !== null && typeof d.state[k] !== 'object' && !/^button\./.test(k)).map((k) => {
+        const m = meta(d, k) || {}, v = d.state[k];
+        return [m.title || k, typeof v === 'boolean' ? (v ? 'Ja' : 'Nej') : typeof v === 'number' ? f1.format(v) + (m.units ? ' ' + m.units : '') : String(v)];
+      }),
+    ] : [
+      T('measure_temperature.supply') && ['Framledning', T('measure_temperature.supply')],
+      T('measure_temperature.hotwater') && ['Varmvatten', T('measure_temperature.hotwater')],
+    ];
+    kv(g, rows);
+    const more = mk('button', 'more', open ? 'Mindre info' : 'Mer info'); more.type = 'button';
+    more.setAttribute('aria-expanded', open ? 'true' : 'false');
+    more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
+    const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
     if (has(d, 'target_temperature')) {
       const tv = mk('span', 'tv num', f1.format(val(d, 'target_temperature')) + '°');
@@ -542,7 +569,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       right.append(wrap);
     }
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
-    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row, g);
+    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row, g, mw);
     return box;
   }
   function renderTemp() {
@@ -562,6 +589,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const th = T.filter((d) => d.type === 'thermostat');
     const tc = $('thermos'); tc.replaceChildren();
     if (!th.length) tc.append(mk('div', 'empty', devices.length ? 'Inga termostater i Homey.' : 'Hämtar termostater…'));
+    th.sort((a, b) => has(b, 'measure_temperature.supply') - has(a, 'measure_temperature.supply'));
     th.forEach((d) => {
       if (has(d, 'measure_temperature.supply')) { tc.append(heatPumpRow(d)); return; }
       const row = mk('div', 'thermo'); const left = mk('div');
