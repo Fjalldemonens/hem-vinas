@@ -177,6 +177,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .fine{font-size:.8rem;color:var(--muted);margin:0 2px}
 #robots{gap:30px}
+.mapc{background:#000;display:grid;place-items:center;min-height:120px}
+.mapc img{display:block;width:100%;height:auto;image-rendering:pixelated}
+.mapc .empty{color:#9aa}
 @media (max-width:440px){.seg svg{display:none}.seg button{font-size:.84rem;padding:10px 2px}}
 @media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.78rem}}
 @media (prefers-reduced-motion: reduce){.skel,.flow .run{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
@@ -331,6 +334,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       if (on) $('pill').style.transform = 'translateX(' + (i * 100) + '%)';
     });
     try { localStorage.setItem('hemvinas.view', v); } catch (e) {}
+    if (v === 'stad' && typeof renderRobot === 'function' && devices.length) renderRobot();
   }
   document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); }));
   $('pill').parentElement.addEventListener('keydown', (e) => {
@@ -711,6 +715,22 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const k = mk('div', 'kv num'); kv(k, rows); card.append(k);
     return [mk('div', 'h2', 'Senaste städning'), card];
   }
+  // Robotens karta: Homey-bilden hämtas högst en gång per minut, och bara när Städ-fliken visas.
+  const maps = {};
+  function robotMap(d) {
+    const im = (d.images || [])[0]; if (!im) return null;
+    const m = maps[d.id] || (maps[d.id] = { src: '', at: 0, busy: false, fail: false });
+    const visible = !$('p-stad').hidden;
+    if (visible && !m.busy && Date.now() - m.at > 60000) {
+      m.busy = true;
+      api.image(im.url).then((src) => { if (m.src) URL.revokeObjectURL(m.src); m.src = src; m.fail = false; }).catch(() => { m.fail = true; })
+        .finally(() => { m.at = Date.now(); m.busy = false; renderRobot(); });
+    }
+    const card = mk('div', 'card mapc');
+    if (m.src) { const img = mk('img'); img.src = m.src; img.alt = 'Karta från ' + d.name; card.append(img); }
+    else card.append(mk('div', 'empty', m.fail ? 'Kartan kunde inte hämtas.' : 'Hämtar karta…'));
+    return [mk('div', 'h2', 'Karta'), card];
+  }
   function rrCard(d) {
     const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
     const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true, docked = val(d, 'dock') === true;
@@ -730,6 +750,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!cleaning && settable(d, 'spot_clean')) B.push(actBtn(d, 'Punktstäda', '', { spot_clean: true }, 'Punktstädning startar'));
     if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
     const q = quick(B); if (q) wrap.append(q);
+    const map = robotMap(d); if (map) wrap.append(...map);
 
     wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
     wrap.append(...choice(d, 'clean_mode', 'Städläge'));

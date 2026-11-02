@@ -120,8 +120,19 @@
         // Namn, typ och valbara lägen per funktion, så appen kan bygga knappar (t.ex. för robotdammsugaren)
         if (c) caps[k] = { title: txt(c.title), type: c.type, setable: c.setable !== false, units: txt(c.units), values: Array.isArray(c.values) ? c.values.map((x) => ({ id: String(x.id), title: txt(x.title) || String(x.id) })) : null };
       });
-      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps };
+      // Bilder som enheten publicerar i Homey, t.ex. robotens karta
+      const images = (d.images || []).map((x) => ({ id: x.id, title: txt(x.title), url: x.imageObj && x.imageObj.url, at: x.imageObj && x.imageObj.lastUpdated })).filter((x) => x.url);
+      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps, images };
     });
+  }
+  // Hämtar en bild från Homey (kräver inloggning) och ger en lokal adress som <img> kan visa.
+  async function image(url, retried) {
+    const s = await session(false);
+    const full = /^https?:/.test(url) ? url : s.base + (url.startsWith('/') ? '' : '/') + url;
+    const r = await fetch(full, { headers: { authorization: 'Bearer ' + s.token } });
+    if (r.status === 401 && !retried) { await session(true); return image(url, true); }
+    if (!r.ok) throw new HttpError(r.status, 'Bilden kunde inte hämtas');
+    return URL.createObjectURL(await r.blob());
   }
   async function variables() { const v = await homey('/api/manager/logic/variable/'); return Object.values(v || {}); }
   async function moods() { try { const m = await homey('/api/manager/moods/mood/'); return Object.values(m || {}); } catch (e) { return []; } }
@@ -136,5 +147,5 @@
   }
   const where = () => { const b = ls.get(K.base) || ''; return !b ? '' : /connect\.athom\.com/.test(b) ? 'via molnet' : 'lokalt'; };
 
-  window.HomeyClient = { login, logout, handleRedirect, loggedIn, devices, variables, moods, setMood, setCaps, where };
+  window.HomeyClient = { login, logout, handleRedirect, loggedIn, devices, image, variables, moods, setMood, setCaps, where };
 })();
