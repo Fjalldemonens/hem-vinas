@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.10">
+<meta name="app-version" content="2026-11-05.11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -165,6 +165,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .kv .v.ah{color:var(--muted);font-weight:500}
 .kv .v.run{color:var(--ok)}
 .kv .sep{border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+.mblock{border-top:1px solid var(--line)}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px 0;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mblock .kv{padding-top:8px}
+.mtoggle{display:block;width:calc(100% - 32px);margin:0 16px 12px;padding:9px 12px;font:inherit;font-size:.85rem;font-weight:600;color:var(--fg);background:var(--bg-2);border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.mtoggle[aria-expanded="true"]{color:var(--muted)}
 .appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
 .price{display:flex;flex-direction:column;gap:10px;padding:16px}
 .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -356,7 +361,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
 
     <div class="h2">Idag</div>
-    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
+    <div class="card"><div class="kv num" id="today"></div><div class="mblock" id="monBlock"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -376,8 +381,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.10"></script>
-<script src="homey.js?v=2026-11-05.10"></script>
+<script src="config.js?v=2026-11-05.11"></script>
+<script src="homey.js?v=2026-11-05.11"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -822,6 +827,23 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     el.append(mk('div', 'appnote', 'Kostnad = förbrukning × köppriset för varje kvart (inkl. påslag enligt Homey Energy). Räknas av flödet AI 14 i Homey, uppdaterad ' + hhmm(A.u) + '.'));
   }
 
+  // Månadsblock i Idag-rutan: aktuell månad synlig, föregående månad bakom en knapp
+  let pmOpen = false;
+  function renderMonths(cur, prev) {
+    const box = $('monBlock'); if (!box) return; box.replaceChildren(); box.hidden = !cur && !prev;
+    const name = (m) => { const n = MON[Number(String(m).slice(5, 7)) - 1] || m; return n.charAt(0).toUpperCase() + n.slice(1); };
+    const net = (x) => { const n = x.ikr - x.ekr; return ['Netto', (n < 0 ? '+' + f0.format(-n) : '−' + f0.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
+    const rows = (x) => [['Köpt', f0.format(x.ik) + ' kWh · ' + f0.format(x.ikr) + ' kr'], ['Sålt', f0.format(x.ek) + ' kWh · ' + f0.format(x.ekr) + ' kr'], net(x)];
+    const block = (x, label) => { const hd = mk('div', 'mhead'); hd.append(mk('span', '', name(x.m)), mk('span', '', label)); const k = mk('div', 'kv num'); kv(k, rows(x)); return [hd, k]; };
+    if (cur) box.append(...block(cur, 'hittills'));
+    if (prev && prev.m) {
+      const btn = mk('button', 'mtoggle', (pmOpen ? 'Dölj ' : 'Visa ') + name(prev.m).toLowerCase()); btn.type = 'button'; btn.setAttribute('aria-expanded', pmOpen ? 'true' : 'false');
+      btn.addEventListener('click', () => { pmOpen = !pmOpen; renderMonths(cur, prev); });
+      if (pmOpen) box.append(...block(prev, 'hela månaden'));
+      box.append(btn);
+    }
+  }
+
   function renderEnergy() {
     const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
     const sun = devices.find((d) => d.type === 'solarpanel');
@@ -847,8 +869,6 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     // Köpt och sålt idag i kr från flödet AI 14 (kvartspriser); annars Tibbers egna siffror
     let G = null; try { const A = JSON.parse(varVal('AI Förbrukning') || ''); G = A && A.grid; } catch (e) {}
     const GM = G && G.month && G.month.m ? G.month : null, GP = G && G.prevMonth;
-    const monthRows = (x, suf) => { if (!x || !x.m) return []; const n = MON[Number(x.m.slice(5, 7)) - 1]; const N = n.charAt(0).toUpperCase() + n.slice(1);
-      return [[N + suf + ' · köpt', f0.format(x.ik) + ' kWh · ' + f0.format(x.ikr) + ' kr', 'sep'], [N + ' · sålt', f0.format(x.ek) + ' kWh · ' + f0.format(x.ekr) + ' kr'], netRow(N + ' · netto', x.ikr, x.ekr, 0)]; };
     const netRow = (label, ink, ut, dec) => { const n = ink - ut, F = dec === 0 ? f0 : f2; return [label, (n < 0 ? '+' + F.format(-n) : '−' + F.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
     const fromTxt = (x) => (x.from ? ' (från ' + x.from + ')' : '');
     kv($('today'), [
@@ -858,9 +878,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         : grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
       G && netRow('Netto idag', G.imp.kr, G.exp.kr),
       sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
-      ...monthRows(GM && { m: GM.m, ik: GM.imp.kwh, ikr: GM.imp.kr, ek: GM.exp.kwh, ekr: GM.exp.kr }, ' (hittills)'),
-      ...monthRows(GP, ''),
     ]);
+    renderMonths(GM && { m: GM.m, ik: GM.imp.kwh, ikr: GM.imp.kr, ek: GM.exp.kwh, ekr: GM.exp.kr }, GP);
     const ph = $('phases'); ph.replaceChildren();
     ['L1', 'L2', 'L3'].forEach((L) => { if (grid && has(grid, 'measure_current.' + L)) { const c = mk('div', 'ph'); c.append(mk('div', 'k', 'Fas ' + L), mk('div', 'v', f1.format(val(grid, 'measure_current.' + L)) + ' A')); ph.append(c); } });
     ph.hidden = !ph.children.length;
