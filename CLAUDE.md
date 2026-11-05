@@ -14,6 +14,6 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 
 ## Regler
 - Lägg aldrig hemligheter (Client Secret, tokens) i repot. Repot är publikt.
-- Homey API-klientens scopes: zone.readonly, device.readonly, device.control, logic.readonly, mood.readonly, mood.set. Behöver en ny funktion fler scopes måste användaren lägga till dem i Homey Developer Tools.
+- Homey API-klientens scopes: zone.readonly, device.readonly, device.control, logic.readonly, mood.readonly, mood.set, samt homey.logic (för att spara städschemat i variabeln AI Städschema). Behöver en ny funktion fler scopes måste användaren lägga till dem i Homey Developer Tools.
 - Svenska i allt som syns i appen.
 - Vid varje ändring: höj `app-version` i `index.html` (meta-taggen och `?v=` på config.js och homey.js, t.ex. 2026-11-02.2). Appen jämför versionen med GitHub Pages och visar "Ny version av appen finns – Uppdatera nu".

@@ -134,6 +134,12 @@
     if (!r.ok) throw new HttpError(r.status, 'Bilden kunde inte hämtas');
     return URL.createObjectURL(await r.blob());
   }
+  // Skriver en logikvariabel (kräver behörigheten homey.logic i Homey Developer Tools).
+  async function setVariable(name, value) {
+    const v = (await variables()).find((x) => x.name === name);
+    if (!v) throw new Error('Variabeln ' + name + ' finns inte i Homey');
+    return homey('/api/manager/logic/variable/' + encodeURIComponent(v.id), { method: 'PUT', body: JSON.stringify({ variable: { value } }) });
+  }
   async function variables() { const v = await homey('/api/manager/logic/variable/'); return Object.values(v || {}); }
   async function moods() { try { const m = await homey('/api/manager/moods/mood/'); return Object.values(m || {}); } catch (e) { return []; } }
   async function setMood(id) { return homey('/api/manager/moods/mood/' + encodeURIComponent(id) + '/set', { method: 'POST', body: '{}' }); }
@@ -147,5 +153,5 @@
   }
   const where = () => { const b = ls.get(K.base) || ''; return !b ? '' : /connect\.athom\.com/.test(b) ? 'via molnet' : 'lokalt'; };
 
-  window.HomeyClient = { login, logout, handleRedirect, loggedIn, devices, image, variables, moods, setMood, setCaps, where };
+  window.HomeyClient = { login, logout, handleRedirect, loggedIn, devices, image, variables, setVariable, moods, setMood, setCaps, where };
 })();

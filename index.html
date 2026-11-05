@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.1">
+<meta name="app-version" content="2026-11-05.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -204,6 +204,16 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .quick .btn.wide{grid-column:1/3}
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .fine{font-size:.8rem;color:var(--muted);margin:0 2px}
+.btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.on{border-color:var(--accent);color:var(--accent)}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .st{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-width:0}
+.srow .n{font-family:var(--f-disp);font-weight:600}
+.srow .s{font-size:.8rem;color:var(--muted)}
+.sched{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.sched .sl{font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.tin{font:inherit;font-size:1.1rem;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);color:var(--fg);width:9rem}
 #robots{gap:30px}
 .mapc{background:#000;display:grid;place-items:center;min-height:120px}
 .mapc img{display:block;width:100%;height:auto;image-rendering:pixelated}
@@ -355,8 +365,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.1"></script>
-<script src="homey.js?v=2026-11-05.1"></script>
+<script src="config.js?v=2026-11-05.2"></script>
+<script src="homey.js?v=2026-11-05.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -908,12 +918,100 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const k = mk('div', 'kv num'); kv(k, rows); card.append(k);
     return [mk('div', 'h2', 'Senaste städning'), card];
   }
+  /* ---------- städschema (test): variabeln AI Städschema, körs av flödet AI 13 ---------- */
+  const DAYS = [[1, 'Mån'], [2, 'Tis'], [3, 'Ons'], [4, 'Tor'], [5, 'Fre'], [6, 'Lör'], [0, 'Sön']];
+  const DAYL = { 0: 'söndag', 1: 'måndag', 2: 'tisdag', 3: 'onsdag', 4: 'torsdag', 5: 'fredag', 6: 'lördag' };
+  const schedOpen = {}; let draft = null, schedBusy = false;
+  function schedAll() { try { return JSON.parse(varVal('AI Städschema') || '{}') || {}; } catch (e) { return {}; } }
+  function nextRun(devId) {
+    const list = (schedAll()[devId] || []).filter((e) => e.on && e.time && (e.days || []).length);
+    let best = null; const now = new Date();
+    for (const e of list) for (let k = 0; k < 8; k++) {
+      const t = new Date(now); t.setDate(now.getDate() + k); const [h, m] = e.time.split(':').map(Number); t.setHours(h, m, 0, 0);
+      if (t > now && e.days.includes(t.getDay())) { if (!best || t < best.t) best = { t, e }; break; }
+    }
+    if (!best) return null;
+    const k = Math.round((new Date(best.t).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 864e5);
+    return { ...best, label: (k === 0 ? 'idag' : k === 1 ? 'imorgon' : DAYL[best.t.getDay()]) + ' ' + best.e.time };
+  }
+  const dayText = (days) => { const s = DAYS.filter(([n]) => (days || []).includes(n)).map(([, l]) => l); return s.length === 7 ? 'Varje dag' : s.length ? s.join(', ') : 'Inga dagar'; };
+  function schedDesc(d, e) {
+    return [e.mode ? sv(capTitle(d, 'clean_mode', e.mode)) : 'Nuvarande städläge', e.room ? sv(capTitle(d, 'clean_room_pick', e.room)) : 'Hela', e.suction ? 'sugkraft ' + sv(capTitle(d, 'suction_power', e.suction)).toLowerCase() : ''].filter(Boolean).join(' · ');
+  }
+  async function schedSave(d, list, msg) {
+    if (schedBusy) return false; schedBusy = true;
+    const all = schedAll(); all[d.id] = list; const txt = JSON.stringify(all);
+    try {
+      await api.setVariable('AI Städschema', txt);
+      const v = vars.find((x) => x.name === 'AI Städschema'); if (v) v.value = txt;
+      toast(msg || 'Schemat sparat'); return true;
+    } catch (e) {
+      banner(e && e.status === 403 || /scope|forbidden|permission/i.test(String(e && e.message))
+        ? 'Appen får inte spara schemat än. Lägg till behörigheten homey.logic för Hem Vinäs i Homey Developer Tools, logga sedan ut och in i appen.'
+        : 'Schemat kunde inte sparas: ' + ((e && e.message) || 'okänt fel'));
+      return false;
+    } finally { schedBusy = false; renderRobot(); }
+  }
+  function choiceRow(d, cap, cur, none, onPick) {
+    const c = mk('div', 'chips');
+    [[null, none], ...opts(d, cap).map((x) => [x.id, sv(x.title)])].forEach(([id, label]) => {
+      const b = mk('button', 'chip', label); b.type = 'button'; b.setAttribute('aria-pressed', String(cur) === String(id) ? 'true' : 'false');
+      b.addEventListener('click', () => { onPick(id); renderRobot(); }); c.append(b);
+    });
+    return c;
+  }
+  function schedPanel(d) {
+    const list = (schedAll()[d.id] || []).slice();
+    const out = [mk('div', 'h2', 'Schema')];
+    if (draft && draft.dev === d.id) {
+      const e = draft.e, card = mk('div', 'card sched');
+      const lab = (t) => mk('div', 'sl', t);
+      const dc = mk('div', 'chips');
+      DAYS.forEach(([n, l]) => { const b = mk('button', 'chip', l); b.type = 'button'; b.setAttribute('aria-pressed', e.days.includes(n) ? 'true' : 'false'); b.addEventListener('click', () => { e.days = e.days.includes(n) ? e.days.filter((x) => x !== n) : e.days.concat(n); renderRobot(); }); dc.append(b); });
+      const ti = mk('input', 'tin'); ti.type = 'time'; ti.value = e.time; ti.addEventListener('input', () => { e.time = ti.value; });
+      card.append(lab('Dagar'), dc, lab('Tid'), ti);
+      if (opts(d, 'clean_mode').length) card.append(lab('Städläge'), choiceRow(d, 'clean_mode', e.mode, 'Nuvarande', (v) => { e.mode = v; }));
+      if (opts(d, 'clean_room_pick').length) card.append(lab('Rum'), choiceRow(d, 'clean_room_pick', e.room, 'Hela hemmet', (v) => { e.room = v; }));
+      if (opts(d, 'suction_power').length) card.append(lab('Sugkraft'), choiceRow(d, 'suction_power', e.suction, 'Nuvarande', (v) => { e.suction = v; }));
+      const save = mk('button', 'btn go', 'Spara'); save.type = 'button';
+      save.addEventListener('click', async () => {
+        if (!/^\d\d:\d\d$/.test(e.time || '') || !e.days.length) { toast('Välj minst en dag och en tid'); return; }
+        const i = list.findIndex((x) => x.id === e.id); if (i >= 0) list[i] = e; else list.push(e);
+        list.sort((a, b) => a.time.localeCompare(b.time));
+        if (await schedSave(d, list)) { draft = null; renderRobot(); }
+      });
+      const cancel = mk('button', 'btn', 'Avbryt'); cancel.type = 'button'; cancel.addEventListener('click', () => { draft = null; renderRobot(); });
+      const btns = [save, cancel];
+      if (list.some((x) => x.id === e.id)) { const del = mk('button', 'btn warnb wide', 'Ta bort schemat'); del.type = 'button'; del.addEventListener('click', async () => { if (await schedSave(d, list.filter((x) => x.id !== e.id), 'Schemat borttaget')) { draft = null; renderRobot(); } }); btns.push(del); }
+      const q = quick(btns); q.style.marginTop = '6px'; card.append(q);
+      out.push(card);
+      return out;
+    }
+    const card = mk('div', 'card');
+    if (!list.length) card.append(mk('div', 'empty', 'Inget schema än.'));
+    list.forEach((e) => {
+      const row = mk('div', 'srow');
+      const txt = mk('button', 'st'); txt.type = 'button'; txt.setAttribute('aria-label', 'Ändra schema ' + dayText(e.days) + ' ' + e.time);
+      txt.append(mk('div', 'n num', e.time + ' · ' + dayText(e.days)), mk('div', 's', schedDesc(d, e)));
+      txt.addEventListener('click', () => { draft = { dev: d.id, e: JSON.parse(JSON.stringify(e)) }; renderRobot(); });
+      const sw = mk('button', 'sw'); sw.type = 'button'; sw.setAttribute('role', 'switch'); sw.setAttribute('aria-checked', e.on ? 'true' : 'false'); sw.setAttribute('aria-label', (e.on ? 'Stäng av' : 'Slå på') + ' schemat');
+      sw.addEventListener('click', () => schedSave(d, list.map((x) => (x.id === e.id ? { ...x, on: !x.on } : x)), e.on ? 'Schemat avstängt' : 'Schemat påslaget'));
+      row.append(txt, sw); card.append(row);
+    });
+    out.push(card);
+    const add = mk('button', 'btn', '+ Nytt schema'); add.type = 'button';
+    add.addEventListener('click', () => { draft = { dev: d.id, e: { id: 's' + Date.now().toString(36), on: true, days: [1, 2, 3, 4, 5], time: '10:00', mode: null, suction: null, room: null } }; renderRobot(); });
+    const q = quick([add]); out.push(q);
+    out.push(mk('p', 'fine', 'Test: schemat körs av flödet AI 13 i Homey. Stäng av samma schema i Roborock-appen så roboten inte städar två gånger.'));
+    return out;
+  }
   function rrCard(d) {
     const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
     const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true, docked = val(d, 'dock') === true;
     const charging = /charg/i.test(String(val(d, 'battery_charging_state') || '')) && !/dis/i.test(String(val(d, 'battery_charging_state')));
     const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
-    wrap.append(roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode')))]));
+    const nx = nextRun(d.id);
+    wrap.append(roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label]));
     const al = alarmChips(d); if (al) wrap.append(al);
     const last = lastJob(d); if (last) wrap.append(...last);
 
@@ -926,7 +1024,12 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if ((cleaning || paused || !docked) && settable(d, 'cancel_and_dock')) B.push(actBtn(d, 'Åk hem', '', { cancel_and_dock: true }, 'Roboten åker hem'));
     if (!cleaning && settable(d, 'spot_clean')) B.push(actBtn(d, 'Punktstäda', '', { spot_clean: true }, 'Punktstädning startar'));
     if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
+    const sb = mk('button', 'btn' + (schedOpen[d.id] ? ' on' : ''), schedOpen[d.id] ? 'Stäng schema' : 'Schema'); sb.type = 'button';
+    sb.setAttribute('aria-expanded', schedOpen[d.id] ? 'true' : 'false');
+    sb.addEventListener('click', () => { schedOpen[d.id] = !schedOpen[d.id]; if (!schedOpen[d.id] && draft && draft.dev === d.id) draft = null; renderRobot(); });
+    B.push(sb);
     const q = quick(B); if (q) wrap.append(q);
+    if (schedOpen[d.id]) wrap.append(...schedPanel(d));
 
     wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
     wrap.append(...choice(d, 'clean_mode', 'Städläge'));
@@ -968,6 +1071,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   }
 
   function renderRobot() {
+    const ae = document.activeElement;
+    if (draft && ae && ae.classList && ae.classList.contains('tin') && $('robots').contains(ae)) return;
     const all = devices.filter((d) => d.type === 'vacuumcleaner');
     const rrNames = new Set(all.filter(isRR).map((d) => String(d.name).trim().toLowerCase()));
     const R = all.filter((d) => isRR(d) || !rrNames.has(String(d.name).trim().toLowerCase()))
