@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.9">
+<meta name="app-version" content="2026-11-05.10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -376,8 +376,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.9"></script>
-<script src="homey.js?v=2026-11-05.9"></script>
+<script src="config.js?v=2026-11-05.10"></script>
+<script src="homey.js?v=2026-11-05.10"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -847,6 +847,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     // Köpt och sålt idag i kr från flödet AI 14 (kvartspriser); annars Tibbers egna siffror
     let G = null; try { const A = JSON.parse(varVal('AI Förbrukning') || ''); G = A && A.grid; } catch (e) {}
     const GM = G && G.month && G.month.m ? G.month : null, GP = G && G.prevMonth;
+    const monthRows = (x, suf) => { if (!x || !x.m) return []; const n = MON[Number(x.m.slice(5, 7)) - 1]; const N = n.charAt(0).toUpperCase() + n.slice(1);
+      return [[N + suf + ' · köpt', f0.format(x.ik) + ' kWh · ' + f0.format(x.ikr) + ' kr', 'sep'], [N + ' · sålt', f0.format(x.ek) + ' kWh · ' + f0.format(x.ekr) + ' kr'], netRow(N + ' · netto', x.ikr, x.ekr, 0)]; };
     const netRow = (label, ink, ut, dec) => { const n = ink - ut, F = dec === 0 ? f0 : f2; return [label, (n < 0 ? '+' + F.format(-n) : '−' + F.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
     const fromTxt = (x) => (x.from ? ' (från ' + x.from + ')' : '');
     kv($('today'), [
@@ -855,13 +857,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       G ? ['Sålt idag' + fromTxt(G.exp), f1.format(G.exp.kwh) + ' kWh · ' + f2.format(G.exp.kr) + ' kr']
         : grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
       G && netRow('Netto idag', G.imp.kr, G.exp.kr),
-      GM && ['Köpt i ' + MON[Number(GM.m.slice(5, 7)) - 1], f0.format(GM.imp.kwh) + ' kWh · ' + f0.format(GM.imp.kr) + ' kr', 'sep'],
-      GM && ['Sålt i ' + MON[Number(GM.m.slice(5, 7)) - 1], f0.format(GM.exp.kwh) + ' kWh · ' + f0.format(GM.exp.kr) + ' kr'],
-      GM && netRow('Netto i ' + MON[Number(GM.m.slice(5, 7)) - 1], GM.imp.kr, GM.exp.kr, 0),
-      GP && ['Netto ' + MON[Number(GP.m.slice(5, 7)) - 1], f0.format(GP.ikr - GP.ekr) + ' kr (köpt ' + f0.format(GP.ikr) + ', sålt ' + f0.format(GP.ekr) + ')'],
       sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
-      grid && has(grid, 'meter_power.imported') && ['Köpt totalt', f0.format(val(grid, 'meter_power.imported')) + ' kWh'],
-      grid && has(grid, 'meter_power.exported') && ['Sålt totalt', f0.format(val(grid, 'meter_power.exported')) + ' kWh'],
+      ...monthRows(GM && { m: GM.m, ik: GM.imp.kwh, ikr: GM.imp.kr, ek: GM.exp.kwh, ekr: GM.exp.kr }, ' (hittills)'),
+      ...monthRows(GP, ''),
     ]);
     const ph = $('phases'); ph.replaceChildren();
     ['L1', 'L2', 'L3'].forEach((L) => { if (grid && has(grid, 'measure_current.' + L)) { const c = mk('div', 'ph'); c.append(mk('div', 'k', 'Fas ' + L), mk('div', 'v', f1.format(val(grid, 'measure_current.' + L)) + ' A')); ph.append(c); } });
