@@ -138,7 +138,12 @@
   async function setVariable(name, value) {
     const v = (await variables()).find((x) => x.name === name);
     if (!v) throw new Error('Variabeln ' + name + ' finns inte i Homey');
-    return homey('/api/manager/logic/variable/' + encodeURIComponent(v.id), { method: 'PUT', body: JSON.stringify({ variable: { value } }) });
+    // Homey vill ha variabelns fält direkt i kroppen ({ value }). Fel form svarar OK men sparar inget,
+    // så vi läser tillbaka och kontrollerar att värdet verkligen ändrades.
+    await homey('/api/manager/logic/variable/' + encodeURIComponent(v.id), { method: 'PUT', body: JSON.stringify({ value }) });
+    const after = (await variables()).find((x) => x.id === v.id);
+    if (!after || after.value !== value) throw new Error('Homey tog emot ändringen men sparade den inte');
+    return after;
   }
   async function variables() { const v = await homey('/api/manager/logic/variable/'); return Object.values(v || {}); }
   async function moods() { try { const m = await homey('/api/manager/moods/mood/'); return Object.values(m || {}); } catch (e) { return []; } }
