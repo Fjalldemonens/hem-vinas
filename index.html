@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.5">
+<meta name="app-version" content="2026-11-05.6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -235,6 +235,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   .glance{max-width:40rem}
   .seg{max-width:40rem}
   #rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start;gap:14px}
+  #rooms > .h2{grid-column:1 / -1;margin:14px 0 -4px}
+  #rooms > .h2:first-child{margin-top:0}
   #p-temperatur:not([hidden]),#p-energi:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:start;grid-auto-flow:row dense}
   #p-temperatur > *{grid-column:1}
   #p-temperatur > .h2.rumh,#p-temperatur > #sensors{grid-column:2}
@@ -373,8 +375,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.5"></script>
-<script src="homey.js?v=2026-11-05.5"></script>
+<script src="config.js?v=2026-11-05.6"></script>
+<script src="homey.js?v=2026-11-05.6"></script>
 <script>
 (() => {
   const S = 'Homey';
