@@ -3,6 +3,11 @@
 const DEV = { kyl: '73e322a0-197e-40fa-adc0-75cddff530be', disk: 'aa436302-665d-4f51-a89c-fe2e959dd2c6', tvatt: '3c4ab65f-c279-4e6e-b9c2-6cd4a4322471' };
 // Ett disk-/tvättpass börjar över "on" W och är klart när effekten legat under "off" W i "idle" minuter.
 const CYCLE = { disk: { on: 8, off: 3, idle: 30 }, tvatt: { on: 8, off: 3, idle: 20 } };
+// Mönster per pass (sedan 2026-11-05): toppeffekt, minuter med värme (≥ HOT W), värmeminuter efter LATE min
+// (tvättvärmen ligger i början, torkvärmen i slutet) och en profil med snitteffekt per 10 min. De senaste
+// HIST passen sparas och visas i AI Förbrukning, så att trösklarna kan finslipas. Kombimaskinen (AEG 7000 Kombi)
+// kör ibland tvätt följt av tork: preliminärt "tork" om minst TORK_MIN värmeminuter efter LATE min.
+const HOT = 1000, LATE = 75, TORK_MIN = 15, HIST = 8;
 const t = Date.now();
 const vars = Object.values(await Homey.logic.getVariables());
 const vOut = vars.find((x) => x.name === 'AI Förbrukning');
@@ -54,11 +59,25 @@ for (const [k, id] of Object.entries(DEV)) {
     const C = CYCLE[k];
     if (C) {
       if (s.run) {
-        s.run.kwh += dk; s.run.kr += kr;
-        if (w > C.off) s.run.idle = null; else if (!s.run.idle) s.run.idle = t;
-        if (s.run.idle && t - s.run.idle >= C.idle * 60000) {
-          if (s.run.kwh >= 0.02) s.lastRun = { start: s.run.start, end: s.run.idle, kwh: r3(s.run.kwh), kr: r2(s.run.kr) };
-          log('Klart', k, s.run.kwh.toFixed(3), 'kWh', s.run.kr.toFixed(2), 'kr');
+        const R = s.run;
+        R.kwh += dk; R.kr += kr;
+        // mönster
+        const age = (t - R.start) / 60000, b = Math.floor(age / 10);
+        R.pk = Math.max(R.pk || 0, w);
+        if (w >= HOT) { R.hot = (R.hot || 0) + 1; if (age >= LATE) R.late = (R.late || 0) + 1; }
+        R.ps = R.ps || []; R.pn = R.pn || [];
+        if (b < 72) { R.ps[b] = (R.ps[b] || 0) + w; R.pn[b] = (R.pn[b] || 0) + 1; }
+        if (w > C.off) R.idle = null; else if (!R.idle) R.idle = t;
+        if (R.idle && t - R.idle >= C.idle * 60000) {
+          if (R.kwh >= 0.02) {
+            const rec = { start: R.start, end: R.idle, kwh: r3(R.kwh), kr: r2(R.kr), min: Math.round((R.idle - R.start) / 60000),
+              pk: Math.round(R.pk || 0), hot: R.hot || 0, late: R.late || 0 };
+            if (k === 'tvatt') rec.kind = rec.late >= TORK_MIN ? 'tork' : 'tvatt';
+            s.lastRun = rec;
+            const prof = []; for (let i = 0; i < R.ps.length; i++) prof.push(R.pn[i] ? Math.round(R.ps[i] / R.pn[i]) : 0);
+            s.hist = [{ ...rec, prof }, ...(s.hist || [])].slice(0, HIST);
+          }
+          log('Klart', k, R.kwh.toFixed(3), 'kWh', R.kr.toFixed(2), 'kr', 'värme', R.hot || 0, 'sen värme', R.late || 0);
           s.run = null;
         }
       } else if (w >= C.on) { s.run = { start: t, kwh: 0, kr: 0, idle: null }; log('Start', k); }
@@ -72,6 +91,7 @@ for (const [k, id] of Object.entries(DEV)) {
     prevMonth: s.prevMon || null,
     last: s.lastRun || null,
     run: s.run ? { start: s.run.start, kwh: r3(s.run.kwh), kr: r2(s.run.kr) } : null,
+    hist: s.hist || undefined,
   };
 }
 // Nätet idag (Elmätare). Köpt: mätarställningen × kvartens köppris (första gången ifylld från Homeys historik).
