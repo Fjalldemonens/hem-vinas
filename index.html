@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.14">
+<meta name="app-version" content="2026-11-05.15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -185,11 +185,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .pchart .gl{stroke:var(--line);stroke-width:1}
 .pchart .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
 .pchart .ln{fill:none;stroke-width:2;stroke-linejoin:round}
-.pchart .ln.imp{stroke:var(--warn)} .pchart .ln.exp{stroke:var(--accent)}
-.pchart .area{stroke:none;opacity:.14} .pchart .area.imp{fill:var(--warn)} .pchart .area.exp{fill:var(--accent)}
-.pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.5}
+.pchart .ln.imp{stroke:var(--danger)} .pchart .ln.exp{stroke:var(--ok)}
+.pchart .area{stroke:none;opacity:.16} .pchart .area.imp{fill:var(--danger)} .pchart .area.exp{fill:var(--ok)}
+.pchart .oth{fill:none;stroke-width:1.5;opacity:.8} .pchart .oth.imp{stroke:var(--danger)} .pchart .oth.exp{stroke:var(--ok)}
 .pchart .nowl{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
-.pchart .nowd{stroke:var(--card);stroke-width:2} .pchart .nowd.imp{fill:var(--warn)} .pchart .nowd.exp{fill:var(--accent)}
+.pchart .nowd{stroke:var(--card);stroke-width:2;fill:var(--fg)}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
 .price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
 .range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
@@ -384,8 +384,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.14"></script>
-<script src="homey.js?v=2026-11-05.14"></script>
+<script src="config.js?v=2026-11-05.15"></script>
+<script src="homey.js?v=2026-11-05.15"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -753,7 +753,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const ticks = []; const stepv = hi > 3 ? 1 : 0.5; for (let v = Math.ceil(lo / stepv) * stepv; v <= hi; v += stepv) ticks.push(v);
     ticks.forEach((v) => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gl' }); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }); t.textContent = f1.format(v); });
     [0, 6, 12, 18, 24].forEach((h) => { const t = el('text', { x: x(arr.length * h / 24), y: H - 6, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(h).padStart(2, '0'); });
-    el('path', { d: step(other), class: 'oth' });
+    el('path', { d: step(other), class: 'oth ' + (kind === 'imp' ? 'exp' : 'imp') });
     el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', class: 'area ' + kind });
     el('path', { d: step(arr), class: 'ln ' + kind });
     if (nowIdx >= 0 && nowIdx < arr.length) { const cx = x(nowIdx + 0.5); el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' }); el('circle', { cx, cy: y(arr[nowIdx]), r: 4, class: 'nowd ' + kind }); }
