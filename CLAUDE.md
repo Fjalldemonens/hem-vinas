@@ -7,9 +7,9 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 - Ingen byggprocess: ren HTML/CSS/JS. Inga bibliotek utöver Google Fonts.
 
 ## Filer
-- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-05.17.
+- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-05.18.
 - `homey.js` – Homey Web API-klient: OAuth via Workern, delegationstoken, session mot Homey Pro (lokalt först, annars moln), enheter, zoner, variabler, moods.
-- `homey/` – kopior av HomeyScript-koden i flödena AI 13 och AI 14 (källan som körs ligger i Homey; uppdatera kopian när flödet ändras).
+- `homey/` – kopior av HomeyScript-koden i flödena AI 11, AI 13 och AI 14 (källan som körs ligger i Homey; uppdatera kopian när flödet ändras).
 - `config.js` – Client ID, Worker-adress, Redirect URL. Inga hemligheter.
 - `worker/worker.js` – Cloudflare Worker `hem-vinas-auth` (https://hem-vinas-auth.uffes-mora.workers.dev). Ändringar här måste klistras in manuellt i Cloudflare (Edit code → Deploy) av användaren.
 
@@ -24,7 +24,7 @@ Flöden hittas via id, så mappar och flödesnamn får ändras. **Variabelnamnen
 
 | Flöde | Id | Gör |
 |---|---|---|
-| AI 11 · Homevolt-vakt | c58c08ad-20bf-441c-b14f-060cd3248af3 | Var 5:e min: push om Homevolt saknat data >15 min. Skriver AI Homevolt status/händelse/logg. |
+| AI 11 · Homevolt-vakt | c58c08ad-20bf-441c-b14f-060cd3248af3 | Var 5:e min. Kontaktvakt: push om Homevolt saknat data >15 min. Driftvakt (2026-11-05): push om kontakt finns men batteriet står still i 15 min – `battery_status` Okänd/fel, eller `measure_power.target_power` ≥500 W som inte levereras (bara när SoC ger plats). Skriver AI Homevolt status (`OK …` / `FEL sedan …: orsak` / `Ingen kontakt …`), händelse och logg. Tillstånd i HomeyScript `global` (homevoltDown, hvSusSince, hvFault). |
 | AI 12 · Elpriser till appen | fb284696-b2e9-43eb-bd70-dbe581d5657f | Var 15:e min: kvartspriser idag/imorgon från Homey Energy → AI Elpriser `{u,cur,f,days:[{d,s,iv,imp[],exp[]}]}`. imp = användarens formel, exp = spot. |
 | AI 13 · Städschema (test) | 421b0a25-622b-41fc-a2e6-67950df7d2da | Varje min: kör scheman i AI Städschema. Ställer in läge/sug/moppning/rutt via capabilities, startar sedan ALLA rum i ETT jobb med Roborock-kortet `clean_room` (args `rooms`: rumsnamn kommaseparerade, `repeat` 1–3), annars `clean_all`. Minst 15 min mellan starter. Logg → AI Städlogg. |
 | AI 14 · Förbrukning kyl, disk, tvätt, nät | 5079f42e-afc5-4fed-9262-2c7ea3ec0b4f | Varje min: kylskåp (dygn/månad), disk/tvätt (senaste pass/månad), nätet köpt/sålt idag, månad, föregående månad → AI Förbrukning. Tillstånd i HomeyScript `global 'elf'`. |
@@ -41,6 +41,7 @@ Variabler: AI Elpriser, AI Förbrukning, AI Städschema, AI Städlogg, AI Homevo
 - **Saros 10R** (f46d4d93-…): rum 1 vardagsrum, 2 hall1, 3 kök, 4 badrum, 5 matsal, 6 hall 2. Sugkraft 101 tyst, 102 balanserad, 103 turbo, 104 max, 105 av, 110 smart. Mopprutt 300 standard, 301 djup, 303 djup+, 304 snabb, 306 smart. Vattenflöde 200 av, 221 svag, 225 låg, 230 skonsam, 235 medel, 240 måttlig, 245 hög, 250 max. Städläge 0 dammsugning, 1 damm+mopp, 2 moppning.
 - **Roborock Q7 L5** (9736de40-…): rum 10 Hall, 11 Stort sovrum, 12 Sovrum. Sugkraft även 108 max+. Vattenflöde 200 av, 201 mild, 202 måttlig, 203 intensiv.
 - **Homey Web API, skriva variabel:** `PUT /api/manager/logic/variable/:id` med kroppen `{ value }` (inte `{ variable: { value } }` – det svarar OK men sparar inget).
+- **Homevolt i Homey (bb92dcb1-…):** appen exponerar inget fellarm. Vid fel (t.ex. modul BAT00 död 2026-11-05) visas bara `battery_status: "Okänd"`, `measure_power` 0 och `measure_power.target_power` ≠ 0. Exakt modulstatus och alarmkoder finns bara på Homevolts lokala sida http://192.168.1.168.
 - **Hue lightstrip** får inte vara med i något flöde (styrs av Harmony). Luft-luftvärmepumpen används bara för kyla åt hundarna.
 
 ## Arbetssätt (för att spara användning)

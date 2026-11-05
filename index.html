@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.17">
+<meta name="app-version" content="2026-11-05.18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -390,8 +390,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.17"></script>
-<script src="homey.js?v=2026-11-05.17"></script>
+<script src="config.js?v=2026-11-05.18"></script>
+<script src="homey.js?v=2026-11-05.18"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -932,14 +932,26 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const bSeen = batt ? lastSeen(batt) : 0, bStale = batt && (batt.available === false || (bSeen && Date.now() - bSeen > 15 * 60000));
     if (batt && bStale) { $('vBatt').textContent = 'Ingen kontakt'; setFlow('fBatt', 0, true); }
     // Status under batteriet i flödesbilden: Homevolts egen status, annars härledd från effekten
+    // Driftvakt: kontakt finns men batteriet står still (Homevolts status okänd/fel, eller beordrad effekt som inte levereras).
+    // Flödet AI 11 bekräftar efter 15 min och skriver 'FEL …' i AI Homevolt status; appen visar även det direkta läget.
+    const hvVar = String(varVal('AI Homevolt status') || '');
+    const bRaw = batt ? String(val(batt, 'battery_status') || '') : '';
+    const bTgt = batt ? Number(val(batt, 'measure_power.target_power')) || 0 : 0;
+    const bSoc = batt && has(batt, 'measure_battery') ? Number(val(batt, 'measure_battery')) : NaN;
+    const bRoom = isNaN(bSoc) ? true : bTgt < 0 ? bSoc < 97 : bSoc > 5;
+    const bStuck = !!batt && !bStale && Math.abs(bTgt) >= 500 && Math.abs(b) < 50 && bRoom;
+    const bBadSt = /okänd|unknown|fel|fault|error|alarm/i.test(bRaw);
+    const bFault = !!batt && !bStale && (/^FEL/.test(hvVar) || bStuck || bBadSt);
+    const bState = bFault ? 'Står still – fel' : bRaw || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar');
     const bst = $('vBattSt');
     if (bst) {
-      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : String(val(batt, 'battery_status') || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar'));
-      bst.textContent = st; bst.setAttribute('class', 'sub' + (bStale ? ' bad' : /laddar/i.test(st) && !/ur/i.test(st) ? ' chg' : ''));
+      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bState;
+      bst.textContent = st; bst.setAttribute('class', 'sub' + (bStale || bFault ? ' bad' : /laddar/i.test(st) && !/ur/i.test(st) ? ' chg' : ''));
     }
     kv($('batt'), batt ? [
       ['Kontakt', batt.available === false ? 'Otillgänglig i Homey' : bSeen ? (bStale ? 'Ingen data ' : 'OK, data ') + ago(bSeen) : '–', bStale ? 'bad' : 'okc'],
-      ['Batteri', String(val(batt, 'battery_status') || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar'))],
+      ['Batteri', bState, bFault ? 'bad' : ''],
+      bFault && ['Felorsak', /^FEL/.test(hvVar) ? hvVar.replace(/^FEL /, '').replace(/^sedan/, 'Sedan') : (bStuck ? 'Beordrad ' + W(Math.abs(bTgt)) + ' men levererar ' + W(Math.abs(b)) : 'Homevolt rapporterar status "' + bRaw + '"') + ' (bekräftas efter 15 min)', 'bad'],
       has(batt, 'measure_battery') && ['Laddnivå', f0.format(val(batt, 'measure_battery')) + ' %'],
       ['Effekt', W(Math.abs(b))],
       has(batt, 'meter_power.available') && ['Tillgängligt', f1.format(val(batt, 'meter_power.available')) + ' kWh'],
