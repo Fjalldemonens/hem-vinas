@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.6">
+<meta name="app-version" content="2026-11-05.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -355,7 +355,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
 
     <div class="h2">Idag</div>
-    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div></div>
+    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (inkl. påslag), sålt med spotpriset per kvart.</div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -375,8 +375,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.6"></script>
-<script src="homey.js?v=2026-11-05.6"></script>
+<script src="config.js?v=2026-11-05.7"></script>
+<script src="homey.js?v=2026-11-05.7"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -843,9 +843,15 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     renderPrice(price);
     renderApps();
 
+    // Köpt och sålt idag i kr från flödet AI 14 (kvartspriser); annars Tibbers egna siffror
+    let G = null; try { const A = JSON.parse(varVal('AI Förbrukning') || ''); G = A && A.grid; } catch (e) {}
+    const fromTxt = (x) => (x.from ? ' (från ' + x.from + ')' : '');
     kv($('today'), [
-      grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
-      grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
+      G ? ['Köpt idag' + fromTxt(G.imp), f1.format(G.imp.kwh) + ' kWh · ' + f2.format(G.imp.kr) + ' kr']
+        : grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
+      G ? ['Sålt idag' + fromTxt(G.exp), f1.format(G.exp.kwh) + ' kWh · ' + f2.format(G.exp.kr) + ' kr']
+        : grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
+      G && ['Netto idag', (G.imp.kr - G.exp.kr < 0 ? '+' + f2.format(G.exp.kr - G.imp.kr) + ' kr' : '−' + f2.format(G.imp.kr - G.exp.kr) + ' kr'), G.imp.kr - G.exp.kr < 0 ? 'okc' : ''],
       sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
       grid && has(grid, 'meter_power.imported') && ['Köpt totalt', f0.format(val(grid, 'meter_power.imported')) + ' kWh'],
       grid && has(grid, 'meter_power.exported') && ['Sålt totalt', f0.format(val(grid, 'meter_power.exported')) + ' kWh'],
