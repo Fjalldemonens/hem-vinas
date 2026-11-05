@@ -1,8 +1,8 @@
 // Homevolt-vakt: larmar (1) när batteriet slutar rapportera till Homey och (2) när det har kontakt men står still i felläge.
-// Sant = ny händelse, då skickas push. Skapad 2026-11-02, driftvakt tillagd 2026-11-05.
+// Sant = ny händelse, då skickas push. Skapad 2026-11-02, driftvakt tillagd 2026-11-05 (1 h).
 const ID = 'bb92dcb1-6a8b-4ce3-ad55-57eec631ec8c';
 const LIMIT_MIN = 15;      // kontaktvakt: inga nya värden på så här länge = nere
-const FAULT_MIN = 15;      // driftvakt: avvikelsen måste hålla i sig så här länge
+const FAULT_MIN = 60;      // driftvakt: avvikelsen måste hålla i sig så här länge
 const d = await Homey.devices.getDevice({ id: ID });
 const C = d.capabilitiesObj || {};
 const v = (k) => (C[k] ? C[k].value : null);
@@ -27,7 +27,7 @@ if (sus && !global.get('hvSusSince')) global.set('hvSusSince', Date.now());
 if (!sus) global.set('hvSusSince', null);
 const susSince = global.get('hvSusSince');
 const fault = sus && susSince && Date.now() - susSince >= FAULT_MIN * 60000;
-const why = (stuck ? 'beordrad att ' + (charge ? 'ladda ' : 'ladda ur ') + kW(tgt) + ' men levererar ' + Math.round(Math.abs(pw)) + ' W' : '') + (stuck && badSt ? ', ' : '') + (badSt ? 'status "' + st + '"' : '');
+const why = stuck ? 'ska ' + (charge ? 'ladda ' : 'ladda ur ') + kW(tgt) + ' men levererar ' + Math.round(Math.abs(pw)) + ' W' : 'Homevolt rapporterar status ' + (st || 'okänd').toLowerCase();
 
 const vars = Object.values(await Homey.logic.getVariables());
 const setVar = async (n, val) => { const x = vars.find((y) => y.name === n); if (x) await Homey.logic.updateVariable({ id: x.id, variable: { value: val } }); };

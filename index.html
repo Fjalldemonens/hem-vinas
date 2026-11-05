@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.18">
+<meta name="app-version" content="2026-11-05.19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -207,6 +207,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .ph .v{font-family:var(--f-disp);font-size:1.05rem}
 .socbar{height:10px;border-radius:5px;background:var(--card-2);overflow:hidden;margin:0 16px 14px}
 .kv .v.bad{color:var(--danger)} .kv .v.okc{color:var(--ok)}
+.balert{margin:14px 16px 0;padding:10px 12px;border-radius:10px;border-left:3px solid var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.balert b{display:block;color:var(--danger);font-size:.95rem}
+.balert span{display:block;margin-top:2px;color:var(--muted);font-size:.84rem;line-height:1.35}
 .blog{padding:0 16px 14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .blog .lh{font-weight:700;color:var(--fg);font-size:.78rem;letter-spacing:.04em}
 .socbar i{display:block;height:100%;background:var(--batt);border-radius:5px}
@@ -375,7 +378,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card"><div class="kv num" id="solar"></div></div>
 
     <div class="h2">Batteri &amp; laddbox</div>
-    <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
+    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -390,8 +393,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.18"></script>
-<script src="homey.js?v=2026-11-05.18"></script>
+<script src="config.js?v=2026-11-05.19"></script>
+<script src="homey.js?v=2026-11-05.19"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -932,26 +935,32 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const bSeen = batt ? lastSeen(batt) : 0, bStale = batt && (batt.available === false || (bSeen && Date.now() - bSeen > 15 * 60000));
     if (batt && bStale) { $('vBatt').textContent = 'Ingen kontakt'; setFlow('fBatt', 0, true); }
     // Status under batteriet i flödesbilden: Homevolts egen status, annars härledd från effekten
-    // Driftvakt: kontakt finns men batteriet står still (Homevolts status okänd/fel, eller beordrad effekt som inte levereras).
-    // Flödet AI 11 bekräftar efter 15 min och skriver 'FEL …' i AI Homevolt status; appen visar även det direkta läget.
+    // Driftvakt: flaggas bara när flödet AI 11 har bekräftat stillestånd i 1 h ('FEL sedan …: orsak' i AI Homevolt status)
     const hvVar = String(varVal('AI Homevolt status') || '');
     const bRaw = batt ? String(val(batt, 'battery_status') || '') : '';
-    const bTgt = batt ? Number(val(batt, 'measure_power.target_power')) || 0 : 0;
-    const bSoc = batt && has(batt, 'measure_battery') ? Number(val(batt, 'measure_battery')) : NaN;
-    const bRoom = isNaN(bSoc) ? true : bTgt < 0 ? bSoc < 97 : bSoc > 5;
-    const bStuck = !!batt && !bStale && Math.abs(bTgt) >= 500 && Math.abs(b) < 50 && bRoom;
-    const bBadSt = /okänd|unknown|fel|fault|error|alarm/i.test(bRaw);
-    const bFault = !!batt && !bStale && (/^FEL/.test(hvVar) || bStuck || bBadSt);
-    const bState = bFault ? 'Står still – fel' : bRaw || (b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar');
+    const bFault = !!batt && !bStale && /^FEL/.test(hvVar);
+    const bDerived = b > 15 ? 'Laddar ur' : b < -15 ? 'Laddar' : 'Vilar';
+    const bState = bFault ? 'Står still' : !bRaw || /okänd|unknown/i.test(bRaw) ? bDerived : bRaw;
+    const al = $('battAlert');
+    if (al) {
+      al.hidden = !bFault;
+      if (bFault) {
+        const m = hvVar.match(/^FEL sedan (\d{4}-\d\d-\d\d) (\d\d:\d\d):\s*(.*)$/) || [];
+        const today = new Date().toLocaleDateString('sv-SE');
+        const when = m[1] ? (m[1] === today ? m[2] : m[1].slice(5) + ' ' + m[2]) : '';
+        const why = (m[3] || '').replace(/^./, (c) => c.toUpperCase());
+        al.firstElementChild.textContent = 'Batteriet står still' + (when ? ' sedan ' + when : '');
+        al.lastElementChild.textContent = (why ? why + '. ' : '') + 'Kontakten fungerar – felet sitter i batterisystemet.';
+      }
+    }
     const bst = $('vBattSt');
     if (bst) {
-      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bState;
+      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bFault ? 'Står still – fel' : bState;
       bst.textContent = st; bst.setAttribute('class', 'sub' + (bStale || bFault ? ' bad' : /laddar/i.test(st) && !/ur/i.test(st) ? ' chg' : ''));
     }
     kv($('batt'), batt ? [
       ['Kontakt', batt.available === false ? 'Otillgänglig i Homey' : bSeen ? (bStale ? 'Ingen data ' : 'OK, data ') + ago(bSeen) : '–', bStale ? 'bad' : 'okc'],
       ['Batteri', bState, bFault ? 'bad' : ''],
-      bFault && ['Felorsak', /^FEL/.test(hvVar) ? hvVar.replace(/^FEL /, '').replace(/^sedan/, 'Sedan') : (bStuck ? 'Beordrad ' + W(Math.abs(bTgt)) + ' men levererar ' + W(Math.abs(b)) : 'Homevolt rapporterar status "' + bRaw + '"') + ' (bekräftas efter 15 min)', 'bad'],
       has(batt, 'measure_battery') && ['Laddnivå', f0.format(val(batt, 'measure_battery')) + ' %'],
       ['Effekt', W(Math.abs(b))],
       has(batt, 'meter_power.available') && ['Tillgängligt', f1.format(val(batt, 'meter_power.available')) + ' kWh'],
