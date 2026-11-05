@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.16">
+<meta name="app-version" content="2026-11-05.17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -188,9 +188,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .pchart .area{stroke:none;opacity:.32}
 .pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.3}
 .pchart .oarea{fill:var(--faint);opacity:.12;stroke:none}
-.pchart .nowh{opacity:.28}
+.pchart .nowh{opacity:.3}
+.pchart .nowr{fill:none;stroke:var(--fg);stroke-width:2.2}
+.pchart .nowbg{fill:var(--fg)}
+.pchart .nowt{fill:var(--card);font-family:var(--f-body);font-size:10.5px;font-weight:700}
 .pchart .nowl{stroke:var(--faint);stroke-width:2;opacity:.6}
-.pchart .nowd{stroke:var(--card);stroke-width:2}
+.pchart .nowd{stroke:var(--card);stroke-width:2.5}
 .pminmax{display:flex;gap:22px;flex-wrap:wrap}
 .pminmax .big{font-size:1.9rem}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
@@ -387,8 +390,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.16"></script>
-<script src="homey.js?v=2026-11-05.16"></script>
+<script src="config.js?v=2026-11-05.17"></script>
+<script src="homey.js?v=2026-11-05.17"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -783,8 +786,13 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (nowIdx >= 0 && nowIdx < arr.length) {
       const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = priceColor(arr[nowIdx], mn, mx, kind);
       el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' });
-      el('circle', { cx, cy, r: 9, fill: col, class: 'nowh' });
-      el('circle', { cx, cy, r: 4.5, fill: col, class: 'nowd' });
+      el('circle', { cx, cy, r: 14, fill: col, class: 'nowh' });
+      el('circle', { cx, cy, r: 8.5, class: 'nowr' });
+      el('circle', { cx, cy, r: 6, fill: col, class: 'nowd' });
+      // Pris just nu som etikett ovanför punkten (flyttas in om den hamnar vid kanten)
+      const lx = Math.min(Math.max(cx, L + 22), W - R - 22), ly = cy - 20 < T + 8 ? cy + 30 : cy - 20;
+      el('rect', { x: lx - 21, y: ly - 12, width: 42, height: 17, rx: 8.5, class: 'nowbg' });
+      const tx = el('text', { x: lx, y: ly + 1, 'text-anchor': 'middle', class: 'nowt' }); tx.textContent = f2.format(arr[nowIdx]);
     }
     return svg;
   }
