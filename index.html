@@ -968,7 +968,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ] : [['Batteri', 'Hittades inte']]);
     const lg = $('battLog'), logTxt = String(varVal('AI Homevolt logg') || '').split('\n').filter((l) => l && l !== '-');
     lg.hidden = !logTxt.length; lg.replaceChildren();
-    if (logTxt.length) { lg.append(mk('div', 'lh', 'Avbrott (senaste)')); logTxt.slice(0, 5).forEach((l) => lg.append(mk('div', 'll', l))); }
+    if (logTxt.length) { lg.append(mk('div', 'lh', 'Händelser (senaste)')); logTxt.slice(0, 5).forEach((l) => lg.append(mk('div', 'll', l))); }
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
     if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
