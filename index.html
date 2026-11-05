@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-02.3">
+<meta name="app-version" content="2026-11-05.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -69,7 +69,7 @@ button.live{font:inherit;font-size:.76rem;cursor:pointer}
 
 /* segmented switch */
 .seg{display:grid;grid-template-columns:repeat(4,1fr);padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);position:relative}
-.seg button{font:inherit;font-weight:600;font-size:.9rem;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:999px;cursor:pointer;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
+.seg button{font:inherit;font-weight:600;font-size:clamp(.74rem,3.4vw,.92rem);white-space:nowrap;overflow:hidden;min-width:0;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:999px;cursor:pointer;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
 .seg button[aria-selected="true"]{color:var(--accent-ink)}
 .seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/4);border-radius:999px;background:var(--accent);transition:transform .28s cubic-bezier(.3,.7,.2,1);box-shadow:0 6px 18px -6px var(--accent)}
 .seg svg{width:16px;height:16px}
@@ -139,6 +139,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .thermo .n{font-family:var(--f-disp);font-weight:600}
 .thermo .s{font-size:.8rem;color:var(--muted)}
 .thermo .heat{color:var(--warm);font-weight:700}
+.thermo .inne{font-size:.9rem;color:var(--muted);margin:2px 0}
+.thermo .inne b{color:var(--fg);font-family:var(--f-disp);font-weight:400;font-size:1.15rem}
 .step{display:flex;align-items:center;gap:6px}
 .step button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card-2);color:var(--fg);font:inherit;font-size:1.2rem;font-weight:600;cursor:pointer}
 .step .tv{font-family:var(--f-disp);font-size:1.25rem;min-width:62px;text-align:center}
@@ -158,12 +160,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;font-size:.9rem}
 .kv .k{color:var(--muted)}
 .kv .v{text-align:right;font-weight:600}
-.price{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:16px}
+.price{display:flex;flex-direction:column;gap:10px;padding:16px}
+.phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.psub{font-size:.8rem;color:var(--muted);margin-top:4px}
+.pctl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mini{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px}
+.mini button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.mini button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.mini button:disabled{opacity:.4;cursor:default}
+.pchart{width:100%;height:auto;display:block}
+.pchart .gl{stroke:var(--line);stroke-width:1}
+.pchart .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
+.pchart .ln{fill:none;stroke-width:2;stroke-linejoin:round}
+.pchart .ln.imp{stroke:var(--warn)} .pchart .ln.exp{stroke:var(--accent)}
+.pchart .area{stroke:none;opacity:.14} .pchart .area.imp{fill:var(--warn)} .pchart .area.exp{fill:var(--accent)}
+.pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.5}
+.pchart .nowl{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.pchart .nowd{stroke:var(--card);stroke-width:2} .pchart .nowd.imp{fill:var(--warn)} .pchart .nowd.exp{fill:var(--accent)}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
 .price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
 .range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
 .range i{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:var(--fg);transform:translateX(-50%)}
-.rangel{grid-column:1/3;display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
+.rangel{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
 .phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px 16px}
 .ph{background:var(--card-2);border-radius:12px;padding:8px 10px}
 .ph .k{font-size:.72rem;color:var(--muted);font-weight:700}
@@ -190,8 +208,30 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mapc{background:#000;display:grid;place-items:center;min-height:120px}
 .mapc img{display:block;width:100%;height:auto;image-rendering:pixelated}
 .mapc .empty{color:#9aa}
-@media (max-width:440px){.seg svg{display:none}.seg button{font-size:.84rem;padding:10px 2px}}
-@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.seg button span{font-size:.78rem}}
+@media (max-width:520px){.seg svg{display:none}.seg button{padding:10px 2px}}
+@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.step button{width:34px;height:34px}.step .tv{min-width:52px;font-size:1.1rem}}
+.chip{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.btn{line-height:1.2;overflow-wrap:anywhere}
+.thermo .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.thermo > div:first-child{min-width:0}
+/* surfplatta och dator: bredare app och två spalter */
+@media (min-width:800px){
+  .app{max-width:72rem;gap:18px}
+  .glance{max-width:40rem}
+  .seg{max-width:40rem}
+  #rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start;gap:14px}
+  #p-temperatur:not([hidden]),#p-energi:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:start;grid-auto-flow:row dense}
+  #p-temperatur > *{grid-column:1}
+  #p-temperatur > .h2.rumh,#p-temperatur > #sensors{grid-column:2}
+  #p-temperatur > .h2.rumh{grid-row:1;align-self:start}
+  #p-temperatur > #sensors{grid-row:1 / span 8;margin-top:28px}
+  #p-energi > *{grid-column:2}
+  #p-energi > .flow{grid-column:1;grid-row:1 / span 12}
+  .flow svg{max-width:440px;margin:0 auto}
+  .pchart{max-height:260px}
+  #robots{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-items:start;gap:24px}
+}
+@media (min-width:1200px){.glance{max-width:none}.seg{max-width:48rem}}
 @media (prefers-reduced-motion: reduce){.skel,.flow .run,.live.spin .ic{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
 
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -260,7 +300,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div></div>
     <div class="h2">Värme</div>
     <div class="card" id="thermos"><div class="empty">Hämtar termostater…</div></div>
-    <div class="h2">Rum</div>
+    <div class="h2 rumh">Rum</div>
     <div class="grid2" id="sensors"><div class="skel"></div><div class="skel"></div></div>
   </section>
 
@@ -315,8 +355,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-02.3"></script>
-<script src="homey.js?v=2026-11-02.3"></script>
+<script src="config.js?v=2026-11-05.1"></script>
+<script src="homey.js?v=2026-11-05.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -510,12 +550,22 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   const TH_ST = [[/no demand|idle|standby/i, 'Inget värmebehov'], [/hot ?water/i, 'Gör varmvatten'], [/heat/i, 'Värmer'], [/defrost/i, 'Avfrostning'], [/alarm|error/i, 'Larm']];
   const thSv = (v) => { const s = String(v ?? ''); const m = TH_ST.find(([r]) => r.test(s)); return m ? m[1] : s; };
   const hpOpen = {};
+  // Ärvärde inne: pumpen har ingen rumsgivare i Homey (dess temperatur är utegivaren), så vi tar husets givare på bottenvåningen.
+  function indoorTemp() {
+    const main = devices.find((d) => d.type === 'sensor' && /^bottenvåning$/i.test(String(d.name).trim()) && has(d, 'measure_temperature'));
+    if (main) return { v: Number(val(main, 'measure_temperature')), src: main.name };
+    const ins = devices.filter((d) => d.type === 'sensor' && has(d, 'measure_temperature') && !/utomhus|hundhus|källare/i.test(d.zone));
+    if (!ins.length) return null;
+    return { v: ins.reduce((a, d) => a + Number(val(d, 'measure_temperature')), 0) / ins.length, src: 'snitt inne' };
+  }
   function heatPumpRow(d) {
     const name = String(d.name).trim();
     const row = mk('div', 'thermo'); const left = mk('div');
     left.append(mk('div', 'n', name));
     const st = thSv(val(d, 'thermia_status')), working = st && st !== 'Inget värmebehov';
     const s = mk('div', 's num');
+    const inT = indoorTemp();
+    if (inT) { const iv = mk('div', 'inne num'); iv.append(document.createTextNode('Inne nu '), mk('b', '', f1.format(inT.v) + '°')); left.append(iv); }
     s.append(working ? mk('span', 'heat', st) : document.createTextNode(st || 'Status okänd'));
     if (has(d, 'thermia_opmode')) s.append(document.createTextNode(' · ' + String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').replace(/^auto$/i, 'Auto')));
     left.append(s);
@@ -536,7 +586,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       onoff('hotwater_status') && ['Varmvattenproduktion', onoff('hotwater_status')],
       onoff('hotwater_boost') && ['Extra varmvatten', onoff('hotwater_boost')],
       T('measure_temperature') && ['Ute (pumpens givare)', T('measure_temperature')],
-      has(d, 'target_temperature') && ['Önskad inne', f1.format(val(d, 'target_temperature')) + '°'],
+      has(d, 'target_temperature') && ['Önskad inne (börvärde)', f1.format(val(d, 'target_temperature')) + '°'],
+      indoorTemp() && ['Inne nu (ärvärde, ' + indoorTemp().src + ')', f1.format(indoorTemp().v) + '°'],
       has(d, 'thermia_opmode') && ['Driftläge', String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').replace(/^./, (c) => c.toUpperCase())],
       has(d, 'thermia_status') && ['Status', thSv(val(d, 'thermia_status'))],
       // Övriga värden som pumpen skickar, med Homeys egna namn
@@ -544,10 +595,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         const m = meta(d, k) || {}, v = d.state[k];
         return [m.title || k, typeof v === 'boolean' ? (v ? 'Ja' : 'Nej') : typeof v === 'number' ? f1.format(v) + (m.units ? ' ' + m.units : '') : String(v)];
       }),
-    ] : [
-      T('measure_temperature.supply') && ['Framledning', T('measure_temperature.supply')],
-      T('measure_temperature.hotwater') && ['Varmvatten', T('measure_temperature.hotwater')],
-    ];
+    ] : [];
     kv(g, rows);
     const more = mk('button', 'more', open ? 'Mindre info' : 'Mer info'); more.type = 'button';
     more.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -654,6 +702,66 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   // När en enhet senast skickade ett värde till Homey (nyaste tidsstämpeln bland dess funktioner).
   const lastSeen = (d) => Math.max(0, ...Object.values(d.caps || {}).map((c) => c.at || 0));
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'nyss' : m < 60 ? 'för ' + m + ' min sedan' : m < 1440 ? 'för ' + f1.format(m / 60) + ' h sedan' : 'för ' + Math.round(m / 1440) + ' dygn sedan'; };
+  /* ---------- elpris: Homey Energys priser via variabeln AI Elpriser (flödet AI 12) ---------- */
+  let priceDay = 0, priceKind = 'imp';
+  function priceData() { try { const j = JSON.parse(varVal('AI Elpriser') || ''); return j && j.days && j.days.length ? j : null; } catch (e) { return null; } }
+  const hm = (t) => new Date(t).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+  function segBtns(opts, cur, onPick) {
+    const g = mk('div', 'mini');
+    opts.forEach(([v, label, dis]) => { const b = mk('button', '', label); b.type = 'button'; b.disabled = !!dis; b.setAttribute('aria-pressed', v === cur ? 'true' : 'false'); b.addEventListener('click', () => onPick(v)); g.append(b); });
+    return g;
+  }
+  function priceChart(day, kind, nowIdx) {
+    const arr = day[kind], other = day[kind === 'imp' ? 'exp' : 'imp'];
+    const W = 340, H = 150, L = 34, R = 6, T = 8, B = 22;
+    const all = arr.concat(other), lo = Math.min(0, ...all), hi = Math.max(...all) * 1.08 || 1;
+    const x = (i) => L + (W - L - R) * i / arr.length, y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    const step = (a) => 'M' + x(0).toFixed(1) + ' ' + y(a[0]).toFixed(1) + a.map((v, k) => ' H' + x(k).toFixed(1) + ' V' + y(v).toFixed(1)).join('') + ' H' + x(a.length).toFixed(1);
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'pchart'); svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', (kind === 'imp' ? 'Importpris' : 'Exportpris') + ' per kvart, ' + f2.format(Math.min(...arr)) + ' till ' + f2.format(Math.max(...arr)) + ' kr per kWh');
+    const el = (n, a) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); svg.append(e); return e; };
+    const ticks = []; const stepv = hi > 3 ? 1 : 0.5; for (let v = Math.ceil(lo / stepv) * stepv; v <= hi; v += stepv) ticks.push(v);
+    ticks.forEach((v) => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gl' }); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }); t.textContent = f1.format(v); });
+    [0, 6, 12, 18, 24].forEach((h) => { const t = el('text', { x: x(arr.length * h / 24), y: H - 6, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(h).padStart(2, '0'); });
+    el('path', { d: step(other), class: 'oth' });
+    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', class: 'area ' + kind });
+    el('path', { d: step(arr), class: 'ln ' + kind });
+    if (nowIdx >= 0 && nowIdx < arr.length) { const cx = x(nowIdx + 0.5); el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' }); el('circle', { cx, cy: y(arr[nowIdx]), r: 4, class: 'nowd ' + kind }); }
+    return svg;
+  }
+  function renderPrice(dev) {
+    const pc = $('priceCard'); pc.replaceChildren();
+    const P = priceData();
+    if (!P) {
+      if (!dev) { pc.append(mk('div', 'empty', devices.length ? 'Inga elpriser än. Flödet AI 12 i Homey hämtar dem var 15:e minut.' : 'Hämtar elpris…')); return; }
+      const big = mk('div', 'big num'); big.append(document.createTextNode(f2.format(val(dev, 'measure_price_total'))), mk('small', '', ' kr/kWh')); pc.append(big); return;
+    }
+    const today = P.days[0], iv = (today.iv || 15) * 60000, t0 = new Date(today.s).getTime();
+    const idx = Math.floor((Date.now() - t0) / iv);
+    if (priceDay >= P.days.length) priceDay = 0;
+    const day = P.days[priceDay];
+    const cur = today.imp[idx], curE = today.exp[idx];
+    const sorted = today.imp.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
+    const lvl = cur == null ? ['–', ''] : cur >= q(0.9) ? ['Mycket dyrt', 'bad'] : cur >= q(0.66) ? ['Dyrt', 'warn'] : cur <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
+    const head = mk('div', 'phead');
+    const left = mk('div');
+    const big = mk('div', 'big num'); big.append(document.createTextNode(cur == null ? '–' : f2.format(cur)), mk('small', '', ' kr/kWh'));
+    const left2 = mk('div', 'psub num', cur == null ? '' : Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000)) + ' min kvar · export ' + f2.format(curE) + ' kr');
+    left.append(big, left2);
+    head.append(left, mk('span', 'chip ' + lvl[1], lvl[0]));
+    const ctr = mk('div', 'pctl');
+    ctr.append(
+      segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
+      segBtns([['imp', 'Import'], ['exp', 'Export']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
+    const arr = day[priceKind], mn = Math.min(...arr), mx = Math.max(...arr);
+    const at = (v) => hm(new Date(day.s).getTime() + arr.indexOf(v) * iv);
+    const foot = mk('div', 'rangel num');
+    foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + at(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + at(mx)));
+    const note = P.days.length < 2 ? mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.') : null;
+    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1), foot);
+    if (note) pc.append(note);
+  }
   function renderEnergy() {
     const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
     const sun = devices.find((d) => d.type === 'solarpanel');
@@ -673,20 +781,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     $('gLoad').textContent = grid || sun ? W(home) : '–';
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
 
-    const pc = $('priceCard'); pc.replaceChildren();
-    if (price) {
-      const now = Number(val(price, 'measure_price_total')), lo = Number(val(price, 'measure_price_lowest')), hi = Number(val(price, 'measure_price_highest'));
-      const lvl = String(val(price, 'price_level') || val(price, 'measure_price_level') || '').toUpperCase();
-      const LV = { VERY_CHEAP: ['Mycket billigt', 'ok'], CHEAP: ['Billigt', 'ok'], NORMAL: ['Normalt', 'acc'], EXPENSIVE: ['Dyrt', 'warn'], VERY_EXPENSIVE: ['Mycket dyrt', 'bad'] };
-      const [lt, lc] = LV[lvl] || [lvl || '–', ''];
-      const big = mk('div', 'big num'); big.append(document.createTextNode(f2.format(now)), mk('small', '', ' kr/kWh'));
-      pc.append(big, mk('span', 'chip ' + lc, lt));
-      if (!isNaN(lo) && !isNaN(hi) && hi > lo) {
-        const r = mk('div', 'range'); const i = mk('i'); i.style.left = Math.max(0, Math.min(100, (now - lo) / (hi - lo) * 100)) + '%'; r.append(i);
-        const rl = mk('div', 'rangel num'); rl.append(mk('span', '', 'Lägst idag ' + f2.format(lo)), mk('span', '', 'Högst ' + f2.format(hi)));
-        pc.append(r, rl);
-      }
-    } else pc.append(mk('div', 'empty', devices.length ? 'Ingen elprisenhet i Homey.' : 'Hämtar elpris…'));
+    renderPrice(price);
 
     kv($('today'), [
       grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
@@ -736,11 +831,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   const OPS = { 0: ['Stoppad', ''], 1: ['Städar', 'run'], 2: ['Pausad', ''], 3: ['Fel', 'err'], 64: ['Åker hem', 'run'], 65: ['Laddar', ''], 66: ['I laddstationen', ''] };
   const ALARMS = { alarm_stuck: ['Roboten har fastnat', 'bad'], alarm_lost: ['Roboten hittar inte hem', 'bad'], alarm_problem: ['Roboten har ett problem', 'bad'], alarm_bin_full: ['Dammbehållaren är full', 'warn'], alarm_bin_missing: ['Dammbehållaren saknas', 'bad'], alarm_tank_empty: ['Rentvattentanken är tom', 'warn'], alarm_water_box_empty: ['Vattentanken är tom', 'warn'], alarm_tank_full: ['Smutsvattentanken är full', 'warn'], alarm_tank_missing: ['Vattentanken saknas', 'bad'], alarm_tank_open: ['Vattentanken är öppen', 'warn'], alarm_cleaning_pad_missing: ['Moppduken saknas', 'warn'] };
   // Engelska namn översätts; svenska namn från Homey används som de är (vakuum → dammsugning).
-  const EN = [[/vac\w*.*(and|&|\+|then).*mop|mop.*(and|&|\+).*vac|both/i, 'Dammsug och moppa'], [/deep/i, 'Djupstädning'], [/quick|fast/i, 'Snabb'], [/quiet|silent/i, 'Tyst'], [/^max/i, 'Max'], [/mop/i, 'Moppa'], [/vac|sweep/i, 'Dammsug'], [/idle/i, 'Vila'], [/map/i, 'Kartlägg'], [/clean/i, 'Städa'], [/auto/i, 'Auto']];
+  const EN = [[/vac\w*.*(and|&|\+|then).*mop|mop.*(and|&|\+).*vac|both/i, 'Dammsug och moppa'], [/deep/i, 'Djupstädning'], [/quick|fast/i, 'Snabb'], [/quiet|silent/i, 'Tyst'], [/mop/i, 'Moppa'], [/vac|sweep/i, 'Dammsug'], [/idle/i, 'Vila'], [/map/i, 'Kartlägg'], [/clean/i, 'Städa'], [/auto/i, 'Auto']];
   const sv = (t) => {
     const s = String(t ?? '');
-    if (/[åäö]/i.test(s) || /vakuum|mopp|dammsug|städ|rengör|tyst|djup|balans/i.test(s)) return s.replace(/vakuum/gi, (m) => m[0] === 'V' ? 'Dammsugning' : 'dammsugning');
-    const m = EN.find(([r]) => r.test(s)); return m ? m[1] : s;
+    if (/[åäö]/i.test(s) || /vakuum|mopp|dammsug|städ|rengör|tyst|djup|balans/i.test(s)) return s.replace(/vakuum/gi, (m) => m[0] === 'V' ? 'Dammsugning' : 'dammsugning').replace(/^./, (c) => c.toUpperCase());
+    const m = EN.find(([r]) => r.test(s)); return m ? m[1] : s.replace(/^./, (c) => c.toUpperCase());
   };
   const meta = (d, cap) => (d.caps && d.caps[cap]) || null;
   const opts = (d, cap) => (meta(d, cap) && meta(d, cap).values) || [];
@@ -813,22 +908,6 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const k = mk('div', 'kv num'); kv(k, rows); card.append(k);
     return [mk('div', 'h2', 'Senaste städning'), card];
   }
-  // Robotens karta: Homey-bilden hämtas högst en gång per minut, och bara när Städ-fliken visas.
-  const maps = {};
-  function robotMap(d) {
-    const im = (d.images || [])[0]; if (!im) return null;
-    const m = maps[d.id] || (maps[d.id] = { src: '', at: 0, busy: false, fail: false });
-    const visible = !$('p-stad').hidden;
-    if (visible && !m.busy && Date.now() - m.at > 60000) {
-      m.busy = true;
-      api.image(im.url).then((src) => { if (m.src) URL.revokeObjectURL(m.src); m.src = src; m.fail = false; }).catch(() => { m.fail = true; })
-        .finally(() => { m.at = Date.now(); m.busy = false; renderRobot(); });
-    }
-    const card = mk('div', 'card mapc');
-    if (m.src) { const img = mk('img'); img.src = m.src; img.alt = 'Karta från ' + d.name; card.append(img); }
-    else card.append(mk('div', 'empty', m.fail ? 'Kartan kunde inte hämtas.' : 'Hämtar karta…'));
-    return [mk('div', 'h2', 'Karta'), card];
-  }
   function rrCard(d) {
     const wrap = mk('section', 'panel'); wrap.setAttribute('aria-label', d.name);
     const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true, docked = val(d, 'dock') === true;
@@ -848,7 +927,6 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!cleaning && settable(d, 'spot_clean')) B.push(actBtn(d, 'Punktstäda', '', { spot_clean: true }, 'Punktstädning startar'));
     if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
     const q = quick(B); if (q) wrap.append(q);
-    const map = robotMap(d); if (map) wrap.append(...map);
 
     wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
     wrap.append(...choice(d, 'clean_mode', 'Städläge'));
