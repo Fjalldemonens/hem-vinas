@@ -968,7 +968,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ] : [['Batteri', 'Hittades inte']]);
     const lg = $('battLog'), logTxt = String(varVal('AI Homevolt logg') || '').split('\n').filter((l) => l && l !== '-');
     lg.hidden = !logTxt.length; lg.replaceChildren();
-    if (logTxt.length) { lg.append(mk('div', 'lh', 'Händelser (senaste)')); logTxt.slice(0, 5).forEach((l) => lg.append(mk('div', 'll', l))); }
+    if (logTxt.length) {
+      const open = lg.dataset.open === '1', rest = Math.min(logTxt.length, 10) - 1;
+      lg.append(mk('div', 'lh', 'Senaste händelse'));
+      logTxt.slice(0, open ? 10 : 1).forEach((l) => lg.append(mk('div', 'll', l)));
+      if (rest > 0) {
+        const b = mk('button', 'more', open ? 'Visa färre' : 'Visa fler (' + rest + ')'); b.type = 'button';
+        b.setAttribute('aria-expanded', open ? 'true' : 'false'); b.style.alignSelf = 'flex-start'; b.style.marginTop = '2px';
+        b.addEventListener('click', () => { lg.dataset.open = open ? '' : '1'; renderEnergy(); });
+        lg.append(b);
+      }
+    }
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
     if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
