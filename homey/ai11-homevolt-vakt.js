@@ -1,8 +1,8 @@
 // Homevolt-vakt (AI 11), var 10:e min. Sant = ny händelse, då skickas push.
 // (1) Kontaktvakt: Homevolt-enheten i Homey har inte rapporterat på 15 min / är otillgänglig.
 // (2) Systemvakt: batteriet står still trots kontakt – nätfrekvens 0 Hz i Homey, eller EMS-alarm på den
-//     lokala sidan – i minst 15 min. Oberoende av IGNORE (ett trasigt
-//     BAT00 kan fälla hela systemet). Fångade inte stoppet 2026-11-05 16:05–20:45 innan detta lades till.
+//     lokala sidan – i minst 15 min. Medan en modul står i IGNORE loggas stoppet bara (ingen push, ingen
+//     röd ruta), eftersom ett trasigt BAT00 väntas fälla systemet. Lades till efter stoppet 2026-11-05 16:05–20:45.
 // (3) Modulvakt: läser Homevolts lokala sida http://192.168.1.168/ems.json och larmar när en batterimodul
 //     inte är "Connected" eller har alarm i 1 h. Moduler i IGNORE hoppas över till och med angivet datum.
 // (4) Lokal sida tyst > 30 min loggas (ingen push), liksom när den svarar igen.
@@ -54,6 +54,7 @@ const stop = stopNow && stopSince && Date.now() - stopSince >= STOP_MIN * 60000;
 // Modulvakt
 const name = (m) => 'BAT0' + m.id;
 const ignored = (m) => IGNORE[m.id] && today <= IGNORE[m.id];
+const stopQuiet = Object.values(IGNORE).some((dt) => today <= dt);   // känt fel, väntar på byte
 const bad = (mods || []).filter((m) => !ignored(m) && (m.state_str !== 'Connected' || Number(m.alarm) !== 0));
 const why = bad.map((m) => name(m) + ' ' + (m.state_str || 'okänd status') + ((m.alarm_str || []).length ? ' (' + m.alarm_str.map(short).join(', ') + ')' : '')).join('; ');
 const sus = !down && bad.length > 0;
@@ -83,11 +84,11 @@ if (stop && !wasS) {
   global.set('hvStop', true);
   global.set('hvStopAt', stopSince);
   global.set('hvStopWhy', stopWhy.join('; '));
-  msgs.push('Homevolt står still sedan ' + fmt(stopSince) + ' trots kontakt: ' + stopWhy.join('; ') + '.');
+  (stopQuiet ? quiet : msgs).push('Homevolt står still sedan ' + fmt(stopSince) + ' trots kontakt: ' + stopWhy.join('; ') + '.');
 } else if (!stopNow && wasS && !down) {
   const since = global.get('hvStopAt') || Date.now();
   global.set('hvStop', false);
-  msgs.push('Homevolt är igång igen. Stoppet varade ca ' + dur(since) + ' (från ' + fmt(since) + ').');
+  (stopQuiet ? quiet : msgs).push('Homevolt är igång igen. Stoppet varade ca ' + dur(since) + ' (från ' + fmt(since) + ').');
 }
 const wasF = global.get('hvFault') === true;
 if (fault && !wasF) {
@@ -111,12 +112,12 @@ if (emsErr && emsErrSince && Date.now() - emsErrSince >= EMS_QUIET_MIN * 60000 &
   global.set('hvEmsErrSince', null);
 }
 
-const ign = (mods || []).filter(ignored).map((m) => name(m) + ' ignoreras t.o.m. ' + IGNORE[m.id]).join(', ');
+const ignList = (mods || []).filter(ignored).map((m) => name(m) + ' ignoreras t.o.m. ' + IGNORE[m.id]).join(', ');
 await setVar('AI Homevolt status',
   down ? 'Ingen kontakt sedan ' + (last ? fmt(last) : 'okänt')
-  : global.get('hvStop') === true ? 'FEL sedan ' + fmt(global.get('hvStopAt')) + ': ' + (stopWhy.join('; ') || global.get('hvStopWhy'))
+  : global.get('hvStop') === true && !stopQuiet ? 'FEL sedan ' + fmt(global.get('hvStopAt')) + ': ' + (stopWhy.join('; ') || global.get('hvStopWhy'))
   : global.get('hvFault') === true ? 'FEL sedan ' + fmt(global.get('hvFaultAt')) + ': ' + (why || global.get('hvFaultWhy') || 'batterimodul i fel')
-  : 'OK, senaste data ' + fmt(last) + (emsErr ? ' (lokal sida svarar inte)' : ign ? ' (' + ign + ')' : ''));
+  : 'OK, senaste data ' + fmt(last) + (global.get('hvStop') === true ? ' (står still sedan ' + fmt(global.get('hvStopAt')).slice(11) + ', känt BAT00-fel)' : emsErr ? ' (lokal sida svarar inte)' : ignList ? ' (' + ignList + ')' : ''));
 const all = [...msgs, ...quiet].join(' ');
 if (all) {
   const old = getVar('AI Homevolt logg').split('\n').filter((l) => l && l !== '-');
