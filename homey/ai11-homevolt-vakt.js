@@ -1,4 +1,4 @@
-// Homevolt-vakt (AI 11), var 5:e min. Sant = ny händelse, då skickas push.
+// Homevolt-vakt (AI 11), var 30:e min. Sant = ny händelse, då skickas push.
 // (1) Kontaktvakt: Homevolt-enheten i Homey har inte rapporterat på 15 min / är otillgänglig.
 // (2) Modulvakt: läser Homevolts lokala sida http://192.168.1.168/ems.json och larmar när en batterimodul
 //     inte är "Connected" eller har alarm i 1 h. Moduler i IGNORE hoppas över till och med angivet datum.
