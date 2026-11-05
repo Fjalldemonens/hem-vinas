@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.13">
+<meta name="app-version" content="2026-11-05.14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -384,8 +384,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.13"></script>
-<script src="homey.js?v=2026-11-05.13"></script>
+<script src="config.js?v=2026-11-05.14"></script>
+<script src="homey.js?v=2026-11-05.14"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1034,6 +1034,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       e.suction ? 'sugkraft ' + lc('suction_power', e.suction) : '',
       e.scrub ? 'moppning ' + lc('scrub_intensity', e.scrub) : '',
       e.route ? 'rutt ' + lc('mop_route', e.route) : '',
+      (e.repeat || 1) > 1 ? e.repeat + ' varv' : '',
     ].filter(Boolean).join(' · ');
   }
   const firstDay = (e) => Math.min(...(e.days || [7]).map((n) => (n + 6) % 7));
@@ -1086,6 +1087,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       if (opts(d, 'suction_power').length) card.append(lab('Sugkraft'), choiceRow(d, 'suction_power', e.suction, 'Nuvarande', (v) => { e.suction = v; }));
       if (opts(d, 'scrub_intensity').length) card.append(lab('Moppning (vattenflöde)'), choiceRow(d, 'scrub_intensity', e.scrub, 'Nuvarande', (v) => { e.scrub = v; }));
       if (opts(d, 'mop_route').length) card.append(lab('Rutt'), choiceRow(d, 'mop_route', e.route, 'Nuvarande', (v) => { e.route = v; }));
+      if (e.rooms && e.rooms.length) {
+        const rc = mk('div', 'chips');
+        [1, 2, 3].forEach((n) => { const b = mk('button', 'chip', n + (n === 1 ? ' varv' : ' varv')); b.type = 'button'; b.setAttribute('aria-pressed', (e.repeat || 1) === n ? 'true' : 'false'); b.addEventListener('click', () => { e.repeat = n; renderRobot(); }); rc.append(b); });
+        card.append(lab('Antal varv'), rc);
+      }
       if (e.note) card.append(mk('p', 'fine', 'Obs: ' + e.note));
       const save = mk('button', 'btn go', 'Spara'); save.type = 'button';
       save.addEventListener('click', async () => {
@@ -1114,9 +1120,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     });
     out.push(card);
     const add = mk('button', 'btn', '+ Nytt schema'); add.type = 'button';
-    add.addEventListener('click', () => { draft = { dev: d.id, e: { id: 's' + Date.now().toString(36), on: true, days: [1, 2, 3, 4, 5], time: '10:00', mode: null, suction: null, scrub: null, route: null, rooms: [] } }; renderRobot(); });
+    add.addEventListener('click', () => { draft = { dev: d.id, e: { id: 's' + Date.now().toString(36), on: true, days: [1, 2, 3, 4, 5], time: '10:00', mode: null, suction: null, scrub: null, route: null, rooms: [], repeat: 1 } }; renderRobot(); });
     const q = quick([add]); out.push(q);
-    out.push(mk('p', 'fine', 'Test: schemat körs av flödet AI 13 i Homey. Flera rum städas ett i taget, och nästa körning väntar tills roboten är tillbaka i laddstationen. Stäng av samma schema i Roborock-appen så roboten inte städar två gånger.'));
+    out.push(mk('p', 'fine', 'Test: schemat körs av flödet AI 13 i Homey. Inställningarna ställs in och alla valda rum startas i ett och samma städjobb. Är roboten upptagen väntar jobbet tills den är ledig i laddstationen. Stäng av samma schema i Roborock-appen så roboten inte städar två gånger.'));
     return out;
   }
   function rrCard(d) {
