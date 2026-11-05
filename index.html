@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.11">
+<meta name="app-version" content="2026-11-05.12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -363,14 +363,15 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="h2">Idag</div>
     <div class="card"><div class="kv num" id="today"></div><div class="mblock" id="monBlock"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
 
-    <div class="h2">Apparater</div>
-    <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
+    <div class="h2">Solceller</div>
+    <div class="card"><div class="kv num" id="solar"></div></div>
 
     <div class="h2">Batteri &amp; laddbox</div>
     <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
 
-    <div class="h2">Solceller</div>
-    <div class="card"><div class="kv num" id="solar"></div></div>
+    <div class="h2">Apparater</div>
+    <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
+
   </section>
 
   <section class="panel" id="p-stad" role="tabpanel" aria-labelledby="t-stad" hidden>
@@ -381,8 +382,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.11"></script>
-<script src="homey.js?v=2026-11-05.11"></script>
+<script src="config.js?v=2026-11-05.12"></script>
+<script src="homey.js?v=2026-11-05.12"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -806,7 +807,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!A || !A.u) { el.replaceChildren(mk('div', 'empty', vars.length ? 'Ingen förbrukningsdata än. Flödet AI 14 i Homey räknar varje minut.' : 'Hämtar förbrukning…')); return; }
     el.replaceChildren();
     const live = (k) => { const d = devices.find((x) => x.id === (A[k] && A[k].id)); return d ? Number(val(d, 'measure_power')) || 0 : (A[k] ? A[k].w : 0); };
-    const month = (x) => x.month && ['Hittills i ' + MON[Number(x.month.m.slice(5, 7)) - 1] + (x.month.from ? ' (från ' + dShort(x.month.from) + ')' : ''), kwhKr(x.month)];
+    const month = (x) => x.month && [monName(x.month.m) + (x.month.from ? ' (från ' + dShort(x.month.from) + ')' : ''), kwhKr(x.month)];
     const prevMonth = (x) => x.prevMonth && [monName(x.prevMonth.m) + (x.prevMonth.from ? ' (från ' + dShort(x.prevMonth.from) + ')' : ''), kwhKr(x.prevMonth)];
     const block = (name, w, rows) => { const b = mk('div', 'kv num app'); kv(b, [[name, w > 0.5 ? 'nu ' + W(w) : 'vilar'], ...rows]); b.children[0].classList.add('ah'); b.children[1].classList.add('ah'); el.append(b); };
     if (A.kyl) {
