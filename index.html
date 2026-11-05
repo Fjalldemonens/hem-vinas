@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.4">
+<meta name="app-version" content="2026-11-05.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -160,6 +160,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;font-size:.9rem}
 .kv .k{color:var(--muted)}
 .kv .v{text-align:right;font-weight:600}
+.app + .app{border-top:1px solid var(--line)}
+.kv .k.ah{color:var(--fg);font-weight:700}
+.kv .v.ah{color:var(--muted);font-weight:500}
+.kv .v.run{color:var(--ok)}
+.appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
 .price{display:flex;flex-direction:column;gap:10px;padding:16px}
 .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .psub{font-size:.8rem;color:var(--muted);margin-top:4px}
@@ -350,6 +355,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="h2">Idag</div>
     <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div></div>
 
+    <div class="h2">Apparater</div>
+    <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
+
     <div class="h2">Batteri &amp; laddbox</div>
     <div class="card" id="battCard"><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
 
@@ -365,8 +373,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.4"></script>
-<script src="homey.js?v=2026-11-05.4"></script>
+<script src="config.js?v=2026-11-05.5"></script>
+<script src="homey.js?v=2026-11-05.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -772,6 +780,45 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1), foot);
     if (note) pc.append(note);
   }
+  /* ---------- apparater: förbrukning och kostnad från flödet AI 14 (variabeln AI Förbrukning) ---------- */
+  const MON = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
+  const monName = (m) => { const n = MON[Number(String(m).slice(5, 7)) - 1] || m; return n.charAt(0).toUpperCase() + n.slice(1); };
+  const dShort = (s) => { const [, mm, dd] = String(s).split('-').map(Number); return dd + ' ' + (MON[mm - 1] || '').slice(0, 3); };
+  const hhmm = (ts) => new Date(ts).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+  function whenTs(ts) {
+    const d = new Date(ts), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    const diff = Math.round((t0 - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+    const day = diff === 0 ? 'Idag' : diff === 1 ? 'Igår' : d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+    return day + ' ' + hhmm(ts);
+  }
+  const kwhKr = (x) => f2.format(x.kwh) + ' kWh · ' + f2.format(x.kr) + ' kr';
+  function renderApps() {
+    const el = $('apps'); if (!el) return;
+    let A = null; try { A = JSON.parse(varVal('AI Förbrukning') || ''); } catch (e) {}
+    if (!A || !A.u) { el.replaceChildren(mk('div', 'empty', vars.length ? 'Ingen förbrukningsdata än. Flödet AI 14 i Homey räknar varje minut.' : 'Hämtar förbrukning…')); return; }
+    el.replaceChildren();
+    const live = (k) => { const d = devices.find((x) => x.id === (A[k] && A[k].id)); return d ? Number(val(d, 'measure_power')) || 0 : (A[k] ? A[k].w : 0); };
+    const month = (x) => x.month && ['Hittills i ' + MON[Number(x.month.m.slice(5, 7)) - 1] + (x.month.from ? ' (från ' + dShort(x.month.from) + ')' : ''), kwhKr(x.month)];
+    const prevMonth = (x) => x.prevMonth && [monName(x.prevMonth.m) + (x.prevMonth.from ? ' (från ' + dShort(x.prevMonth.from) + ')' : ''), kwhKr(x.prevMonth)];
+    const block = (name, w, rows) => { const b = mk('div', 'kv num app'); kv(b, [[name, w > 0.5 ? 'nu ' + W(w) : 'vilar'], ...rows]); b.children[0].classList.add('ah'); b.children[1].classList.add('ah'); el.append(b); };
+    if (A.kyl) {
+      const x = A.kyl;
+      block(x.n || 'Kylskåp', live('kyl'), [
+        x.yday ? ['Igår (' + dShort(x.yday.d) + (x.yday.from ? ', från ' + x.yday.from : '') + ')', kwhKr(x.yday)] : ['Igår', 'klart efter midnatt'],
+        month(x), prevMonth(x),
+      ]);
+    }
+    [['disk', 'Diskmaskin', 'Senaste disk'], ['tvatt', 'Tvättmaskin', 'Senaste tvätt']].forEach(([k, def, lbl]) => {
+      const x = A[k]; if (!x) return;
+      block(x.n || def, live(k), [
+        x.run && ['Pågår sedan ' + hhmm(x.run.start), kwhKr(x.run), 'run'],
+        x.last ? [lbl + ' · ' + whenTs(x.last.start) + '–' + hhmm(x.last.end), kwhKr(x.last)] : !x.run && [lbl, 'ingen registrerad än'],
+        month(x), prevMonth(x),
+      ]);
+    });
+    el.append(mk('div', 'appnote', 'Kostnad = förbrukning × köppriset för varje kvart (inkl. påslag enligt Homey Energy). Räknas av flödet AI 14 i Homey, uppdaterad ' + hhmm(A.u) + '.'));
+  }
+
   function renderEnergy() {
     const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
     const sun = devices.find((d) => d.type === 'solarpanel');
@@ -792,6 +839,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
 
     renderPrice(price);
+    renderApps();
 
     kv($('today'), [
       grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
