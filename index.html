@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.7">
+<meta name="app-version" content="2026-11-05.8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -355,7 +355,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
 
     <div class="h2">Idag</div>
-    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (inkl. påslag), sålt med spotpriset per kvart.</div></div>
+    <div class="card"><div class="kv num" id="today"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -375,8 +375,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.7"></script>
-<script src="homey.js?v=2026-11-05.7"></script>
+<script src="config.js?v=2026-11-05.8"></script>
+<script src="homey.js?v=2026-11-05.8"></script>
 <script>
 (() => {
   const S = 'Homey';
