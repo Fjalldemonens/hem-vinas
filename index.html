@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.2">
+<meta name="app-version" content="2026-11-05.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -365,8 +365,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.2"></script>
-<script src="homey.js?v=2026-11-05.2"></script>
+<script src="config.js?v=2026-11-05.3"></script>
+<script src="homey.js?v=2026-11-05.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -935,9 +935,19 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return { ...best, label: (k === 0 ? 'idag' : k === 1 ? 'imorgon' : DAYL[best.t.getDay()]) + ' ' + best.e.time };
   }
   const dayText = (days) => { const s = DAYS.filter(([n]) => (days || []).includes(n)).map(([, l]) => l); return s.length === 7 ? 'Varje dag' : s.length ? s.join(', ') : 'Inga dagar'; };
+  const roomsOf = (e) => (e.rooms && e.rooms.length ? e.rooms : e.room ? [e.room] : []);
   function schedDesc(d, e) {
-    return [e.mode ? sv(capTitle(d, 'clean_mode', e.mode)) : 'Nuvarande städläge', e.room ? sv(capTitle(d, 'clean_room_pick', e.room)) : 'Hela', e.suction ? 'sugkraft ' + sv(capTitle(d, 'suction_power', e.suction)).toLowerCase() : ''].filter(Boolean).join(' · ');
+    const r = roomsOf(e);
+    const lc = (c, v) => sv(capTitle(d, c, v)).toLowerCase();
+    return [
+      e.mode != null ? sv(capTitle(d, 'clean_mode', e.mode)) : 'Nuvarande städläge',
+      r.length ? r.map((x) => sv(capTitle(d, 'clean_room_pick', x))).join(', ') : 'Hela hemmet',
+      e.suction ? 'sugkraft ' + lc('suction_power', e.suction) : '',
+      e.scrub ? 'moppning ' + lc('scrub_intensity', e.scrub) : '',
+      e.route ? 'rutt ' + lc('mop_route', e.route) : '',
+    ].filter(Boolean).join(' · ');
   }
+  const firstDay = (e) => Math.min(...(e.days || [7]).map((n) => (n + 6) % 7));
   async function schedSave(d, list, msg) {
     if (schedBusy) return false; schedBusy = true;
     const all = schedAll(); all[d.id] = list; const txt = JSON.stringify(all);
@@ -952,6 +962,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       return false;
     } finally { schedBusy = false; renderRobot(); }
   }
+  function multiRow(d, cap, cur, none, onChange) {
+    const c = mk('div', 'chips');
+    const all = mk('button', 'chip', none); all.type = 'button'; all.setAttribute('aria-pressed', cur.length ? 'false' : 'true');
+    all.addEventListener('click', () => { onChange([]); renderRobot(); }); c.append(all);
+    opts(d, cap).forEach((x) => {
+      const on = cur.includes(x.id), n = cur.indexOf(x.id) + 1;
+      const b = mk('button', 'chip', sv(x.title) + (on && cur.length > 1 ? ' ' + n : '')); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.addEventListener('click', () => { onChange(on ? cur.filter((y) => y !== x.id) : cur.concat(x.id)); renderRobot(); }); c.append(b);
+    });
+    return c;
+  }
   function choiceRow(d, cap, cur, none, onPick) {
     const c = mk('div', 'chips');
     [[null, none], ...opts(d, cap).map((x) => [x.id, sv(x.title)])].forEach(([id, label]) => {
@@ -961,7 +982,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return c;
   }
   function schedPanel(d) {
-    const list = (schedAll()[d.id] || []).slice();
+    const list = (schedAll()[d.id] || []).slice().sort((a, b) => firstDay(a) - firstDay(b) || a.time.localeCompare(b.time));
     const out = [mk('div', 'h2', 'Schema')];
     if (draft && draft.dev === d.id) {
       const e = draft.e, card = mk('div', 'card sched');
@@ -971,13 +992,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const ti = mk('input', 'tin'); ti.type = 'time'; ti.value = e.time; ti.addEventListener('input', () => { e.time = ti.value; });
       card.append(lab('Dagar'), dc, lab('Tid'), ti);
       if (opts(d, 'clean_mode').length) card.append(lab('Städläge'), choiceRow(d, 'clean_mode', e.mode, 'Nuvarande', (v) => { e.mode = v; }));
-      if (opts(d, 'clean_room_pick').length) card.append(lab('Rum'), choiceRow(d, 'clean_room_pick', e.room, 'Hela hemmet', (v) => { e.room = v; }));
+      if (!e.rooms) { e.rooms = e.room ? [e.room] : []; delete e.room; }
+      if (opts(d, 'clean_room_pick').length) card.append(lab('Rum (städas i den ordning du väljer)'), multiRow(d, 'clean_room_pick', e.rooms, 'Hela hemmet', (v) => { e.rooms = v; }));
       if (opts(d, 'suction_power').length) card.append(lab('Sugkraft'), choiceRow(d, 'suction_power', e.suction, 'Nuvarande', (v) => { e.suction = v; }));
+      if (opts(d, 'scrub_intensity').length) card.append(lab('Moppning (vattenflöde)'), choiceRow(d, 'scrub_intensity', e.scrub, 'Nuvarande', (v) => { e.scrub = v; }));
+      if (opts(d, 'mop_route').length) card.append(lab('Rutt'), choiceRow(d, 'mop_route', e.route, 'Nuvarande', (v) => { e.route = v; }));
+      if (e.note) card.append(mk('p', 'fine', 'Obs: ' + e.note));
       const save = mk('button', 'btn go', 'Spara'); save.type = 'button';
       save.addEventListener('click', async () => {
         if (!/^\d\d:\d\d$/.test(e.time || '') || !e.days.length) { toast('Välj minst en dag och en tid'); return; }
         const i = list.findIndex((x) => x.id === e.id); if (i >= 0) list[i] = e; else list.push(e);
-        list.sort((a, b) => a.time.localeCompare(b.time));
+        list.sort((a, b) => firstDay(a) - firstDay(b) || a.time.localeCompare(b.time));
         if (await schedSave(d, list)) { draft = null; renderRobot(); }
       });
       const cancel = mk('button', 'btn', 'Avbryt'); cancel.type = 'button'; cancel.addEventListener('click', () => { draft = null; renderRobot(); });
@@ -1000,9 +1025,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     });
     out.push(card);
     const add = mk('button', 'btn', '+ Nytt schema'); add.type = 'button';
-    add.addEventListener('click', () => { draft = { dev: d.id, e: { id: 's' + Date.now().toString(36), on: true, days: [1, 2, 3, 4, 5], time: '10:00', mode: null, suction: null, room: null } }; renderRobot(); });
+    add.addEventListener('click', () => { draft = { dev: d.id, e: { id: 's' + Date.now().toString(36), on: true, days: [1, 2, 3, 4, 5], time: '10:00', mode: null, suction: null, scrub: null, route: null, rooms: [] } }; renderRobot(); });
     const q = quick([add]); out.push(q);
-    out.push(mk('p', 'fine', 'Test: schemat körs av flödet AI 13 i Homey. Stäng av samma schema i Roborock-appen så roboten inte städar två gånger.'));
+    out.push(mk('p', 'fine', 'Test: schemat körs av flödet AI 13 i Homey. Flera rum städas ett i taget, och nästa körning väntar tills roboten är tillbaka i laddstationen. Stäng av samma schema i Roborock-appen så roboten inte städar två gånger.'));
     return out;
   }
   function rrCard(d) {
