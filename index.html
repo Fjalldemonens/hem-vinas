@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.8">
+<meta name="app-version" content="2026-11-05.9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -164,6 +164,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .kv .k.ah{color:var(--fg);font-weight:700}
 .kv .v.ah{color:var(--muted);font-weight:500}
 .kv .v.run{color:var(--ok)}
+.kv .sep{border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
 .appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
 .price{display:flex;flex-direction:column;gap:10px;padding:16px}
 .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
@@ -375,8 +376,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.8"></script>
-<script src="homey.js?v=2026-11-05.8"></script>
+<script src="config.js?v=2026-11-05.9"></script>
+<script src="homey.js?v=2026-11-05.9"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -718,7 +719,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     el.classList.toggle('rev', !towardHome);
     el.style.animationDuration = (Math.max(0.45, 1.6 - Math.min(Math.abs(w), 6000) / 5000)) + 's';
   }
-  function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k', k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
+  function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k' + (cls === 'sep' ? ' sep' : ''), k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
   // När en enhet senast skickade ett värde till Homey (nyaste tidsstämpeln bland dess funktioner).
   const lastSeen = (d) => Math.max(0, ...Object.values(d.caps || {}).map((c) => c.at || 0));
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'nyss' : m < 60 ? 'för ' + m + ' min sedan' : m < 1440 ? 'för ' + f1.format(m / 60) + ' h sedan' : 'för ' + Math.round(m / 1440) + ' dygn sedan'; };
@@ -845,13 +846,19 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 
     // Köpt och sålt idag i kr från flödet AI 14 (kvartspriser); annars Tibbers egna siffror
     let G = null; try { const A = JSON.parse(varVal('AI Förbrukning') || ''); G = A && A.grid; } catch (e) {}
+    const GM = G && G.month && G.month.m ? G.month : null, GP = G && G.prevMonth;
+    const netRow = (label, ink, ut, dec) => { const n = ink - ut, F = dec === 0 ? f0 : f2; return [label, (n < 0 ? '+' + F.format(-n) : '−' + F.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
     const fromTxt = (x) => (x.from ? ' (från ' + x.from + ')' : '');
     kv($('today'), [
       G ? ['Köpt idag' + fromTxt(G.imp), f1.format(G.imp.kwh) + ' kWh · ' + f2.format(G.imp.kr) + ' kr']
         : grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
       G ? ['Sålt idag' + fromTxt(G.exp), f1.format(G.exp.kwh) + ' kWh · ' + f2.format(G.exp.kr) + ' kr']
         : grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
-      G && ['Netto idag', (G.imp.kr - G.exp.kr < 0 ? '+' + f2.format(G.exp.kr - G.imp.kr) + ' kr' : '−' + f2.format(G.imp.kr - G.exp.kr) + ' kr'), G.imp.kr - G.exp.kr < 0 ? 'okc' : ''],
+      G && netRow('Netto idag', G.imp.kr, G.exp.kr),
+      GM && ['Köpt i ' + MON[Number(GM.m.slice(5, 7)) - 1], f0.format(GM.imp.kwh) + ' kWh · ' + f0.format(GM.imp.kr) + ' kr', 'sep'],
+      GM && ['Sålt i ' + MON[Number(GM.m.slice(5, 7)) - 1], f0.format(GM.exp.kwh) + ' kWh · ' + f0.format(GM.exp.kr) + ' kr'],
+      GM && netRow('Netto i ' + MON[Number(GM.m.slice(5, 7)) - 1], GM.imp.kr, GM.exp.kr, 0),
+      GP && ['Netto ' + MON[Number(GP.m.slice(5, 7)) - 1], f0.format(GP.ikr - GP.ekr) + ' kr (köpt ' + f0.format(GP.ikr) + ', sålt ' + f0.format(GP.ekr) + ')'],
       sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
       grid && has(grid, 'meter_power.imported') && ['Köpt totalt', f0.format(val(grid, 'meter_power.imported')) + ' kWh'],
       grid && has(grid, 'meter_power.exported') && ['Sålt totalt', f0.format(val(grid, 'meter_power.exported')) + ' kWh'],
