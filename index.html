@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.15">
+<meta name="app-version" content="2026-11-05.16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -184,12 +184,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .pchart{width:100%;height:auto;display:block}
 .pchart .gl{stroke:var(--line);stroke-width:1}
 .pchart .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
-.pchart .ln{fill:none;stroke-width:2;stroke-linejoin:round}
-.pchart .ln.imp{stroke:var(--danger)} .pchart .ln.exp{stroke:var(--ok)}
-.pchart .area{stroke:none;opacity:.16} .pchart .area.imp{fill:var(--danger)} .pchart .area.exp{fill:var(--ok)}
-.pchart .oth{fill:none;stroke-width:1.5;opacity:.8} .pchart .oth.imp{stroke:var(--danger)} .pchart .oth.exp{stroke:var(--ok)}
-.pchart .nowl{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
-.pchart .nowd{stroke:var(--card);stroke-width:2;fill:var(--fg)}
+.pchart .ln{fill:none;stroke-width:2.2;stroke-linejoin:round}
+.pchart .area{stroke:none;opacity:.32}
+.pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.3}
+.pchart .oarea{fill:var(--faint);opacity:.12;stroke:none}
+.pchart .nowh{opacity:.28}
+.pchart .nowl{stroke:var(--faint);stroke-width:2;opacity:.6}
+.pchart .nowd{stroke:var(--card);stroke-width:2}
+.pminmax{display:flex;gap:22px;flex-wrap:wrap}
+.pminmax .big{font-size:1.9rem}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
 .price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
 .range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
@@ -384,8 +387,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.15"></script>
-<script src="homey.js?v=2026-11-05.15"></script>
+<script src="config.js?v=2026-11-05.16"></script>
+<script src="homey.js?v=2026-11-05.16"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -740,23 +743,49 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     opts.forEach(([v, label, dis]) => { const b = mk('button', '', label); b.type = 'button'; b.disabled = !!dis; b.setAttribute('aria-pressed', v === cur ? 'true' : 'false'); b.addEventListener('click', () => onPick(v)); g.append(b); });
     return g;
   }
+  // Färgskala som i Homey: import grönt (billigt) → gult → orange → rött (dyrt); export tvärtom (högt pris = bra)
+  const PSTOPS = [[0, [122, 196, 47]], [0.4, [214, 193, 44]], [0.7, [239, 141, 44]], [1, [216, 55, 44]]];
+  function priceColor(v, mn, mx, kind) {
+    let t = mx > mn ? (v - mn) / (mx - mn) : 0.5; if (kind === 'exp') t = 1 - t; t = Math.min(1, Math.max(0, t));
+    for (let i = 1; i < PSTOPS.length; i++) {
+      const [t1, c1] = PSTOPS[i - 1], [t2, c2] = PSTOPS[i];
+      if (t <= t2) { const f = (t - t1) / (t2 - t1); return 'rgb(' + c1.map((c, k) => Math.round(c + (c2[k] - c) * f)).join(',') + ')'; }
+    }
+    return 'rgb(216,55,44)';
+  }
+  let pcId = 0;
   function priceChart(day, kind, nowIdx) {
     const arr = day[kind], other = day[kind === 'imp' ? 'exp' : 'imp'];
-    const W = 340, H = 150, L = 34, R = 6, T = 8, B = 22;
+    const W = 340, H = 160, L = 34, R = 6, T = 10, B = 22;
     const all = arr.concat(other), lo = Math.min(0, ...all), hi = Math.max(...all) * 1.08 || 1;
+    const mn = Math.min(...arr), mx = Math.max(...arr);
     const x = (i) => L + (W - L - R) * i / arr.length, y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
     const step = (a) => 'M' + x(0).toFixed(1) + ' ' + y(a[0]).toFixed(1) + a.map((v, k) => ' H' + x(k).toFixed(1) + ' V' + y(v).toFixed(1)).join('') + ' H' + x(a.length).toFixed(1);
     const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'pchart'); svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', (kind === 'imp' ? 'Importpris' : 'Exportpris') + ' per kvart, ' + f2.format(Math.min(...arr)) + ' till ' + f2.format(Math.max(...arr)) + ' kr per kWh');
-    const el = (n, a) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); svg.append(e); return e; };
+    svg.setAttribute('aria-label', (kind === 'imp' ? 'Importpris' : 'Exportpris') + ' per kvart, ' + f2.format(mn) + ' till ' + f2.format(mx) + ' kr per kWh');
+    const mkEl = (n, a, parent) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); (parent || svg).append(e); return e; };
+    const el = (n, a) => mkEl(n, a);
+    // Gradienter: linjens färg följer priset (lodrätt), ytan under tonas ut nedåt
+    const id = 'pc' + (++pcId), defs = el('defs', {});
+    const g = mkEl('linearGradient', { id: id + 'g', gradientUnits: 'userSpaceOnUse', x1: 0, x2: 0, y1: y(mx), y2: y(mn) }, defs);
+    for (let i = 0; i <= 10; i++) mkEl('stop', { offset: (i * 10) + '%', 'stop-color': priceColor(mx - (mx - mn) * i / 10, mn, mx, kind) }, g);
+    const fg = mkEl('linearGradient', { id: id + 'f', gradientUnits: 'userSpaceOnUse', x1: 0, x2: 0, y1: y(mx), y2: y(lo) }, defs);
+    mkEl('stop', { offset: '0%', 'stop-color': '#fff', 'stop-opacity': '1' }, fg); mkEl('stop', { offset: '100%', 'stop-color': '#fff', 'stop-opacity': '0' }, fg);
+    const mask = mkEl('mask', { id: id + 'm' }, defs); mkEl('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#' + id + 'f)' }, mask);
     const ticks = []; const stepv = hi > 3 ? 1 : 0.5; for (let v = Math.ceil(lo / stepv) * stepv; v <= hi; v += stepv) ticks.push(v);
     ticks.forEach((v) => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gl' }); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }); t.textContent = f1.format(v); });
-    [0, 6, 12, 18, 24].forEach((h) => { const t = el('text', { x: x(arr.length * h / 24), y: H - 6, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(h).padStart(2, '0'); });
-    el('path', { d: step(other), class: 'oth ' + (kind === 'imp' ? 'exp' : 'imp') });
-    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', class: 'area ' + kind });
-    el('path', { d: step(arr), class: 'ln ' + kind });
-    if (nowIdx >= 0 && nowIdx < arr.length) { const cx = x(nowIdx + 0.5); el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' }); el('circle', { cx, cy: y(arr[nowIdx]), r: 4, class: 'nowd ' + kind }); }
+    [0, 6, 12, 18, 24].forEach((hh) => { const t = el('text', { x: x(arr.length * hh / 24), y: H - 6, 'text-anchor': hh === 0 ? 'start' : hh === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(hh).padStart(2, '0'); });
+    el('path', { d: step(other) + ' V' + y(lo) + ' H' + x(0) + ' Z', class: 'oarea' });
+    el('path', { d: step(other), class: 'oth' });
+    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', fill: 'url(#' + id + 'g)', mask: 'url(#' + id + 'm)', class: 'area' });
+    el('path', { d: step(arr), stroke: 'url(#' + id + 'g)', class: 'ln' });
+    if (nowIdx >= 0 && nowIdx < arr.length) {
+      const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = priceColor(arr[nowIdx], mn, mx, kind);
+      el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' });
+      el('circle', { cx, cy, r: 9, fill: col, class: 'nowh' });
+      el('circle', { cx, cy, r: 4.5, fill: col, class: 'nowd' });
+    }
     return svg;
   }
   function renderPrice(dev) {
@@ -770,26 +799,31 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const idx = Math.floor((Date.now() - t0) / iv);
     if (priceDay >= P.days.length) priceDay = 0;
     const day = P.days[priceDay];
-    const cur = today.imp[idx], curE = today.exp[idx];
-    const sorted = today.imp.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
-    const lvl = cur == null ? ['–', ''] : cur >= q(0.9) ? ['Mycket dyrt', 'bad'] : cur >= q(0.66) ? ['Dyrt', 'warn'] : cur <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
+    const arr = day[priceKind], mn = Math.min(...arr), mx = Math.max(...arr);
+    const slot = (v) => { const s = new Date(day.s).getTime() + arr.indexOf(v) * iv; return hm(s) + '–' + hm(s + iv); };
     const head = mk('div', 'phead');
-    const left = mk('div');
-    const big = mk('div', 'big num'); big.append(document.createTextNode(cur == null ? '–' : f2.format(cur)), mk('small', '', ' kr/kWh'));
-    const left2 = mk('div', 'psub num', cur == null ? '' : Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000)) + ' min kvar · export ' + f2.format(curE) + ' kr');
-    left.append(big, left2);
-    head.append(left, mk('span', 'chip ' + lvl[1], lvl[0]));
+    const priceBig = (v, sub) => { const w = mk('div', 'pbig'); const big = mk('div', 'big num'); big.style.color = priceColor(v, mn, mx, priceKind); big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh')); w.append(big, mk('div', 'psub num', sub)); return w; };
+    if (priceDay === 0 && arr[idx] != null) {
+      head.append(priceBig(arr[idx], Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000)) + ' min kvar' + (priceKind === 'imp' ? ' · export ' + f2.format(today.exp[idx]) + ' kr' : ' · import ' + f2.format(today.imp[idx]) + ' kr')));
+      if (priceKind === 'imp') {
+        const sorted = today.imp.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))], cur = today.imp[idx];
+        const lvl = cur >= q(0.9) ? ['Mycket dyrt', 'bad'] : cur >= q(0.66) ? ['Dyrt', 'warn'] : cur <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
+        head.append(mk('span', 'chip ' + lvl[1], lvl[0]));
+      }
+    } else {
+      const two = mk('div', 'pminmax'); two.append(priceBig(mn, 'Min · ' + slot(mn)), priceBig(mx, 'Max · ' + slot(mx))); head.append(two);
+    }
     const ctr = mk('div', 'pctl');
     ctr.append(
       segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
       segBtns([['imp', 'Import'], ['exp', 'Export']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
-    const arr = day[priceKind], mn = Math.min(...arr), mx = Math.max(...arr);
-    const at = (v) => hm(new Date(day.s).getTime() + arr.indexOf(v) * iv);
-    const foot = mk('div', 'rangel num');
-    foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + at(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + at(mx)));
-    const note = P.days.length < 2 ? mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.') : null;
-    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1), foot);
-    if (note) pc.append(note);
+    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1));
+    if (priceDay === 0) {
+      const foot = mk('div', 'rangel num');
+      const lo = mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slot(mn).split('–')[0]), hi2 = mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slot(mx).split('–')[0]);
+      foot.append(lo, hi2); pc.append(foot);
+    }
+    if (P.days.length < 2) pc.append(mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.'));
   }
   /* ---------- apparater: förbrukning och kostnad från flödet AI 14 (variabeln AI Förbrukning) ---------- */
   const MON = ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december'];
