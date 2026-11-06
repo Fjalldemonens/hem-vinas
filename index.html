@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-06.3">
+<meta name="app-version" content="2026-11-06.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -194,6 +194,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .pchart .nowt{fill:var(--card);font-family:var(--f-body);font-size:10.5px;font-weight:700}
 .pchart .nowl{stroke:var(--faint);stroke-width:2;opacity:.6}
 .pchart .nowd{stroke:var(--card);stroke-width:2.5}
+.pchart{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
+.pchart:focus{outline:none}
+.pchart .scrl{stroke:var(--fg);stroke-width:1.5;opacity:.55}
 .pminmax{display:flex;gap:22px;flex-wrap:wrap}
 .pminmax .big{font-size:1.9rem}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
@@ -393,8 +396,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-06.3"></script>
-<script src="homey.js?v=2026-11-06.3"></script>
+<script src="config.js?v=2026-11-06.4"></script>
+<script src="homey.js?v=2026-11-06.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -753,7 +756,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return 'rgb(216,55,44)';
   }
   let pcId = 0;
-  function priceChart(day, kind, nowIdx) {
+  function priceChart(day, kind, nowIdx, onScrub) {
     const arr = day[kind], other = day[kind === 'imp' ? 'exp' : 'imp'];
     const W = 340, H = 160, L = 34, R = 6, T = 10, B = 22;
     const all = arr.concat(other), lo = Math.min(0, ...all), hi = Math.max(...all) * 1.08 || 1;
@@ -781,6 +784,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     el('path', { d: step(arr), stroke: 'url(#' + id + 'g)', class: 'ln' });
     if (nowIdx >= 0 && nowIdx < arr.length) {
       const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = priceColor(arr[nowIdx], mn, mx, kind);
+      const ng = mkEl('g', { class: 'nowg' }); const el = (n, a) => mkEl(n, a, ng);
       el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' });
       el('circle', { cx, cy, r: 14, fill: col, class: 'nowh' });
       el('circle', { cx, cy, r: 8.5, class: 'nowr' });
@@ -790,9 +794,54 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       el('rect', { x: lx - 21, y: ly - 12, width: 42, height: 17, rx: 8.5, class: 'nowbg' });
       const tx = el('text', { x: lx, y: ly + 1, 'text-anchor': 'middle', class: 'nowt' }); tx.textContent = f2.format(arr[nowIdx]);
     }
+    // Dra med fingret i sidled (som i Tibber/Homey): markör följer med och visar kvartens tid och pris.
+    // touch-action: pan-y gör att lodrätt drag fortfarande scrollar sidan.
+    const sg = mkEl('g', { class: 'scrg', style: 'display:none', 'pointer-events': 'none' });
+    const sLine = mkEl('line', { y1: T, y2: H - B, class: 'scrl' }, sg);
+    const sHalo = mkEl('circle', { r: 14, class: 'nowh' }, sg), sRing = mkEl('circle', { r: 8.5, class: 'nowr' }, sg), sDot = mkEl('circle', { r: 6, class: 'nowd' }, sg);
+    const sBg = mkEl('rect', { height: 17, rx: 8.5, class: 'nowbg' }, sg), sTx = mkEl('text', { 'text-anchor': 'middle', class: 'nowt' }, sg);
+    const t0 = new Date(day.s).getTime(), ivMs = (day.iv || 15) * 60000;
+    let cur = -1;
+    const show = (i) => {
+      i = Math.min(arr.length - 1, Math.max(0, i));
+      if (i === cur) return; cur = i;
+      const cx = x(i + 0.5), cy = y(arr[i]), col = priceColor(arr[i], mn, mx, kind);
+      sLine.setAttribute('x1', cx); sLine.setAttribute('x2', cx);
+      [sHalo, sRing, sDot].forEach((c) => { c.setAttribute('cx', cx); c.setAttribute('cy', cy); });
+      sHalo.setAttribute('fill', col); sDot.setAttribute('fill', col);
+      const w = 76, lx = Math.min(Math.max(cx, L + w / 2), W - R - w / 2), ly = cy - 20 < T + 8 ? cy + 30 : cy - 20;
+      sBg.setAttribute('x', lx - w / 2); sBg.setAttribute('y', ly - 12); sBg.setAttribute('width', w);
+      sTx.setAttribute('x', lx); sTx.setAttribute('y', ly + 1); sTx.textContent = hm(t0 + i * ivMs) + ' · ' + f2.format(arr[i]);
+      sg.style.display = ''; const ng = svg.querySelector('.nowg'); if (ng) ng.style.display = 'none';
+      onScrub && onScrub(i);
+    };
+    const hide = () => {
+      if (cur < 0) return; cur = -1; sg.style.display = 'none';
+      const ng = svg.querySelector('.nowg'); if (ng) ng.style.display = '';
+      onScrub && onScrub(-1);
+    };
+    const idxAt = (ev) => { const r = svg.getBoundingClientRect(); const vx = (ev.clientX - r.left) / r.width * W; return Math.floor((vx - L) / (W - L - R) * arr.length); };
+    let down = false;
+    svg.addEventListener('pointerdown', (ev) => { down = true; try { svg.setPointerCapture(ev.pointerId); } catch (e) {} show(idxAt(ev)); });
+    svg.addEventListener('pointermove', (ev) => { if (down || ev.pointerType === 'mouse') show(idxAt(ev)); });
+    const end = (ev) => { down = false; if (ev.type !== 'pointerup' || ev.pointerType !== 'mouse') hide(); };
+    ['pointerup', 'pointercancel'].forEach((t) => svg.addEventListener(t, end));
+    svg.addEventListener('pointerleave', () => { if (!down) hide(); });
+    svg.addEventListener('contextmenu', (ev) => ev.preventDefault());
+    // Tangentbord: pilar flyttar markören, Esc släpper
+    svg.setAttribute('tabindex', '0');
+    svg.addEventListener('keydown', (ev) => {
+      const start = cur >= 0 ? cur : nowIdx >= 0 ? nowIdx : 0;
+      if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { ev.preventDefault(); show(start + (ev.key === 'ArrowRight' ? 1 : -1) * (ev.shiftKey ? 4 : 1)); }
+      else if (ev.key === 'Escape') hide();
+    });
+    svg.addEventListener('blur', hide);
     return svg;
   }
+  let priceScrubbing = false, pricePending = null;
   function renderPrice(dev) {
+    // Uppdatera inte kortet mitt i ett fingerdrag – rita om när fingret släpps
+    if (priceScrubbing) { pricePending = dev; return; }
     const pc = $('priceCard'); pc.replaceChildren();
     const P = priceData();
     if (!P) {
@@ -821,7 +870,25 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     ctr.append(
       segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
       segBtns([['imp', 'Import'], ['exp', 'Export']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
-    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1));
+    // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
+    const headKids = [...head.childNodes];
+    const sorted = arr.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
+    const onScrub = (i) => {
+      if (i < 0) {
+        priceScrubbing = false; head.replaceChildren(...headKids);
+        if (pricePending !== null) { const d = pricePending; pricePending = null; renderPrice(d); }
+        return;
+      }
+      priceScrubbing = true;
+      const s = new Date(day.s).getTime() + i * iv, v = arr[i];
+      const otherK = priceKind === 'imp' ? 'exp' : 'imp';
+      head.replaceChildren(priceBig(v, 'kl ' + hm(s) + '–' + hm(s + iv) + ' · ' + (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(day[otherK][i]) + ' kr'));
+      if (priceKind === 'imp') {
+        const lvl = v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
+        head.append(mk('span', 'chip ' + lvl[1], lvl[0]));
+      }
+    };
+    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
     if (priceDay === 0) {
       const foot = mk('div', 'rangel num');
       const lo = mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slot(mn).split('–')[0]), hi2 = mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slot(mx).split('–')[0]);
