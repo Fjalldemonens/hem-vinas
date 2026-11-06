@@ -7,7 +7,7 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 - Ingen byggprocess: ren HTML/CSS/JS. Inga bibliotek utöver Google Fonts.
 
 ## Filer
-- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-06.2.
+- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-06.3.
 - `homey.js` – Homey Web API-klient: OAuth via Workern, delegationstoken, session mot Homey Pro (lokalt först, annars moln), enheter, zoner, variabler, moods.
 - `homey/` – kopior av HomeyScript-koden i flödena AI 11, AI 13 och AI 14 (källan som körs ligger i Homey; uppdatera kopian när flödet ändras).
 - `config.js` – Client ID, Worker-adress, Redirect URL. Inga hemligheter.
@@ -44,7 +44,7 @@ Variabler: AI Elpriser, AI Förbrukning, AI Städschema, AI Städlogg, AI Homevo
 - **Homevolt i Homey (bb92dcb1-…):** Homey-appen exponerar inget fellarm – vid fel syns bara `battery_status: "Okänd"` och `measure_power` 0. Använd i stället Homevolts lokala JSON **http://192.168.1.168/ems.json**: `ems[0].ems_data` (state_str, warning_str, alarm_str, soc_avg ×0,01 %), `ems[0].bms_data[]` = en post per modul i ordningen BAT00, BAT01 (inget id-fält): `state_str` (Connected/Fault), `alarm`, `alarm_str[]`, `soc` ×0,01 %, `energy_avail` Wh, `cycle_count`, `tmin`/`tmax` ×0,1 °C. `sensors[]` = grid/solar/load. En modul i Fault stoppar hela systemet (BATTERY_DC_DISCONNECT).
 - **Homevolt kan stå still med full kontakt:** 2026-11-05 16:05–20:45 låg nätfrekvensen på 0 Hz men Homey fick nya värden hela tiden, så kontaktvakten såg inget. Stopp syns säkrast som `measure_frequency` = 0. `ems_data.warning_str` innehåller `BATTERY_DC_DISCONNECT_WARNING` även när systemet går på BAT01 – använd inte den som stoppsignal. HomeyScripts fetch mot ems.json kan sluta svara en tid ("lokal sida svarar inte").
 - **HomeyScript saknar `setTimeout`** (ReferenceError). Använd aldrig `Promise.race` med `setTimeout` för timeouts – använd `fetch(url, { timeout: ms })`. Modulvakten i AI 11 var blind 2026-11-05 till 2026-11-06 06:10 av just detta, och AI 13 kraschade 2026-11-06 09:30 på samma sak (pausen efter lägesbyte) – nu `pause()` med HomeyScripts `wait()` eller korta enhetsanrop.
-- **Thermia börvärde via Homey (Thermia Online):** går genom Thermias moln. Vid molnstörning svarar Homey OK och värdet syns kort, men studsar tillbaka inom ~5 min. Appen kontrollerar därför börvärdet 6 min efter en ändring (`expectVal`/`checkVerify`) och visar en röd ruta i värmepumpskortet bara om det inte gick fram.
+- **Thermia börvärde via Homey (Thermia Online):** går genom Thermias moln, som ofta svarar OK utan att pumpen tar emot värdet (studsar tillbaka inom ~5 min). Därför är värmepumpskortet skrivskyddat sedan 2026-11-06.3: appen visar bara inställd innetemperatur (börvärde) – ändra på pumpen eller i Thermia-appen. Ingen +/−, ingen kontroll/varning.
 - **Hue lightstrip** får inte vara med i något flöde (styrs av Harmony). Luft-luftvärmepumpen används bara för kyla åt hundarna.
 
 ## Arbetssätt (för att spara användning)
