@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-06.1">
+<meta name="app-version" content="2026-11-06.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -393,8 +393,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-06.1"></script>
-<script src="homey.js?v=2026-11-06.1"></script>
+<script src="config.js?v=2026-11-06.2"></script>
+<script src="homey.js?v=2026-11-06.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -877,7 +877,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (A.kyl) {
       const x = A.kyl;
       block(x.n || 'Kylskåp', live('kyl'), [
-        x.yday ? ['Igår (' + dShort(x.yday.d) + (x.yday.from ? ', från ' + x.yday.from : '') + ')', kwhKr(x.yday)] : ['Igår', 'klart efter midnatt'],
+        x.yday && !x.yday.from ? ['Igår (' + dShort(x.yday.d) + ')', kwhKr(x.yday)] : ['Igår', 'första hela dygnet klart efter midnatt'],
         month(x), prevMonth(x),
       ]);
     }

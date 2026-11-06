@@ -47,14 +47,35 @@ for (const [k, id] of Object.entries(DEV)) {
     if (dk < 0) dk = kwh;            // mätaren nollställd
     s.last = kwh;
     const kr = price == null ? 0 : dk * price;
-    // dygn (räknas in i det gamla dygnet först, sedan byte vid midnatt)
+    // Bara hela dygn (midnatt–midnatt) redovisas (sedan 2026-11-06). Ett dygn som började mitt på dagen (dfrom satt)
+    // räknas men slängs vid midnatt: blir varken "igår" eller del av månaden. Månaden = avslutade hela dygn (mkwh) + idag om det är helt.
     if (!s.day) { s.day = day; s.dkwh = 0; s.dkr = 0; s.dfrom = hm; }
-    s.dkwh += dk; s.dkr += kr;
-    if (s.day !== day) { s.yday = { d: s.day, kwh: r3(s.dkwh), kr: r2(s.dkr), from: s.dfrom || null }; s.day = day; s.dkwh = 0; s.dkr = 0; s.dfrom = null; }
-    // månad
-    if (!s.mon) { s.mon = mon; s.mkwh = 0; s.mkr = 0; s.mfrom = day; }
-    s.mkwh += dk; s.mkr += kr;
-    if (s.mon !== mon) { s.prevMon = { m: s.mon, kwh: r3(s.mkwh), kr: r2(s.mkr), from: s.mfrom || null }; s.mon = mon; s.mkwh = 0; s.mkr = 0; s.mfrom = null; }
+    // Engångsomställning från gamla sättet (då räknades påbörjade dygn in i igår och månaden)
+    if (s.v !== 2) {
+      s.mkwh = (s.mkwh || 0) - (s.dkwh || 0); s.mkr = (s.mkr || 0) - (s.dkr || 0);
+      if (s.yday && s.yday.from) {
+        if (s.yday.d.slice(0, 7) === s.mon) { s.mkwh -= s.yday.kwh; s.mkr -= s.yday.kr; if (s.mfrom === s.yday.d) s.mfrom = s.day; }
+        s.yday = null;
+      }
+      if (s.mkwh < 0.0005) { s.mkwh = 0; s.mkr = 0; }
+      if (s.mfrom && s.mfrom.endsWith('-01')) s.mfrom = null;
+      if (s.prevMon && s.prevMon.from) s.prevMon = null;
+      if (s.dfrom && s.mfrom === s.day) s.mon = null;     // idag är inte helt → månaden startar först vid midnatt
+      s.v = 2;
+    }
+    s.dkwh += dk; s.dkr += kr;      // räknas in i det gamla dygnet först, sedan byte vid midnatt
+    if (s.day !== day) {
+      const full = !s.dfrom, dm = s.day.slice(0, 7);
+      s.yday = full ? { d: s.day, kwh: r3(s.dkwh), kr: r2(s.dkr) } : null;
+      if (full) {
+        if (s.mon !== dm) { s.mon = dm; s.mkwh = 0; s.mkr = 0; s.mfrom = s.day.endsWith('-01') ? null : s.day; }
+        s.mkwh += s.dkwh; s.mkr += s.dkr;
+      }
+      s.day = day; s.dkwh = 0; s.dkr = 0; s.dfrom = null;
+    }
+    // månadsskifte, och start av månad första hela dygnet
+    if (s.mon && s.mon !== mon) { s.prevMon = { m: s.mon, kwh: r3(s.mkwh), kr: r2(s.mkr), from: s.mfrom || null }; s.mon = mon; s.mkwh = 0; s.mkr = 0; s.mfrom = null; }
+    if (!s.mon && !s.dfrom) { s.mon = mon; s.mkwh = 0; s.mkr = 0; s.mfrom = day.endsWith('-01') ? null : day; }
     // disk-/tvättpass
     const C = CYCLE[k];
     if (C) {
@@ -87,7 +108,7 @@ for (const [k, id] of Object.entries(DEV)) {
     id, n: String(d.name || '').trim(), w, since: s.since,
     today: s.day ? { d: s.day, kwh: r3(s.dkwh), kr: r2(s.dkr), from: s.dfrom || null } : null,
     yday: s.yday || null,
-    month: s.mon ? { m: s.mon, kwh: r3(s.mkwh), kr: r2(s.mkr), from: s.mfrom || null } : null,
+    month: s.mon ? { m: s.mon, kwh: r3(s.mkwh + (s.dfrom ? 0 : s.dkwh)), kr: r2(s.mkr + (s.dfrom ? 0 : s.dkr)), from: s.mfrom || null } : null,
     prevMonth: s.prevMon || null,
     last: s.lastRun || null,
     run: s.run ? { start: s.run.start, kwh: r3(s.run.kwh), kr: r2(s.run.kr) } : null,
