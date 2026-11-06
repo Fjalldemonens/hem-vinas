@@ -7,9 +7,10 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 - Ingen byggprocess: ren HTML/CSS/JS. Inga bibliotek utöver Google Fonts.
 
 ## Filer
-- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil med dra-i-grafen som i Tibber – markör + stora siffran visar vald kvart, kortet ritas inte om mitt i ett drag; rubriken har samma form för Idag/Imorgon (Imorgon visar snittpris) och lägst/högst står under grafen för båda dagarna, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-06.6.
+- `index.html` – appen (stil, markup, rendering av flikarna Belysning, Temperatur (inkl. bergvärmepump), Energi (elpris i Homey-stil med dra-i-grafen som i Tibber – markör + stora siffran visar vald kvart, kortet ritas inte om mitt i ett drag; rubriken har samma form för Idag/Imorgon (Imorgon visar snittpris) och lägst/högst står under grafen för båda dagarna, Idag med månad/föregående månad, Solceller, Batteri & laddbox, Apparater), Städ (inkl. Schema bakom knapp)). Nuvarande version 2026-11-06.7.
 - `homey.js` – Homey Web API-klient: OAuth via Workern, delegationstoken, session mot Homey Pro (lokalt först, annars moln), enheter, zoner, variabler, moods.
 - `homey/` – kopior av HomeyScript-koden i flödena AI 11, AI 13 och AI 14 (källan som körs ligger i Homey; uppdatera kopian när flödet ändras).
+- Ikon (2026-11-06.7): svart bakgrund #0a0a0a, orange hus #ff8a1f (`icon.svg` med rundade hörn; PNG:erna är fyrkantiga, iOS rundar själv). iOS cachar hemskärmsikonen – ta bort och lägg till appen igen för att se ny ikon.
 - `config.js` – Client ID, Worker-adress, Redirect URL. Inga hemligheter.
 - `worker/worker.js` – Cloudflare Worker `hem-vinas-auth` (https://hem-vinas-auth.uffes-mora.workers.dev). Ändringar här måste klistras in manuellt i Cloudflare (Edit code → Deploy) av användaren.
 
