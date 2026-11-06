@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-06.4">
+<meta name="app-version" content="2026-11-06.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -175,7 +175,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
 .price{display:flex;flex-direction:column;gap:10px;padding:16px}
 .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.psub{font-size:.8rem;color:var(--muted);margin-top:4px}
+.psub{font-size:.8rem;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phead .pbig{flex:1;min-width:0}
+.phead>.chip{flex:none;white-space:nowrap}
 .pctl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .mini{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px}
 .mini button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
@@ -396,8 +398,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-06.4"></script>
-<script src="homey.js?v=2026-11-06.4"></script>
+<script src="config.js?v=2026-11-06.5"></script>
+<script src="homey.js?v=2026-11-06.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -882,7 +884,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       priceScrubbing = true;
       const s = new Date(day.s).getTime() + i * iv, v = arr[i];
       const otherK = priceKind === 'imp' ? 'exp' : 'imp';
-      head.replaceChildren(priceBig(v, 'kl ' + hm(s) + '–' + hm(s + iv) + ' · ' + (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(day[otherK][i]) + ' kr'));
+      head.replaceChildren(priceBig(v, hm(s) + '–' + hm(s + iv) + ' · ' + (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(day[otherK][i]) + ' kr'));
       if (priceKind === 'imp') {
         const lvl = v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
         head.append(mk('span', 'chip ' + lvl[1], lvl[0]));
