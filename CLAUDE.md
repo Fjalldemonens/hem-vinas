@@ -32,6 +32,40 @@ Flöden hittas via id, så mappar och flödesnamn får ändras. **Variabelnamnen
 
 Variabler: AI Elpriser, AI Förbrukning, AI Städschema, AI Städlogg, AI Homevolt status/händelse/logg, AI Skumt ute, AI Skumt inne. Testrester som får tas bort: flödet "🗑 Claude test energipris", variabeln "🗑 Claude flödesexport".
 
+## Kontraktet Homey ↔ app (grunden för flytten till nya huset)
+Appen pratar bara med Homey via **variabelnamn + JSON-format** och via enheternas **typ/capabilities/namn** – aldrig via märke. Det är detta som gör att appen kan flytta med till nya huset (Vinäs 249:11) utan omskrivning. Beslutat 2026-11-06:
+- **Variabelnamn och format är låsta.** Ändras ett format får det bara *utökas* (nya fält), aldrig byta betydelse eller ta bort fält som appen läser.
+- **Allt husspecifikt** (enhets-id, IP, tariffer, rumsnummer) ska ligga i ett konfigblock överst i varje HomeyScript, märkt `// === KONFIG (husspecifikt) ===`. Vid flytten byts bara konfigblocken + prisformeln, inte logiken.
+- **Byte av märke** (Homevolt → SigenStor, Thermia → Nibe) görs i Homey-flödena, som skriver samma variabler. Märkesbundna variabelnamn (`AI Homevolt …`) får neutrala efterträdare först när nya huset närmar sig; appen ska då läsa nya namnet och falla tillbaka på det gamla. Inget byts i förväg.
+
+| Variabel | Skrivs av | Läses av appen | Format (kort) |
+|---|---|---|---|
+| AI Elpriser | AI 12 | Elpris-kortet | `{u,cur,f,days:[{d,s,iv,imp[],exp[]}]}` – imp = köppris enligt prisformeln, exp = spot |
+| AI Förbrukning | AI 14 | Apparater, Idag/månad | `{u,p,pe,ps, kyl:{…}, disk:{…}, tvatt:{…}, grid:{d,imp,exp,…}}` |
+| AI Homevolt status | AI 11 | Batterikortet (röd ruta bara vid `FEL`) | text: `OK …` / `FEL sedan ÅÅÅÅ-MM-DD HH:MM: orsak` / `Ingen kontakt …` |
+| AI Homevolt händelse, AI Homevolt logg | AI 11 | Batteriloggen | text, en händelse per rad |
+| AI Städschema | appen | AI 13 | JSON per robot-id: `[{id,on,time,days[],rooms[],mode,suction,scrub,route,repeat}]` |
+| AI Städlogg | AI 13 | Städ-fliken | text, en rad per händelse |
+| AI Skumt ute | flöden i Homey | Belysning, Temperatur (chip Skumt/Dagsljus) | boolesk |
+| AI Skumt inne | flöden i Homey | – (bara Homey-flöden) | boolesk |
+
+Enhetsroller som appen hittar själv (inget id i appen): lampor = typ `light`; energikort = typ `battery`/`solarpanel`/`evcharger`; elmätare = `meter_power.imported` eller namnet "Elmätare"; innetemperatur = givaren "Bottenvåning" (annars snitt inne); utegivare = `measure_luminance` + "temp" i namnet.
+
+## Husprofil (vilken enhet fyller vilken roll)
+Fakta om nya huset är planer per 2026-11-06 och bekräftas när enheterna finns. **Homey Pro (Early 2023) flyttar med** – flöden, variabler och appen följer med, men alla nya enheter får nya id.
+
+| Roll | Nuvarande hus (gäller nu) | Nya huset (plan) | Konsekvens vid flytten |
+|---|---|---|---|
+| Homey | Homey Pro (Early 2023) | Samma Homey Pro | Flöden/variabler följer med |
+| Elhandel | Tibber (Pulse = elmätaren i Homey) | **Inte Tibber.** Leverantör ej vald | Prisformelns påslag (0,0998) och fallbacken i AI 14 (`d4736f20-…` `measure_price_total`) måste bytas. Ny elmätare i Homey behövs (Pulse följer inte med i rollen) → `GRID` i AI 14 |
+| Elnät | Ellevio (Mora, reducerad energiskatt) | **Ellevio, kvar** | Överföring/energiskatt i prisformeln (0,59) och `NAT_PROD` kontrolleras mot gällande avtal vid flytten, inte mot dagens siffror |
+| Batteri | Homevolt (`bb92dcb1-…`, lokalt `192.168.1.168/ems.json`) | SigenStor Neo, < 20 kWh i garaget | AI 11 ersätts av en Sigen-vakt som skriver samma statusformat |
+| Solceller | Befintliga (via Homevolt/Homey) | Ca 12–13 kWp via SigenStor Neo | Appen hittar `solarpanel` själv om Sigen-appen exponerar typen |
+| Värmepump | Thermia Diplomat Inverter L ("Bergvärmepump", Thermia Online, skrivskyddat kort) | Nibe S735 | Kortet ska bygga på standardvärden (börvärde, ärvärde, varmvatten), inte Thermia-specifika |
+| Kyl/disk/tvätt | Shelly Plug M Gen3 (`DEV` i AI 14) | Shelly (modell ej vald) | Nya id i `DEV` |
+| Städrobotar | Saros 10R + Q7 L5, rum enligt nedan | Samma robotar, ny karta | Rumsnumren mappas om (AI 13 + appens rumsnamn) |
+| Belysning | Hue + Shelly | Shelly (Gen4), dimmer bara till takspotar; Hue utesensor för lux kvar | Appen tar typ `light` – inget att ändra |
+
 ## Kända fakta och fällor (verifierade 2026-11-05)
 - **Prisformel i Homey Energy:** `((Baspris + 0.0998) * 1.25) + 0.59`. 0,0998 = Tibber fasta påslag 6,00 + rörliga 3,98 öre (exkl. moms, rörliga ändras månadsvis). 0,59 = Ellevio överföring 26,00 + energiskatt 33,00 öre inkl. moms (Mora har 9,6 öre avdrag på energiskatten). Grid Rewards och fasta avgifter (Ellevio 590 kr/mån, Tibber 39,20 kr/mån exkl. moms) räknas inte per kWh.
 - **Såld el:** Tibber betalar spot (utan moms) + Ellevio produktionsersättning 3,20 öre/kWh (`NAT_PROD` i AI 14).
