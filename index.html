@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-05.22">
+<meta name="app-version" content="2026-11-06.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -393,8 +393,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-05.22"></script>
-<script src="homey.js?v=2026-11-05.22"></script>
+<script src="config.js?v=2026-11-06.1"></script>
+<script src="homey.js?v=2026-11-06.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -492,6 +492,21 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       renderAll();
       toast((label || 'Ändringen') + ' gick inte fram. Försök igen.');
       return false;
+    }
+  }
+  // Kontroll av börvärde på bergvärmepumpen: Thermia går via Thermias moln, som kan svara OK utan att pumpen
+  // tar emot värdet (värdet studsar tillbaka). Efter VERIFY_MIN min jämförs pumpens värde med det önskade;
+  // bara om det inte stämmer visas en varning i kortet.
+  const VERIFY_MIN = 6, verify = {}, hpWarn = {};
+  function expectVal(id, cap, want) { verify[id + '|' + cap] = { id, cap, want, due: Date.now() + VERIFY_MIN * 60000 }; delete hpWarn[id]; }
+  function checkVerify() {
+    const now = Date.now();
+    for (const [k, v] of Object.entries(verify)) {
+      if (now < v.due) continue;
+      const d = devices.find((x) => x.id === v.id); if (!d || !d.state) continue;
+      delete verify[k];
+      const cur = Number(d.state[v.cap]);
+      if (!(Math.abs(cur - v.want) < 0.01)) hpWarn[v.id] = 'Ändringen till ' + f1.format(v.want) + '° gick inte fram, pumpen står kvar på ' + f1.format(cur) + '°. Thermias moln svarar troligen inte – ställ in på pumpens display.';
     }
   }
   const thr = {};
@@ -645,7 +660,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const step = (delta) => () => {
         const nv = Math.round((Number(val(d, 'target_temperature')) + delta) * 2) / 2;
         tv.textContent = f1.format(nv) + '°';
-        throttled('t' + d.id, () => setCaps({ [d.id]: { target_temperature: nv } }, 'Temperaturändringen'), 700);
+        throttled('t' + d.id, () => setCaps({ [d.id]: { target_temperature: nv } }, 'Temperaturändringen').then((ok) => ok && expectVal(d.id, 'target_temperature', nv)), 700);
       };
       const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk önskad innetemperatur'); minus.addEventListener('click', step(-0.5));
       const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj önskad innetemperatur'); plus.addEventListener('click', step(0.5));
@@ -655,7 +670,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       right.append(wrap);
     }
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
-    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row, g, mw);
+    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
+    if (hpWarn[d.id]) { const w = mk('div', 'balert'); w.style.margin = '0 16px 10px'; w.append(mk('b', '', 'Temperaturen ändrades inte'), mk('span', '', hpWarn[d.id])); box.append(w); }
+    box.append(g, mw);
     return box;
   }
   function renderTemp() {
@@ -1288,6 +1305,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (busy || !api.loggedIn() || document.hidden) return; busy = true;
     try {
       devices = await api.devices();
+      checkVerify();
       const now = Date.now();
       for (const id of Object.keys(pending)) for (const c of Object.keys(pending[id])) if (pending[id][c].until < now) delete pending[id][c];
       renderAll(); banner('');
