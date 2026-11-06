@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-06.5">
+<meta name="app-version" content="2026-11-06.6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -174,10 +174,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mtoggle[aria-expanded="true"]{color:var(--muted)}
 .appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
 .price{display:flex;flex-direction:column;gap:10px;padding:16px}
-.phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ptop .big{min-width:0}
+.ptop>.chip{flex:none;white-space:nowrap}
 .psub{font-size:.8rem;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.phead .pbig{flex:1;min-width:0}
-.phead>.chip{flex:none;white-space:nowrap}
 .pctl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .mini{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px}
 .mini button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
@@ -199,8 +199,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .pchart{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
 .pchart:focus{outline:none}
 .pchart .scrl{stroke:var(--fg);stroke-width:1.5;opacity:.55}
-.pminmax{display:flex;gap:22px;flex-wrap:wrap}
-.pminmax .big{font-size:1.9rem}
 .price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
 .price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
 .range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
@@ -398,8 +396,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-06.5"></script>
-<script src="homey.js?v=2026-11-06.5"></script>
+<script src="config.js?v=2026-11-06.6"></script>
+<script src="homey.js?v=2026-11-06.6"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -855,47 +853,51 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (priceDay >= P.days.length) priceDay = 0;
     const day = P.days[priceDay];
     const arr = day[priceKind], mn = Math.min(...arr), mx = Math.max(...arr);
-    const slot = (v) => { const s = new Date(day.s).getTime() + arr.indexOf(v) * iv; return hm(s) + '–' + hm(s + iv); };
+    const dayT0 = new Date(day.s).getTime(), otherK = priceKind === 'imp' ? 'exp' : 'imp';
+    const slotStart = (v) => hm(dayT0 + arr.indexOf(v) * iv);
+    const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+    // Rubriken har alltid samma form (stort pris + chip på en rad, undertext på egen rad) för Idag, Imorgon och vid drag,
+    // så att grafen under aldrig hoppar.
+    const sorted = arr.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
+    const level = (v) => v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
     const head = mk('div', 'phead');
-    const priceBig = (v, sub) => { const w = mk('div', 'pbig'); const big = mk('div', 'big num'); big.style.color = priceColor(v, mn, mx, priceKind); big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh')); w.append(big, mk('div', 'psub num', sub)); return w; };
-    if (priceDay === 0 && arr[idx] != null) {
-      head.append(priceBig(arr[idx], Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000)) + ' min kvar' + (priceKind === 'imp' ? ' · export ' + f2.format(today.exp[idx]) + ' kr' : ' · import ' + f2.format(today.imp[idx]) + ' kr')));
-      if (priceKind === 'imp') {
-        const sorted = today.imp.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))], cur = today.imp[idx];
-        const lvl = cur >= q(0.9) ? ['Mycket dyrt', 'bad'] : cur >= q(0.66) ? ['Dyrt', 'warn'] : cur <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
-        head.append(mk('span', 'chip ' + lvl[1], lvl[0]));
+    const setHead = (v, sub, chip) => {
+      const top = mk('div', 'ptop'), big = mk('div', 'big num');
+      big.style.color = priceColor(v, mn, mx, priceKind);
+      big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh'));
+      top.append(big); if (chip) top.append(mk('span', 'chip ' + chip[1], chip[0]));
+      head.replaceChildren(top, mk('div', 'psub num', sub));
+    };
+    const otherTxt = (v) => (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(v) + ' kr';
+    const showDefault = () => {
+      if (priceDay === 0 && arr[idx] != null) {
+        const left = Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000));
+        setHead(arr[idx], 'Nu · ' + left + ' min kvar · ' + otherTxt(day[otherK][idx]), priceKind === 'imp' && level(arr[idx]));
+      } else {
+        setHead(avg(arr), 'Snitt ' + (priceDay === 0 ? 'idag' : 'imorgon') + ' · ' + otherTxt(avg(day[otherK])), null);
       }
-    } else {
-      const two = mk('div', 'pminmax'); two.append(priceBig(mn, 'Min · ' + slot(mn)), priceBig(mx, 'Max · ' + slot(mx))); head.append(two);
-    }
+    };
+    showDefault();
     const ctr = mk('div', 'pctl');
     ctr.append(
       segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
       segBtns([['imp', 'Import'], ['exp', 'Export']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
     // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
-    const headKids = [...head.childNodes];
-    const sorted = arr.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
     const onScrub = (i) => {
       if (i < 0) {
-        priceScrubbing = false; head.replaceChildren(...headKids);
+        priceScrubbing = false; showDefault();
         if (pricePending !== null) { const d = pricePending; pricePending = null; renderPrice(d); }
         return;
       }
       priceScrubbing = true;
-      const s = new Date(day.s).getTime() + i * iv, v = arr[i];
-      const otherK = priceKind === 'imp' ? 'exp' : 'imp';
-      head.replaceChildren(priceBig(v, hm(s) + '–' + hm(s + iv) + ' · ' + (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(day[otherK][i]) + ' kr'));
-      if (priceKind === 'imp') {
-        const lvl = v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
-        head.append(mk('span', 'chip ' + lvl[1], lvl[0]));
-      }
+      const st = dayT0 + i * iv;
+      setHead(arr[i], hm(st) + '–' + hm(st + iv) + ' · ' + otherTxt(day[otherK][i]), priceKind === 'imp' && level(arr[i]));
     };
     pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
-    if (priceDay === 0) {
-      const foot = mk('div', 'rangel num');
-      const lo = mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slot(mn).split('–')[0]), hi2 = mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slot(mx).split('–')[0]);
-      foot.append(lo, hi2); pc.append(foot);
-    }
+    // Lägst/högst under grafen för både idag och imorgon
+    const foot = mk('div', 'rangel num');
+    foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slotStart(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slotStart(mx)));
+    pc.append(foot);
     if (P.days.length < 2) pc.append(mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.'));
   }
   /* ---------- apparater: förbrukning och kostnad från flödet AI 14 (variabeln AI Förbrukning) ---------- */
