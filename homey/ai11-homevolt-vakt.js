@@ -31,10 +31,8 @@ const hz = caps.measure_frequency ? Number(caps.measure_frequency.value) : NaN;
 // Lokala sidan
 let ems = null, mods = null, emsErr = '';
 try {
-  const j = await Promise.race([
-    fetch(EMS_URL).then((r) => r.json()),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000)),
-  ]);
+  // HomeyScript saknar setTimeout – använd fetch-optionen timeout (node-fetch) i stället för Promise.race
+  const j = await fetch(EMS_URL, { timeout: 8000 }).then((r) => r.json());
   const e0 = (j.ems || [])[0] || {};
   ems = e0.ems_data || null;
   mods = (e0.bms_data || []).map((m, i) => ({ id: m.id != null ? m.id : i, ...m }));
