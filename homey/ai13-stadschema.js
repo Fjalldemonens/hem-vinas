@@ -9,7 +9,13 @@ const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Stoc
 const p2 = (n) => String(n).padStart(2, '0');
 const hhmm = p2(now.getHours()) + ':' + p2(now.getMinutes()), dow = now.getDay();
 const stamp = now.toDateString() + ' ' + hhmm;
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+// Paus utan setTimeout (finns inte i HomeyScript, gav "FEL setTimeout is not defined" 2026-11-06 09:30):
+// HomeyScripts inbyggda wait() om den finns, annars korta enhetsanrop tills tiden gått.
+const pause = async (ms, devId) => {
+  if (typeof wait === 'function') return wait(ms);
+  const end = Date.now() + ms;
+  while (Date.now() < end) { try { await Homey.devices.getDevice({ id: devId }); } catch (e) {} }
+};
 const getQ = (id) => { try { return JSON.parse(global.get('stadq_' + id) || '[]'); } catch (e) { return []; } };
 const putQ = (id, q) => global.set('stadq_' + id, JSON.stringify(q));
 const logLines = [];
@@ -45,7 +51,7 @@ for (const devId of Object.keys(S)) {
   const names = s.rooms.map((id) => { const o = ((c.clean_room_pick && c.clean_room_pick.values) || []).find((x) => String(x.id) === String(id)); return o ? (typeof o.title === 'object' ? (o.title.sv || o.title.en) : o.title) : null; }).filter(Boolean);
   try {
     for (const [cap, value] of [['clean_mode', s.mode], ['suction_power', s.suction], ['scrub_intensity', s.scrub], ['mop_route', s.route]]) {
-      if (value != null && c[cap] && String(val(cap)) !== String(value)) { await set(cap, value); await wait(2000); }
+      if (value != null && c[cap] && String(val(cap)) !== String(value)) { await set(cap, value); await pause(2000, devId); }
     }
     if (names.length) {
       await Homey.flow.runFlowCardAction({ id: 'homey:device:' + devId + ':clean_room', args: { rooms: names.join(', '), repeat: s.repeat } });
