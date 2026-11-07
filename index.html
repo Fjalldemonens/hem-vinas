@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-07.3">
+<meta name="app-version" content="2026-11-07.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -41,6 +41,7 @@
   --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
   --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --ok:#1aa45a; color-scheme:light}
 html,body{background:var(--bg);color:var(--fg)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--f-body);font-size:15px;line-height:1.4}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -148,7 +149,8 @@ body.noscroll{overflow:hidden}
 .wxday.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:radial-gradient(120% 140% at 100% 0%,var(--accent-soft),transparent 70%),var(--card)}
 .wxdn{font-weight:700;font-size:.9rem}
 .wxdm{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
-.wxdt b{font-family:var(--f-disp);font-size:1.5rem;font-weight:600} .wxdt span{color:var(--muted);font-size:1rem}
+.wxdt{min-width:0;line-height:1.1} .wxdt b{display:block;font-family:var(--f-disp);font-size:1.6rem;font-weight:600;white-space:nowrap} .wxdt span{display:block;color:var(--muted);font-size:.82rem;white-space:nowrap;margin-top:2px}
+.wxdm svg{flex:none}
 .wxds{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wxsun{font-size:.8rem;color:var(--muted);margin:14px 2px 4px}
 .wxcw{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 8px 2px;margin:6px 0 12px}
@@ -436,8 +438,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-07.3"></script>
-<script src="homey.js?v=2026-11-07.3"></script>
+<script src="config.js?v=2026-11-07.4"></script>
+<script src="homey.js?v=2026-11-07.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1522,7 +1524,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const b = mk('button', 'wxday' + (i === wxDay ? ' on' : '')); b.type = 'button'; b.setAttribute('aria-pressed', i === wxDay);
       const top = mk('div', 'wxdn', wxDayName(i, day.d));
       const mid = mk('div', 'wxdm'); mid.append(wxIcon(day.code, true, 44));
-      const tt = mk('div', 'wxdt num'); tt.append(mk('b', '', wxT(day.max)), mk('span', '', ' / ' + wxT(day.min)));
+      const tt = mk('div', 'wxdt num'); tt.append(mk('b', '', wxT(day.max)), mk('span', '', 'lägst ' + wxT(day.min)));
       mid.append(tt);
       b.append(top, mid, mk('div', 'wxds', wxText(day.code) + (day.pr >= 0.1 ? ' · ' + f1.format(day.pr) + ' mm' : '')));
       b.addEventListener('click', () => { wxDay = i; wxRender(); });
