@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-07.6">
+<meta name="app-version" content="2026-11-07.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -50,10 +50,12 @@ body{font-family:var(--f-body);font-size:15px;line-height:1.4}
 
 /* header */
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.top > div:first-child{min-width:0;flex:1}
+#date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eyebrow{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
 h1{font-family:var(--f-disp);font-weight:300;font-size:2rem;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;text-wrap:balance}
 h1 b{font-weight:600}
-.live{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;color:var(--muted);white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
+.live{display:inline-flex;align-items:center;gap:6px;flex:none;min-width:9.4em;font-variant-numeric:tabular-nums;font-size:.76rem;color:var(--muted);white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
 .live.on .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
 .live.err .dot{background:var(--danger)}
@@ -440,8 +442,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-07.6"></script>
-<script src="homey.js?v=2026-11-07.6"></script>
+<script src="config.js?v=2026-11-07.7"></script>
+<script src="homey.js?v=2026-11-07.7"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -493,9 +495,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   function tick() {
     if (!lastOk && !lastErr) return;
     const sec = lastOk ? Math.round((Date.now() - lastOk) / 1000) : 0;
-    const age = !lastOk ? '' : sec < 5 ? 'Just nu' : sec < 60 ? 'För ' + sec + ' s sedan' : 'För ' + Math.round(sec / 60) + ' min sedan';
-    if (lastErr) status('err', lastErr + (age ? ' · ' + age.toLowerCase() : ''));
-    else status(sec > 60 ? 'stale' : 'on', age + (lastWhere ? ' · ' + lastWhere : ''));
+    // Kort och nästan konstant längd, så att chippet inte växer/krymper och knuffar datumraden till två rader (då hoppar hela sidan)
+    const age = !lastOk ? '' : sec < 5 ? 'nu' : sec < 60 ? sec + ' s' : Math.round(sec / 60) + ' min';
+    const where = lastWhere ? lastWhere.charAt(0).toUpperCase() + lastWhere.slice(1) : 'Uppdaterad';
+    if (lastErr) status('err', lastErr + (age ? ' · ' + age : ''));
+    else status(sec > 60 ? 'stale' : 'on', where + ' · ' + age);
   }
   setInterval(tick, 1000);
   function banner(t) { const b = $('banner'); b.hidden = !t; b.textContent = t || ''; }
