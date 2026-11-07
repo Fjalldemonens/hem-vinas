@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-06.8">
+<meta name="app-version" content="2026-11-07.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -396,8 +396,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 </main>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-06.8"></script>
-<script src="homey.js?v=2026-11-06.8"></script>
+<script src="config.js?v=2026-11-07.1"></script>
+<script src="homey.js?v=2026-11-07.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -643,10 +643,19 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Börvärdet visas bara – det ändras på pumpen/i Thermia (Thermias moln tar inte alltid emot ändringar från Homey).
+    // Börvärde med +/− (fungerar via Homey → Thermia; visat värde kommer alltid från Homey, så studsar det syns det direkt).
     if (has(d, 'target_temperature')) {
+      const tv = mk('span', 'tv num', f1.format(val(d, 'target_temperature')) + '°');
+      const step = (delta) => () => {
+        const nv = Math.round((Number(val(d, 'target_temperature')) + delta) * 2) / 2;
+        tv.textContent = f1.format(nv) + '°';
+        throttled('t' + d.id, () => setCaps({ [d.id]: { target_temperature: nv } }, 'Temperaturändringen'), 700);
+      };
+      const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk önskad innetemperatur'); minus.addEventListener('click', step(-0.5));
+      const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj önskad innetemperatur'); plus.addEventListener('click', step(0.5));
       const wrap = mk('div'); wrap.style.textAlign = 'center';
-      wrap.append(mk('span', 'tv num', f1.format(val(d, 'target_temperature')) + '°'), mk('div', 'fine', 'Inställd inne'));
+      const r = mk('div', 'step'); r.append(minus, tv, plus);
+      wrap.append(r, mk('div', 'fine', 'Önskad inne'));
       right.append(wrap);
     }
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
