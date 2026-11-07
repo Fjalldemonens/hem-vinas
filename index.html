@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-07.1">
+<meta name="app-version" content="2026-11-07.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -127,6 +127,45 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .hero .big{font-family:var(--f-disp);font-weight:300;font-size:3.2rem;line-height:1;letter-spacing:-.03em}
 .hero .big sup{font-size:1.2rem;color:var(--muted);vertical-align:top;margin-left:2px}
 .hero .meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center}
+/* Väderprognos */
+:root{--cloud:#c7d2e0;--cloud-2:#8e9bb0;--snow:#e8f3ff}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}}
+:root[data-theme="light"]{--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}
+.wxbtn{margin-top:12px;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.86rem;font-weight:600;color:var(--fg);background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;cursor:pointer}
+.wxbtn .wxbi{display:inline-flex;color:var(--muted)} .wxbtn .wxbi svg{display:block}
+.wxbtn > span:last-child{color:var(--muted);font-size:1.1rem;line-height:1}
+body.noscroll{overflow:hidden}
+.wx{position:fixed;inset:0;z-index:50;background:rgba(5,9,15,.55);display:flex;align-items:flex-end;justify-content:center;animation:wxfade .2s ease}
+.wx[hidden]{display:none}
+.wxsheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px -10px rgba(0,0,0,.4);animation:wxup .28s cubic-bezier(.3,.7,.2,1)}
+@keyframes wxup{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes wxfade{from{opacity:0}to{opacity:1}}
+.wxtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.wxtitle{font-family:var(--f-disp);font-size:1.5rem;font-weight:600;letter-spacing:-.02em;margin-top:2px}
+.wxx{font:inherit;font-size:1rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.wxdays{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wxday{font:inherit;text-align:left;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;cursor:pointer;min-width:0}
+.wxday.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:radial-gradient(120% 140% at 100% 0%,var(--accent-soft),transparent 70%),var(--card)}
+.wxdn{font-weight:700;font-size:.9rem}
+.wxdm{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
+.wxdt b{font-family:var(--f-disp);font-size:1.5rem;font-weight:600} .wxdt span{color:var(--muted);font-size:1rem}
+.wxds{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxsun{font-size:.8rem;color:var(--muted);margin:14px 2px 4px}
+.wxcw{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 8px 2px;margin:6px 0 12px}
+.wxchart{width:100%;height:auto;display:block}
+.wxct{font:600 11px var(--f-body);fill:var(--fg)} .wxcx{font:500 10px var(--f-body);fill:var(--muted)}
+.wxlist{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.wxrow{display:grid;grid-template-columns:44px 40px 1fr 1fr 1.3fr;align-items:center;gap:6px;padding:6px 14px;border-bottom:1px solid var(--line);font-size:.95rem}
+.wxrow:last-child{border-bottom:0}
+.wxrow.wxhd{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 14px}
+.wxrow.now{background:var(--accent-soft)}
+.wxh{color:var(--muted);font-weight:600} .wxrow.now .wxh{color:var(--accent)}
+.wxi{display:flex} .wxtemp{font-weight:700;font-family:var(--f-disp)}
+.wxpr{color:var(--muted)} .wxpr.on{color:var(--grid);font-weight:600}
+.wxw{color:var(--fg);white-space:nowrap} .wxar{display:inline-block;color:var(--muted);font-size:.9rem;line-height:1}
+.wxsrc{margin-top:10px}
+.wxlink{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--accent);font-weight:600;text-decoration:none}
+
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .tc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
 .tc .n{font-size:.82rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -334,7 +373,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   </section>
 
   <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
-    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div></div>
+    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div><button class="wxbtn" id="wxBtn" type="button" aria-haspopup="dialog"><span class="wxbi" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.8 11.2 3.5 3.5 0 0 0 7 18z"/></svg></span><span class="wxbl">Väderprognos</span><span aria-hidden="true">›</span></button></div><div class="meta" id="outMeta"></div></div>
     <div class="h2">Värme</div>
     <div class="card" id="thermos"><div class="empty">Hämtar termostater…</div></div>
     <div class="h2 rumh">Rum</div>
@@ -394,10 +433,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 
   <p class="foot">Data direkt från er Homey Pro. Uppdateras automatiskt var 15:e sekund, tryck på statusen uppe till höger för att uppdatera direkt. <button class="more" id="logout" type="button">Logga ut</button></p>
 </main>
+<div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-07.1"></script>
-<script src="homey.js?v=2026-11-07.1"></script>
+<script src="config.js?v=2026-11-07.3"></script>
+<script src="homey.js?v=2026-11-07.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1347,6 +1387,186 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!R.length) { box.replaceChildren(devices.length ? mk('p', 'empty', 'Ingen robotdammsugare hittades i Homey.') : mk('div', 'skel')); return; }
     box.replaceChildren(...R.map((d) => (isRR(d) ? rrCard(d) : matterCard(d))));
   }
+
+  // ===== Väderprognos (Open-Meteo, MET Nordic-modellen – samma familj som SMHI/Yr använder i Norden) =====
+  // === KONFIG (husspecifikt) === koordinater för huset
+  const WX = { lat: 60.97, lon: 14.52, place: 'Vinäs, Mora', smhiUrl: 'https://www.smhi.se/vader/prognoser-och-varningar/vaderprognos/q/Mora/Vin%C3%A4s/2662868' };
+  const WX_TTL = 20 * 60000;
+  let wxData = null, wxAt = 0, wxDay = 0, wxBusy = null, wxSrc = '';
+  // SMHI:s vädersymboler (1–27) översatta till WMO-koder så att ikoner/texter är gemensamma för båda källorna
+  const SMHI2WMO = [0, 0, 1, 2, 2, 3, 3, 45, 80, 81, 82, 95, 77, 77, 77, 85, 85, 86, 61, 63, 65, 95, 77, 77, 77, 71, 73, 75];
+  // Solhöjd (förenklad NOAA) – för dag/natt-ikoner och soluppgång/nedgång när källan saknar dem
+  function sunAlt(ms, lat, lon) {
+    const d = ms / 864e5 - 10957.5, g = (357.529 + 0.98560028 * d) * Math.PI / 180, q = 280.459 + 0.98564736 * d;
+    const L = (q + 1.915 * Math.sin(g) + 0.02 * Math.sin(2 * g)) * Math.PI / 180, e = (23.439 - 3.6e-7 * d) * Math.PI / 180;
+    const dec = Math.asin(Math.sin(e) * Math.sin(L)), ra = Math.atan2(Math.cos(e) * Math.sin(L), Math.cos(L));
+    const gmst = (18.697374558 + 24.06570982441908 * d) % 24, ha = (gmst * 15 + lon) * Math.PI / 180 - ra, la = lat * Math.PI / 180;
+    return Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(ha)) * 180 / Math.PI;
+  }
+  function sunTimes(dayStr) {
+    const t0 = new Date(dayStr + 'T00:00:00').getTime(); let rise = null, set = null, prev = sunAlt(t0, WX.lat, WX.lon) > -0.83;
+    for (let m = 5; m <= 1440; m += 5) { const up = sunAlt(t0 + m * 60000, WX.lat, WX.lon) > -0.83; if (up && !prev) rise = t0 + m * 60000; if (!up && prev) set = t0 + m * 60000; prev = up; }
+    const f = (t) => t ? dayStr + 'T' + hm(t) : null; return [f(rise), f(set)];
+  }
+  const localKey = (ms) => { const d = new Date(ms); return d.toLocaleDateString('sv-SE') + 'T' + String(d.getHours()).padStart(2, '0') + ':00'; };
+  async function wxSmhi() {
+    const r = await fetch('https://opendata-download-metfcst.smhi.se/api/category/snow1g/version/1/geotype/point/lon/' + WX.lon + '/lat/' + WX.lat + '/data.json');
+    if (!r.ok) throw new Error('SMHI HTTP ' + r.status);
+    const j = await r.json(), ts = j.timeSeries || [];
+    const ok = (v) => (v == null || v === 9999 || Number.isNaN(Number(v)) ? null : Number(v));
+    const today = new Date().toLocaleDateString('sv-SE'), tom = new Date(Date.now() + 864e5).toLocaleDateString('sv-SE');
+    const H = { time: [], temperature_2m: [], apparent_temperature: [], precipitation: [], weather_code: [], wind_speed_10m: [], wind_gusts_10m: [], wind_direction_10m: [], is_day: [] };
+    for (const e of ts) {
+      const ms = Date.parse(e.time || e.validTime), k = localKey(ms); if (k.slice(0, 10) !== today && k.slice(0, 10) !== tom) continue;
+      const d = e.data || {}, sym = ok(d.symbol_code);
+      H.time.push(k); H.temperature_2m.push(ok(d.air_temperature)); H.apparent_temperature.push(ok(d.air_temperature));
+      H.precipitation.push(ok(d.precipitation_amount_mean) || 0); H.weather_code.push(sym != null ? SMHI2WMO[Math.round(sym)] ?? 3 : 3);
+      H.wind_speed_10m.push(ok(d.wind_speed) || 0); H.wind_gusts_10m.push(ok(d.wind_speed_of_gust ?? d.wind_gust_speed ?? d.gust) ?? ok(d.wind_speed) ?? 0);
+      H.wind_direction_10m.push(ok(d.wind_from_direction) || 0); H.is_day.push(sunAlt(ms, WX.lat, WX.lon) > -0.83 ? 1 : 0);
+    }
+    if (H.time.length < 6 || H.temperature_2m.every((v) => v == null)) throw new Error('SMHI tomt svar');
+    const days = [...new Set(H.time.map((t) => t.slice(0, 10)))], st = days.map(sunTimes);
+    return { hourly: H, daily: { sunrise: st.map((x) => x[0]), sunset: st.map((x) => x[1]) }, _src: 'SMHI' };
+  }
+  async function wxFetch(force) {
+    if (!force && wxData && Date.now() - wxAt < WX_TTL) return wxData;
+    if (wxBusy) return wxBusy;
+    const q = 'latitude=' + WX.lat + '&longitude=' + WX.lon + '&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FStockholm&forecast_days=2';
+    const get = async (model) => { const r = await fetch('https://api.open-meteo.com/v1/forecast?' + q + (model ? '&models=' + model : '')); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); if (!j.hourly || !j.hourly.time) throw new Error('tomt svar'); return j; };
+    wxBusy = (async () => {
+      let j; try { j = await wxSmhi(); } catch (e) { try { j = await get('metno_seamless'); j._src = 'Open-Meteo (MET Nordic)'; } catch (e2) { j = await get(''); j._src = 'Open-Meteo'; } }
+      wxSrc = j._src || 'SMHI';
+      const h = j.hourly, days = [];
+      h.time.forEach((t, i) => {
+        const d = t.slice(0, 10); let day = days.find((x) => x.d === d);
+        if (!day) days.push(day = { d, hours: [], k: days.length });
+        if (h.temperature_2m[i] == null) return;
+        day.hours.push({ t, h: Number(t.slice(11, 13)), temp: h.temperature_2m[i], feel: h.apparent_temperature[i], pr: h.precipitation[i] || 0, code: h.weather_code[i], ws: h.wind_speed_10m[i], wg: h.wind_gusts_10m[i], wd: h.wind_direction_10m[i], day: h.is_day[i] === 1 });
+      });
+      days.forEach((day, k) => {
+        const ts = day.hours.map((x) => x.temp).filter((v) => v != null);
+        day.max = Math.max(...ts); day.min = Math.min(...ts);
+        day.pr = day.hours.reduce((s, x) => s + x.pr, 0);
+        // dagens "huvudväder": värsta koden under dagtimmarna 08–18
+        const dh = day.hours.filter((x) => x.h >= 8 && x.h <= 18);
+        day.code = (dh.length ? dh : day.hours).reduce((m, x) => (wxRank(x.code) > wxRank(m) ? x.code : m), 0);
+        if (j.daily) { day.rise = j.daily.sunrise[k] || null; day.set = j.daily.sunset[k] || null; }
+      });
+      wxData = days; wxAt = Date.now(); return days;
+    })();
+    try { return await wxBusy; } finally { wxBusy = null; }
+  }
+  const wxRank = (c) => c >= 95 ? 9 : (c >= 71 && c <= 77) || c === 85 || c === 86 ? 8 : (c >= 61 && c <= 67) || (c >= 80 && c <= 82) ? 7 : c >= 51 && c <= 57 ? 6 : c === 45 || c === 48 ? 5 : c === 3 ? 4 : c === 2 ? 3 : c === 1 ? 2 : 1;
+  function wxText(c) {
+    if (c === 0) return 'Klart'; if (c === 1) return 'Mestadels klart'; if (c === 2) return 'Halvklart'; if (c === 3) return 'Mulet';
+    if (c === 45 || c === 48) return 'Dimma'; if (c >= 51 && c <= 55) return 'Duggregn'; if (c === 56 || c === 57 || c === 66 || c === 67) return 'Underkylt regn';
+    if (c === 61) return 'Lätt regn'; if (c === 63) return 'Regn'; if (c === 65) return 'Kraftigt regn';
+    if (c === 71) return 'Lätt snöfall'; if (c === 73) return 'Snöfall'; if (c === 75) return 'Kraftigt snöfall'; if (c === 77) return 'Snöblandat';
+    if (c >= 80 && c <= 82) return 'Regnskurar'; if (c === 85 || c === 86) return 'Snöbyar'; if (c >= 95) return 'Åska'; return '';
+  }
+  // Ikoner: egna SVG i appens färger (sol, måne, moln, regn, snö, dimma, åska)
+  function wxIcon(c, day = true, size = 40) {
+    const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 48 48'); svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('aria-hidden', 'true');
+    const add = (n, a) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); svg.append(e); return e; };
+    const sun = (cx, cy, r) => { add('circle', { cx, cy, r, fill: 'var(--sun)' }); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, r1 = r + 3.5, r2 = r + 7.5; add('line', { x1: cx + r1 * Math.cos(a), y1: cy + r1 * Math.sin(a), x2: cx + r2 * Math.cos(a), y2: cy + r2 * Math.sin(a), stroke: 'var(--sun)', 'stroke-width': 2.6, 'stroke-linecap': 'round' }); } };
+    const moon = (cx, cy, r) => add('path', { d: `M${cx + r * 0.35} ${cy - r} A${r} ${r} 0 1 0 ${cx + r} ${cy + r * 0.45} A${r * 0.8} ${r * 0.8} 0 0 1 ${cx + r * 0.35} ${cy - r}Z`, fill: '#c9d4ff' });
+    const cloud = (dx, dy, s, col) => add('path', { d: 'M14 36h20a8 8 0 0 0 .8-15.96A11 11 0 0 0 13.6 22.4 7 7 0 0 0 14 36z', fill: col || 'var(--cloud)', transform: `translate(${dx} ${dy}) scale(${s})` });
+    const drops = (n, col) => { for (let i = 0; i < n; i++) add('line', { x1: 17 + i * 7, y1: 38, x2: 14 + i * 7, y2: 45, stroke: col || 'var(--grid)', 'stroke-width': 2.6, 'stroke-linecap': 'round' }); };
+    const flakes = (n) => { for (let i = 0; i < n; i++) add('circle', { cx: 16 + i * 8, cy: 42, r: 2.4, fill: 'var(--snow)' }); };
+    const sky = (cx, cy, r) => day ? sun(cx, cy, r) : moon(cx, cy, r);
+    if (c === 0) { day ? sun(24, 24, 9) : moon(24, 24, 12); }
+    else if (c === 1) { sky(19, 18, day ? 8 : 10); cloud(10, 10, 0.75); }
+    else if (c === 2) { sky(17, 16, day ? 7 : 9); cloud(4, 6, 0.95); }
+    else if (c === 3) { cloud(-6, 2, 1.05, 'var(--cloud-2)'); cloud(2, 6, 0.95); }
+    else if (c === 45 || c === 48) { cloud(0, -2, 0.95); [36, 41].forEach((y, i) => add('line', { x1: 9 + i * 4, y1: y, x2: 39 - i * 2, y2: y, stroke: 'var(--muted)', 'stroke-width': 2.6, 'stroke-linecap': 'round' })); }
+    else if (c >= 95) { cloud(0, -4, 1, 'var(--cloud-2)'); add('path', { d: 'M25 30l-6 9h6l-3 8 9-11h-6l3-6z', fill: 'var(--sun)' }); }
+    else if ((c >= 71 && c <= 77) || c === 85 || c === 86) { cloud(0, -4, 1); flakes(c === 75 || c === 86 ? 4 : 3); }
+    else if (c >= 51) { if (c >= 80 && c <= 82) sky(15, 12, 6); cloud(0, -4, 1); drops(c === 65 || c === 82 ? 4 : c <= 55 ? 2 : 3, c === 56 || c === 57 || c === 66 || c === 67 ? 'var(--snow)' : null); }
+    else cloud(0, 0, 1);
+    return svg;
+  }
+  const wxDayName = (i, d) => i === 0 ? 'Idag' : i === 1 ? 'Imorgon' : new Date(d).toLocaleDateString('sv-SE', { weekday: 'long' });
+  const wxT = (v) => { const r = Math.round(v); return f0.format(r === 0 ? 0 : r) + '°'; };
+  // Temperaturkurva + nederbördsstaplar för valda timmar
+  function wxChart(hours) {
+    const ns = 'http://www.w3.org/2000/svg', W = 340, H = 128, L = 6, R = 6, T = 22, B = 34;
+    const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('class', 'wxchart'); svg.setAttribute('role', 'img');
+    const add = (n, a, txt) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); if (txt != null) e.textContent = txt; svg.append(e); return e; };
+    const n = hours.length; if (n < 2) return svg;
+    const ts = hours.map((x) => x.temp), mn = Math.min(...ts), mx = Math.max(...ts), span = Math.max(4, mx - mn);
+    const x = (i) => L + (i + 0.5) * (W - L - R) / n, y = (v) => T + (1 - (v - (mn - (span - (mx - mn)) / 2)) / span) * (H - T - B);
+    const pmax = Math.max(2, ...hours.map((h) => h.pr)), bw = (W - L - R) / n * 0.62;
+    hours.forEach((h, i) => { if (h.pr > 0.05) { const bh = (h.pr / pmax) * (H - T - B) * 0.9; add('rect', { x: x(i) - bw / 2, y: H - B - bh, width: bw, height: bh, rx: 2, fill: 'var(--grid)', opacity: 0.45 }); } });
+    const zero = mn < 0 && mx > 0 ? y(0) : null;
+    if (zero != null) add('line', { x1: L, x2: W - R, y1: zero, y2: zero, stroke: 'var(--line)', 'stroke-dasharray': '3 4' });
+    const pts = hours.map((h, i) => [x(i), y(h.temp)]);
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+    const gid = 'wxg' + Math.random().toString(36).slice(2, 7);
+    const defs = add('defs', {}); const lg = document.createElementNS(ns, 'linearGradient'); lg.setAttribute('id', gid); lg.setAttribute('x1', 0); lg.setAttribute('x2', 0); lg.setAttribute('y1', 0); lg.setAttribute('y2', 1);
+    [['0', 'var(--warm)'], ['1', 'var(--cold)']].forEach(([o, c]) => { const s = document.createElementNS(ns, 'stop'); s.setAttribute('offset', o); s.setAttribute('stop-color', c); lg.append(s); }); defs.append(lg);
+    add('path', { d, fill: 'none', stroke: `url(#${gid})`, 'stroke-width': 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+    const iMax = ts.indexOf(mx), iMin = ts.indexOf(mn);
+    [[iMax, -8], [iMin, 16]].forEach(([i, dy]) => { add('circle', { cx: pts[i][0], cy: pts[i][1], r: 3, fill: 'var(--fg)' }); add('text', { x: Math.min(Math.max(pts[i][0], 16), W - 16), y: pts[i][1] + dy, 'text-anchor': 'middle', class: 'wxct' }, wxT(ts[i])); });
+    hours.forEach((h, i) => { if (h.h % 3 === 0) add('text', { x: x(i), y: H - 6, 'text-anchor': 'middle', class: 'wxcx' }, String(h.h).padStart(2, '0')); });
+    return svg;
+  }
+  function wxRender() {
+    const body = $('wxBody'); if (!body) return;
+    if (!wxData) { body.replaceChildren(mk('div', 'empty', 'Hämtar prognos…')); return; }
+    const nowH = new Date(); const nowKey = nowH.toLocaleDateString('sv-SE') + 'T' + String(nowH.getHours()).padStart(2, '0');
+    const frag = document.createDocumentFragment();
+    // dagkort
+    const dc = mk('div', 'wxdays');
+    wxData.slice(0, 2).forEach((day, i) => {
+      const b = mk('button', 'wxday' + (i === wxDay ? ' on' : '')); b.type = 'button'; b.setAttribute('aria-pressed', i === wxDay);
+      const top = mk('div', 'wxdn', wxDayName(i, day.d));
+      const mid = mk('div', 'wxdm'); mid.append(wxIcon(day.code, true, 44));
+      const tt = mk('div', 'wxdt num'); tt.append(mk('b', '', wxT(day.max)), mk('span', '', ' / ' + wxT(day.min)));
+      mid.append(tt);
+      b.append(top, mid, mk('div', 'wxds', wxText(day.code) + (day.pr >= 0.1 ? ' · ' + f1.format(day.pr) + ' mm' : '')));
+      b.addEventListener('click', () => { wxDay = i; wxRender(); });
+      dc.append(b);
+    });
+    frag.append(dc);
+    const day = wxData[wxDay]; if (!day) { body.replaceChildren(frag); return; }
+    let hours = day.hours; if (wxDay === 0) { const k = hours.findIndex((h) => h.t.slice(0, 13) >= nowKey); hours = hours.slice(Math.max(0, k)); }
+    if (day.rise && day.set) frag.append(mk('div', 'wxsun', 'Sol upp ' + day.rise.slice(11, 16) + ' · ner ' + day.set.slice(11, 16)));
+    const cw = mk('div', 'wxcw'); cw.append(wxChart(day.hours)); frag.append(cw);
+    // timlista
+    const list = mk('div', 'wxlist');
+    const hd = mk('div', 'wxrow wxhd'); ['Tid', '', 'Temp', 'Nederb.', 'Vind m/s'].forEach((t) => hd.append(mk('span', '', t))); list.append(hd);
+    hours.forEach((h, i) => {
+      const r = mk('div', 'wxrow' + (wxDay === 0 && i === 0 ? ' now' : ''));
+      r.append(mk('span', 'wxh num', wxDay === 0 && i === 0 ? 'Nu' : String(h.h).padStart(2, '0')));
+      const ic = mk('span', 'wxi'); ic.append(wxIcon(h.code, h.day, 30)); ic.title = wxText(h.code); r.append(ic);
+      const t = mk('span', 'wxtemp num', wxT(h.temp)); t.style.color = h.temp >= 0 ? 'var(--warm)' : 'var(--cold)'; r.append(t);
+      r.append(mk('span', 'wxpr num' + (h.pr >= 0.1 ? ' on' : ''), h.pr >= 0.1 ? f1.format(h.pr) : '–'));
+      const w = mk('span', 'wxw num'); const ar = mk('span', 'wxar', '↓'); ar.style.transform = `rotate(${h.wd}deg)`; ar.title = 'Vind från ' + Math.round(h.wd) + '°';
+      w.append(ar, document.createTextNode(' ' + f0.format(Math.round(h.ws)) + ' (' + f0.format(Math.round(h.wg)) + ')')); r.append(w);
+      list.append(r);
+    });
+    const link = mk('a', 'wxlink', 'Öppna hela prognosen hos SMHI ›'); link.href = WX.smhiUrl; link.target = '_blank'; link.rel = 'noopener';
+    frag.append(list, link, mk('div', 'fine wxsrc', 'Prognos för ' + WX.place + ' från ' + wxSrc + '. Vind i m/s, byvind inom parentes. Uppdaterad ' + hm(wxAt) + '.'));
+    body.replaceChildren(frag);
+  }
+  function wxOpen() {
+    const dlg = $('wx'); dlg.hidden = false; document.body.classList.add('noscroll'); wxDay = 0; wxRender();
+    $('wxClose').focus();
+    wxFetch().then(wxRender).catch(() => { const b = $('wxBody'); b.replaceChildren(mk('div', 'empty', 'Kunde inte hämta prognosen just nu. Försök igen om en stund.')); });
+  }
+  function wxClose() { $('wx').hidden = true; document.body.classList.remove('noscroll'); $('wxBtn').focus(); }
+  function wxBtnUpdate() {
+    const b = $('wxBtn'); if (!b) return;
+    const lbl = b.querySelector('.wxbl');
+    if (wxData && wxData[0]) { const d = wxData[0]; b.querySelector('.wxbi').replaceChildren(wxIcon(d.code, true, 22)); lbl.textContent = 'Prognos · ' + wxT(d.max) + ' / ' + wxT(d.min); }
+  }
+  $('wxBtn').addEventListener('click', wxOpen);
+  $('wxClose').addEventListener('click', wxClose);
+  $('wx').addEventListener('click', (e) => { if (e.target.id === 'wx') wxClose(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('wx').hidden) wxClose(); });
+  wxFetch().then(wxBtnUpdate).catch(() => {});
+  setInterval(() => { if (!document.hidden) wxFetch().then(() => { wxBtnUpdate(); if (!$('wx').hidden) wxRender(); }).catch(() => {}); }, WX_TTL);
 
   function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
 
