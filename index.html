@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-07.4">
+<meta name="app-version" content="2026-11-07.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -132,9 +132,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 :root{--cloud:#c7d2e0;--cloud-2:#8e9bb0;--snow:#e8f3ff}
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}}
 :root[data-theme="light"]{--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}
-.wxbtn{margin-top:12px;display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:.86rem;font-weight:600;color:var(--fg);background:var(--card-2);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;cursor:pointer}
-.wxbtn .wxbi{display:inline-flex;color:var(--muted)} .wxbtn .wxbi svg{display:block}
-.wxbtn > span:last-child{color:var(--muted);font-size:1.1rem;line-height:1}
+.wxbtn{grid-column:1/-1;margin-top:6px;display:flex;align-items:center;gap:10px;width:100%;font:inherit;font-size:.92rem;font-weight:600;color:var(--fg);background:var(--card-2);border:1px solid var(--line);border-radius:16px;padding:9px 14px 9px 10px;cursor:pointer;text-align:left;min-width:0}
+.wxbtn .wxbi{display:inline-flex;color:var(--muted);flex:none} .wxbtn .wxbi svg{display:block}
+.wxbtn .wxbl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wxbtn .wxbr{flex:none;color:var(--accent);font-size:.86rem;white-space:nowrap}
 body.noscroll{overflow:hidden}
 .wx{position:fixed;inset:0;z-index:50;background:rgba(5,9,15,.55);display:flex;align-items:flex-end;justify-content:center;animation:wxfade .2s ease}
 .wx[hidden]{display:none}
@@ -375,7 +376,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   </section>
 
   <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
-    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div><button class="wxbtn" id="wxBtn" type="button" aria-haspopup="dialog"><span class="wxbi" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.8 11.2 3.5 3.5 0 0 0 7 18z"/></svg></span><span class="wxbl">Väderprognos</span><span aria-hidden="true">›</span></button></div><div class="meta" id="outMeta"></div></div>
+    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div><button class="wxbtn" id="wxBtn" type="button" aria-haspopup="dialog"><span class="wxbi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.8 11.2 3.5 3.5 0 0 0 7 18z"/></svg></span><span class="wxbl">Väderprognos</span><span class="wxbr">Prognos <span aria-hidden="true">›</span></span></button></div>
     <div class="h2">Värme</div>
     <div class="card" id="thermos"><div class="empty">Hämtar termostater…</div></div>
     <div class="h2 rumh">Rum</div>
@@ -438,8 +439,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-07.4"></script>
-<script src="homey.js?v=2026-11-07.4"></script>
+<script src="config.js?v=2026-11-07.5"></script>
+<script src="homey.js?v=2026-11-07.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1561,7 +1562,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   function wxBtnUpdate() {
     const b = $('wxBtn'); if (!b) return;
     const lbl = b.querySelector('.wxbl');
-    if (wxData && wxData[0]) { const d = wxData[0]; b.querySelector('.wxbi').replaceChildren(wxIcon(d.code, true, 22)); lbl.textContent = 'Prognos · ' + wxT(d.max) + ' / ' + wxT(d.min); }
+    if (wxData && wxData[0]) { const d = wxData[0]; b.querySelector('.wxbi').replaceChildren(wxIcon(d.code, true, 26)); lbl.textContent = 'Idag ' + wxText(d.code).toLowerCase() + ' · ' + wxT(d.max) + ' / ' + wxT(d.min); }
   }
   $('wxBtn').addEventListener('click', wxOpen);
   $('wxClose').addEventListener('click', wxClose);
