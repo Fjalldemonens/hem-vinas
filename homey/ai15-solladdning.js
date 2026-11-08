@@ -89,6 +89,10 @@ if (S.darkSince && now - S.darkSince >= DARK_MIN * 60000) { await restore('solen
 if (S.amps >= A_MIN && chg < 100 && S.ampsSince && now - S.ampsSince >= 3 * 60000) { S.idleSince = S.idleSince || now; } else S.idleSince = null;
 if (S.idleSince && now - S.idleSince >= FULL_MIN * 60000) { await restore('bilen full'); return true; }
 
+// De första 2 min efter start mäts inget: om Tibber laddade bilen när knappen trycktes
+// syns den laddningen som falskt överskott (t.ex. 8,7 kW vid premiären 2026-11-08 13:48).
+if (now - S.since < 120000) { S.hist = []; save(); await setVar(vSt, 'Sol · startar, mäter överskott … ' + hm()); return true; }
+
 // Glidande snitt
 S.hist = (S.hist || []).concat(surplus).slice(-5);
 const avg = (n) => { const h = S.hist.slice(-n); return h.reduce((a, b) => a + b, 0) / h.length; };
