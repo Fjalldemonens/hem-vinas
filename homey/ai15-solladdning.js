@@ -12,6 +12,7 @@ const CHARGER = '7a0e129f-ec95-4faf-8fc9-9142c056590b'; // Easee "Laddbox"
 const GRID = '2b5aab67-5453-47c7-91eb-3807ecd28135';    // Tibber Pulse "Elmätare" (negativ = export)
 const SOLAR = '51de5b89-b274-49fa-af84-6e131cffd533';   // "Solceller"
 const BATTERY = 'bb92dcb1-6a8b-4ce3-ad55-57eec631ec8c'; // Homevolt
+const CAR = 'ec2954cc-6699-488d-962f-4ca3ed4aa220';     // "EX90 / 2025" (Volvo On Call): measure_battery, charging_target_level. Saknas bilen → bara laddboxens tomgång avgör "full".
 const BAT_SIGN = 1;      // +1 om batteriets measure_power är positiv vid laddning. VERIFIERA när batteriet går.
 const V = 230;           // fasspänning
 const A_MIN = 6, A_MAX = 16;
@@ -96,8 +97,17 @@ const solar = Math.max(0, Number(await val(SOLAR, 'measure_power')) || 0);
 const chg = Number(await val(CHARGER, 'measure_power')) || 0;
 const bat = BAT_SIGN * (Number(await val(BATTERY, 'measure_power')) || 0);
 const plug = await val(CHARGER, 'evcharger_charging_state');
+// Bilens laddnivå och laddgräns (Volvo-molnet, kan vara några minuter gammal – används bara för start/stopp, aldrig för strömregleringen)
+const socRaw = await val(CAR, 'measure_battery'), tgtRaw = await val(CAR, 'charging_target_level');
+const soc = Number.isFinite(Number(socRaw)) && socRaw !== null ? Math.round(Number(socRaw)) : null;
+const tgt = Number.isFinite(Number(tgtRaw)) && tgtRaw !== null ? Math.round(Number(tgtRaw)) : null;
+const carFull = soc !== null && tgt !== null && soc >= tgt;
+const carTxt = soc !== null ? ' · Bil ' + soc + ' %' + (tgt !== null ? ' → ' + tgt + ' %' : '') : '';
 // Bilen först: det bilen tar nu + det batteriet laddar − det vi köper.
 const surplus = Math.round(chg + bat - grid); // batteri som laddar räknas som ledigt, batteri som laddar ur räknas bort
+
+// Nyss påslagen men bilen redan full: rör ingenting (sparar två skrivningar till laddarens flash)
+if (!S.active && carFull) { await setVar(vOn, false); await setVar(vSt, 'Tibber · bilen redan full (' + soc + ' %)' + ' ' + hm()); return true; }
 
 // Nyss påslagen: spara läget, stäng av Tibber, börja pausat
 if (!S.active) {
@@ -117,13 +127,16 @@ if (plug === 'plugged_out') { await restore('bilen urkopplad'); return true; }
 if (solar < DARK_W) { S.darkSince = S.darkSince || now; } else S.darkSince = null;
 if (S.darkSince && now - S.darkSince >= DARK_MIN * 60000) { await restore('solen borta för dagen'); return true; }
 
+// Avslut: bilen har nått sin laddgräns enligt Volvo (avslutar även vilande läge – Tibber har redan kontrollen då)
+if (carFull) { await restore('bilen full (' + soc + ' %)'); return true; }
+
 // Vilande solläge: Tibber styr. Överskottet = laddbox + batteri − nät räknar bort Tibbers egen laddning.
 if (S.standby) {
   const day = new Date(now).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' });
   if (S.rearmDay !== day) { S.rearmDay = day; S.rearms = 0; }
   S.hist = (S.hist || []).concat(surplus).slice(-N(REARM_MIN));
   const avgAll = S.hist.reduce((a, b) => a + b, 0) / S.hist.length;
-  if (S.hist.length >= N(REARM_MIN) && avgAll >= REARM_W && S.rearms < MAX_REARM_DAY) {
+  if (S.hist.length >= N(REARM_MIN) && avgAll >= REARM_W && S.rearms < MAX_REARM_DAY && !carFull) {
     try {
       await card('setDynamicChargerCurrent', { current: 0 });
       await card('disableSmartCharging');
@@ -132,7 +145,7 @@ if (S.standby) {
     save(); await setVar(vSt, 'Sol · startar igen, rejäl sol (' + kw(avgAll) + ') ' + hm()); return true;
   }
   save();
-  await setVar(vSt, 'Tibber · solläget vilar (överskott ' + kw(Math.max(0, surplus)) + ', startar igen vid ' + kw(REARM_W) + (S.rearms >= MAX_REARM_DAY ? ', max omstarter idag' : '') + ') ' + hm());
+  await setVar(vSt, 'Tibber · solläget vilar (överskott ' + kw(Math.max(0, surplus)) + ', startar igen vid ' + kw(REARM_W) + (S.rearms >= MAX_REARM_DAY ? ', max omstarter idag' : '') + (carFull ? ', bilen full' : '') + ')' + carTxt + ' ' + hm());
   return true;
 }
 
@@ -197,6 +210,6 @@ if (S.offSince && now - S.offSince >= PAUSE_TO_TIBBER_MIN * 60000) { await handO
 
 save();
 await setVar(vSt, mode === 'off'
-  ? 'Sol · väntar på sol (överskott ' + kw(Math.max(0, surplus)) + ') ' + hm()
-  : 'Sol · ' + ph + '-fas ' + amps + ' A (överskott ' + kw(surplus) + ') ' + hm());
+  ? 'Sol · väntar på sol (överskott ' + kw(Math.max(0, surplus)) + ')' + carTxt + ' ' + hm()
+  : 'Sol · ' + ph + '-fas ' + amps + ' A (överskott ' + kw(surplus) + ')' + carTxt + ' ' + hm());
 return true;
