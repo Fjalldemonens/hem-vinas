@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.3">
+<meta name="app-version" content="2026-11-08.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -276,6 +276,19 @@ body.noscroll{overflow:hidden}
 .fine{font-size:.8rem;color:var(--muted);margin:0 2px}
 .btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.on{border-color:var(--accent);color:var(--accent)}
+.evhero{padding:16px 16px 4px;display:flex;flex-direction:column;gap:14px}
+.evst{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.evst b{font-family:var(--f-disp);font-weight:400;font-size:1.45rem;letter-spacing:-.01em}
+.evst b.chg{color:var(--ev)}
+.evst span{color:var(--muted);font-size:.92rem;white-space:nowrap}
+.car{display:flex;flex-direction:column;gap:6px}
+.carl{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;color:var(--muted)}
+.carl .num{color:var(--fg);font-weight:600}
+.carbar{position:relative;height:12px;border-radius:6px;background:var(--card-2)}
+.carbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--ev)}
+.carbar s{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--fg);transform:translateX(-50%)}
+.carsub{font-size:.8rem;color:var(--muted)}
+#ev:empty{display:none}
 .solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
 .solbox .btn{width:100%}
 .solst{font-size:.8rem;color:var(--muted)}
@@ -429,8 +442,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="h2">Solceller</div>
     <div class="card"><div class="kv num" id="solar"></div></div>
 
-    <div class="h2">Batteri &amp; laddbox</div>
-    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
+    <div class="h2">Husbatteri</div>
+    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div></div>
+
+    <div class="h2">Laddbox &amp; bil</div>
+    <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div class="carbar"><i></i><s></s></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -446,8 +462,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.3"></script>
-<script src="homey.js?v=2026-11-08.3"></script>
+<script src="config.js?v=2026-11-08.4"></script>
+<script src="homey.js?v=2026-11-08.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1108,15 +1124,27 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
     if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
+    // Laddbox & bil: stor statusrad, bilens laddnivå som stapel med streck vid laddmålet, sedan statistik.
+    const evState = ev ? val(ev, 'evcharger_charging_state') : null;
+    const evSt = $('evSt');
+    evSt.textContent = ev ? EVS[evState] || String(val(ev, 'charger_status') || '–') : 'Laddbox hittades inte';
+    evSt.className = evState === 'plugged_in_charging' ? 'chg' : '';
+    $('evPw').textContent = ev ? [e > 0 || evState === 'plugged_in_charging' ? W(e) : '', has(ev, 'target_charger_current') ? 'max ' + f0.format(val(ev, 'target_charger_current')) + ' A' : ''].filter(Boolean).join(' · ') : '';
+    const cSoc = car ? val(car, 'measure_battery') : null, cTgt = car ? val(car, 'charging_target_level') : null;
+    const carRow = $('carRow'); carRow.hidden = cSoc == null;
+    if (!carRow.hidden) {
+      const pc = Math.max(0, Math.min(100, Number(cSoc))), tg = cTgt == null ? null : Math.max(0, Math.min(100, Number(cTgt)));
+      $('carName').textContent = String(car.name || 'Bil').trim();
+      $('carPct').textContent = f0.format(pc) + ' %' + (tg != null ? ' → ' + f0.format(tg) + ' %' : '');
+      const bar = carRow.querySelector('.carbar');
+      bar.firstElementChild.style.width = Math.max(1, pc) + '%';
+      bar.lastElementChild.hidden = tg == null; if (tg != null) bar.lastElementChild.style.left = tg + '%';
+      $('carSub').textContent = tg == null ? '' : pc >= tg ? 'Laddmålet nått' : f0.format(tg - pc) + ' % kvar till laddmålet';
+    }
     kv($('ev'), ev ? [
-      ['Laddbox', EVS[val(ev, 'evcharger_charging_state')] || String(val(ev, 'charger_status') || '–')],
-      ['Effekt', W(e)],
-      car && val(car, 'measure_battery') != null && ['Bilbatteri', f0.format(val(car, 'measure_battery')) + ' %'],
-      car && val(car, 'charging_target_level') != null && ['Laddmål', f0.format(val(car, 'charging_target_level')) + ' %'],
-      has(ev, 'target_charger_current') && ['Max laddström', f0.format(val(ev, 'target_charger_current')) + ' A'],
       has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
       has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh'],
-    ] : [['Laddbox', 'Hittades inte']]);
+    ] : []);
     // Solladdning: knappen sätter AI Solladdning, flödet AI 15 gör jobbet och skriver AI Solladdning status.
     const solBox = $('solBox'), solOn = varVal('AI Solladdning');
     solBox.hidden = !ev || solOn === undefined;
