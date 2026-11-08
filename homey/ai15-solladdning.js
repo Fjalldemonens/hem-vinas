@@ -22,7 +22,9 @@ const MARGIN_W = 100;    // marginal så vi inte köper el
 const DARK_W = 300;      // solen borta: produktion < detta ...
 const DARK_MIN = 30;     // ... i så här många minuter → tillbaka till Tibber
 const FULL_MIN = 6;      // erbjuden ström ≥ A_MIN men bilen tar < 100 W i så här många min → full
-const SAMPLE_S = 30;     // flödets intervall i sekunder (snitten räknas i minuter oavsett intervall)
+const SETTLE_S = 60;     // efter en strömändring: vänta så här länge innan nästa justering (Pulse ligger efter 30–60 s)
+const IMPORT_W = 100;    // dödband: köp under detta räknas som noll (inget ned-steg)
+const SAMPLE_S = 30;    // flödets intervall i sekunder (snitten räknas i minuter oavsett intervall)
 // Skydd för Easees moln (det har en gräns för antal anrop):
 const MAX_CMD_H = 60;    // högst så här många kommandon per timme, sedan bara nödvändiga sänkningar
 const ERR_MAX = 3;       // så här många fel i rad ...
@@ -121,12 +123,18 @@ if (mode === S.mode && (mode === '1p' || mode === '3p') && a3 < PAUSE_W && now -
 const ph = mode === '3p' ? 3 : 1;
 // Laddar bilen redan i samma läge: reglera mot nätet (erbjuden ström + export − marginal). Det rättar automatiskt
 // för att bilen ofta tar mindre än den erbjuds (7,1 A vid 8 A erbjudet, 2026-11-08). Annars: räkna från överskottet.
-let amps = mode === 'off' ? 0
-  : (mode === S.mode && S.amps > 0 && chg > 300) ? S.amps + Math.floor((-grid - MARGIN_W) / (V * ph))
-  : Math.floor((surplus - MARGIN_W) / (V * ph));
+// Nätreglering i små steg med dödband och insvängningstid – annars pendlar den (2026-11-08 14:15–14:22
+// gick den 9→7→9→7→6 A och nätet växlade mellan −650 W och +370 W, eftersom Pulse visar ändringen först efter 30–60 s).
+const feedback = mode !== 'off' && mode === S.mode && S.amps > 0 && chg > 300;
+let amps;
+if (mode === 'off') amps = 0;
+else if (feedback) {
+  amps = S.amps;
+  const settled = now - (S.ampsSince || 0) >= SETTLE_S * 1000;
+  if (grid > IMPORT_W && (settled || grid > 500)) amps = S.amps - Math.max(1, Math.round(grid / (V * ph)));  // köper el: ned
+  else if (settled && -grid >= MARGIN_W + V * ph) amps = S.amps + 1;                                         // säljer minst en ampere till: upp 1
+} else amps = Math.floor((surplus - MARGIN_W) / (V * ph));
 if (mode !== 'off') amps = Math.min(A_MAX, Math.max(A_MIN, amps));
-// Höjning först när två mätningar i rad räcker (sänkning direkt) – färre anrop när huset fladdrar
-if (mode === S.mode && amps > S.amps && S.amps > 0) { if (!(S.upWant > S.amps)) { S.upWant = amps; amps = S.amps; } else { amps = Math.min(amps, S.upWant); S.upWant = 0; } } else S.upWant = 0;
 // Easee-skydd: felpaus, och timkvot (då bara sänkningar och lägesbyten)
 const paused = S.errPause && now - S.errPause < ERR_PAUSE_MIN * 60000;
 const overQuota = (S.cmds || []).filter((t) => now - t < 3600000).length >= MAX_CMD_H;
