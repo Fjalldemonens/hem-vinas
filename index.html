@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.2">
+<meta name="app-version" content="2026-11-08.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -446,8 +446,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.2"></script>
-<script src="homey.js?v=2026-11-08.2"></script>
+<script src="config.js?v=2026-11-08.3"></script>
+<script src="homey.js?v=2026-11-08.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1020,7 +1020,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   function renderEnergy() {
     const grid = devices.find((d) => has(d, 'meter_power.imported') || /elmätare/i.test(d.name));
     const sun = devices.find((d) => d.type === 'solarpanel');
-    const batt = devices.find((d) => d.type === 'battery');
+    const car = devices.find((d) => has(d, 'charging_target_level') && has(d, 'measure_battery'));   // elbilen (Volvo On Call), hittas på capabilities
+    const batt = devices.find((d) => d.type === 'battery' && d !== car);
     const ev = devices.find((d) => d.type === 'evcharger');
     const price = devices.find((d) => has(d, 'measure_price_total'));
     const g = grid ? Number(val(grid, 'measure_power')) || 0 : 0;
@@ -1110,6 +1111,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     kv($('ev'), ev ? [
       ['Laddbox', EVS[val(ev, 'evcharger_charging_state')] || String(val(ev, 'charger_status') || '–')],
       ['Effekt', W(e)],
+      car && val(car, 'measure_battery') != null && ['Bilbatteri', f0.format(val(car, 'measure_battery')) + ' %'],
+      car && val(car, 'charging_target_level') != null && ['Laddmål', f0.format(val(car, 'charging_target_level')) + ' %'],
       has(ev, 'target_charger_current') && ['Max laddström', f0.format(val(ev, 'target_charger_current')) + ' A'],
       has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
       has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh'],
