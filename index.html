@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.5">
+<meta name="app-version" content="2026-11-08.6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -296,6 +296,10 @@ body.noscroll{overflow:hidden}
 #ev:empty{display:none}
 .solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
 .solbox .btn{width:100%}
+/* Solknappen: av = grå, på = solgul (samma färg som solen i energiflödet), vilande = solgul kant */
+.btn.sol{background:var(--card-2);border-color:var(--line);color:var(--muted)}
+.btn.sol.on{background:var(--sun);border-color:var(--sun);color:#1a1200;box-shadow:0 0 0 4px color-mix(in srgb,var(--sun) 22%,transparent)}
+.btn.sol.rest{background:color-mix(in srgb,var(--sun) 12%,transparent);border-color:var(--sun);color:var(--sun)}
 .solst{font-size:.8rem;color:var(--muted)}
 .solst.bad{color:var(--danger)}
 .srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -467,8 +471,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.5"></script>
-<script src="homey.js?v=2026-11-08.5"></script>
+<script src="config.js?v=2026-11-08.6"></script>
+<script src="homey.js?v=2026-11-08.6"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1164,8 +1168,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     solBox.hidden = !ev || solOn === undefined;
     if (!solBox.hidden) {
       const btn = $('solBtn'), st = String(varVal('AI Solladdning status') || '');
-      btn.textContent = solOn === true ? (/vilar/.test(st) ? '🌥️ Solläget vilar – tryck för att stänga av' : '☀️ Solladdning på – tryck för Tibber') : 'Laddning sol';
-      btn.className = 'btn' + (solOn === true ? ' go' : '');
+      const rest = solOn === true && /vilar/.test(st);
+      btn.textContent = solOn === true ? (rest ? '🌥️ Solläget vilar – tryck för att stänga av' : '☀️ Solladdning på – tryck för Tibber') : '☀️ Laddning sol';
+      btn.className = 'btn sol' + (solOn === true ? (rest ? ' rest' : ' on') : '');
       btn.setAttribute('aria-pressed', solOn === true ? 'true' : 'false');
       const solSt = $('solSt'); solSt.textContent = solOn === true && /^Tibber/.test(st) && !/vilar/.test(st) ? 'Startar inom en minut …' : solOn !== true && /^Sol/.test(st) ? 'Återgår till Tibber inom en minut …' : /ej startad/.test(st) ? 'Tibber styr laddningen' : st;
       solSt.className = 'solst num' + (/^FEL/.test(st) ? ' bad' : '');
