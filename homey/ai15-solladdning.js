@@ -1,4 +1,4 @@
-// AI 15 · Solladdning. Körs varje minut.
+// AI 15 · Solladdning. Körs var 30:e sekund (sedan 2026-11-08 14:10, tidigare varje minut).
 // Variabeln "AI Solladdning" (Ja/Nej) slås på av knappen "Laddning sol" i Hem Vinäs.
 // På:  Tibbers smartladdning stängs av och Easee laddas bara med solöverskott (bilen före batteriet).
 //      Moln = laddningen pausas och väntar på solen. 1-fas vid lite sol, 3-fas vid mycket.
@@ -22,6 +22,11 @@ const MARGIN_W = 100;    // marginal så vi inte köper el
 const DARK_W = 300;      // solen borta: produktion < detta ...
 const DARK_MIN = 30;     // ... i så här många minuter → tillbaka till Tibber
 const FULL_MIN = 6;      // erbjuden ström ≥ A_MIN men bilen tar < 100 W i så här många min → full
+const SAMPLE_S = 30;     // flödets intervall i sekunder (snitten räknas i minuter oavsett intervall)
+// Skydd för Easees moln (det har en gräns för antal anrop):
+const MAX_CMD_H = 60;    // högst så här många kommandon per timme, sedan bara nödvändiga sänkningar
+const ERR_MAX = 3;       // så här många fel i rad ...
+const ERR_PAUSE_MIN = 5; // ... ger så här lång paus i kommandon (laddboxen ligger kvar på senaste värdet)
 // === SLUT KONFIG ===
 
 const vars = Object.values(await Homey.logic.getVariables());
@@ -38,6 +43,13 @@ const val = async (id, cap) => { try { const d = await Homey.devices.getDevice({
 
 let S = {}; try { S = JSON.parse(global.get('solS') || '{}'); } catch (e) { S = {}; }
 const save = () => global.set('solS', JSON.stringify(S));
+const N = (min) => Math.max(1, Math.round(min * 60 / SAMPLE_S)); // antal mätvärden för ett snitt över min minuter
+// Kommando till Easee med räknare och felbroms
+const cmd = async (c, args) => {
+  S.cmds = (S.cmds || []).filter((t) => now - t < 3600000); S.cmds.push(now);
+  try { await card(c, args); S.errs = 0; }
+  catch (e) { S.errs = (S.errs || 0) + 1; if (S.errs >= ERR_MAX) S.errPause = now; throw e; }
+};
 
 // Återgång till Tibber: först ström/faser tillbaka, sedan smartladdning på.
 const restore = async (why) => {
@@ -94,9 +106,9 @@ if (S.idleSince && now - S.idleSince >= FULL_MIN * 60000) { await restore('bilen
 if (now - S.since < 120000) { S.hist = []; save(); await setVar(vSt, 'Sol · startar, mäter överskott … ' + hm()); return true; }
 
 // Glidande snitt
-S.hist = (S.hist || []).concat(surplus).slice(-5);
+S.hist = (S.hist || []).concat(surplus).slice(-N(5));
 const avg = (n) => { const h = S.hist.slice(-n); return h.reduce((a, b) => a + b, 0) / h.length; };
-const a3 = S.hist.length >= 3 ? avg(3) : -1e9, a5 = S.hist.length >= 5 ? avg(5) : -1e9;
+const a3 = S.hist.length >= N(3) ? avg(N(3)) : -1e9, a5 = S.hist.length >= N(5) ? avg(N(5)) : -1e9;
 
 // Lägesbyte med hysteres
 let mode = S.mode;
@@ -109,20 +121,26 @@ if (mode === S.mode && (mode === '1p' || mode === '3p') && a3 < PAUSE_W && now -
 const ph = mode === '3p' ? 3 : 1;
 let amps = mode === 'off' ? 0 : Math.floor((surplus - MARGIN_W) / (V * ph));
 if (mode !== 'off') amps = Math.min(A_MAX, Math.max(A_MIN, amps));
+// Höjning först när två mätningar i rad räcker (sänkning direkt) – färre anrop när huset fladdrar
+if (mode === S.mode && amps > S.amps && S.amps > 0) { if (!(S.upWant > S.amps)) { S.upWant = amps; amps = S.amps; } else { amps = Math.min(amps, S.upWant); S.upWant = 0; } } else S.upWant = 0;
+// Easee-skydd: felpaus, och timkvot (då bara sänkningar och lägesbyten)
+const paused = S.errPause && now - S.errPause < ERR_PAUSE_MIN * 60000;
+const overQuota = (S.cmds || []).filter((t) => now - t < 3600000).length >= MAX_CMD_H;
+if (paused || (overQuota && amps > S.amps && mode === S.mode)) { amps = S.amps; if (paused) mode = S.mode; }
 
 try {
   if (mode !== S.mode) {
     S.modeSince = now; S.ampsSince = now;
-    if (mode === '1p') await card('circuitCurrentControlPerPhase', { current1: A_MAX, current2: 0, current3: 0 });
-    if (mode === '3p') await card('circuitCurrentControlPerPhase', { current1: A_MAX, current2: A_MAX, current3: A_MAX });
+    if (mode === '1p') await cmd('circuitCurrentControlPerPhase', { current1: A_MAX, current2: 0, current3: 0 });
+    if (mode === '3p') await cmd('circuitCurrentControlPerPhase', { current1: A_MAX, current2: A_MAX, current3: A_MAX });
     S.mode = mode;
   }
   if (amps !== S.amps) {
-    await card('setDynamicChargerCurrent', { current: amps });
-    if (amps > 0 && S.amps === 0 && plug === 'plugged_in_paused') { try { await card('resumeCharging'); } catch (e) {} }
+    await cmd('setDynamicChargerCurrent', { current: amps });
+    if (amps > 0 && S.amps === 0 && plug === 'plugged_in_paused') { try { await cmd('resumeCharging'); } catch (e) {} }
     S.amps = amps; S.ampsSince = now;
   }
-} catch (e) { await setVar(vSt, 'FEL ' + hm() + ': ' + e.message); save(); return false; }
+} catch (e) { save(); await setVar(vSt, 'FEL ' + hm() + ': Easee svarade inte (' + e.message + ')' + (S.errPause ? ', pausar kommandon ' + ERR_PAUSE_MIN + ' min' : '')); return false; }
 
 save();
 await setVar(vSt, mode === 'off'
