@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-07.7">
+<meta name="app-version" content="2026-11-08.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -276,6 +276,10 @@ body.noscroll{overflow:hidden}
 .fine{font-size:.8rem;color:var(--muted);margin:0 2px}
 .btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.on{border-color:var(--accent);color:var(--accent)}
+.solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
+.solbox .btn{width:100%}
+.solst{font-size:.8rem;color:var(--muted)}
+.solst.bad{color:var(--danger)}
 .srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
 .srow:last-child{border-bottom:0}
 .srow .st{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-width:0}
@@ -426,7 +430,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card"><div class="kv num" id="solar"></div></div>
 
     <div class="h2">Batteri &amp; laddbox</div>
-    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div></div>
+    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div><div class="kv num" id="ev" style="border-top:1px solid var(--line)"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -442,8 +446,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-07.7"></script>
-<script src="homey.js?v=2026-11-07.7"></script>
+<script src="config.js?v=2026-11-08.1"></script>
+<script src="homey.js?v=2026-11-08.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1110,6 +1114,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
       has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh'],
     ] : [['Laddbox', 'Hittades inte']]);
+    // Solladdning: knappen sätter AI Solladdning, flödet AI 15 gör jobbet och skriver AI Solladdning status.
+    const solBox = $('solBox'), solOn = varVal('AI Solladdning');
+    solBox.hidden = !ev || solOn === undefined;
+    if (!solBox.hidden) {
+      const btn = $('solBtn'), st = String(varVal('AI Solladdning status') || '');
+      btn.textContent = solOn === true ? '☀️ Solladdning på – tryck för Tibber' : 'Laddning sol';
+      btn.className = 'btn' + (solOn === true ? ' go' : '');
+      btn.setAttribute('aria-pressed', solOn === true ? 'true' : 'false');
+      const solSt = $('solSt'); solSt.textContent = solOn === true && /^Tibber/.test(st) ? 'Startar inom en minut …' : solOn !== true && /^Sol/.test(st) ? 'Återgår till Tibber inom en minut …' : /ej startad/.test(st) ? 'Tibber styr laddningen' : st;
+      solSt.className = 'solst num' + (/^FEL/.test(st) ? ' bad' : '');
+    }
     kv($('solar'), sun ? [
       ['Effekt nu', W(s)],
       has(sun, 'meter_power') && ['Idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
@@ -1577,6 +1592,20 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   setInterval(() => { if (!document.hidden) wxFetch().then(() => { wxBtnUpdate(); if (!$('wx').hidden) wxRender(); }).catch(() => {}); }, WX_TTL);
 
   function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
+  let solBusy = false;
+  $('solBtn').addEventListener('click', async () => {
+    if (solBusy) return; solBusy = true;
+    const on = varVal('AI Solladdning') !== true;
+    try {
+      await api.setVariable('AI Solladdning', on);
+      const v = vars.find((x) => x.name === 'AI Solladdning'); if (v) v.value = on;
+      toast(on ? 'Solladdning på – startar inom en minut' : 'Tillbaka till Tibber inom en minut');
+    } catch (e) {
+      banner(e && e.status === 403 || /scope|forbidden|permission/i.test(String(e && e.message))
+        ? 'Appen får inte ändra variabler än. Lägg till behörigheten homey.logic för Hem Vinäs i Homey Developer Tools, logga sedan ut och in i appen.'
+        : 'Solladdningen kunde inte ändras: ' + ((e && e.message) || 'okänt fel'));
+    } finally { solBusy = false; renderEnergy(); }
+  });
 
   /* ---------- live data ---------- */
   let busy = false, timers = [];
