@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.1">
+<meta name="app-version" content="2026-11-08.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -446,8 +446,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.1"></script>
-<script src="homey.js?v=2026-11-08.1"></script>
+<script src="config.js?v=2026-11-08.2"></script>
+<script src="homey.js?v=2026-11-08.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1119,10 +1119,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     solBox.hidden = !ev || solOn === undefined;
     if (!solBox.hidden) {
       const btn = $('solBtn'), st = String(varVal('AI Solladdning status') || '');
-      btn.textContent = solOn === true ? '☀️ Solladdning på – tryck för Tibber' : 'Laddning sol';
+      btn.textContent = solOn === true ? (/vilar/.test(st) ? '🌥️ Solläget vilar – tryck för att stänga av' : '☀️ Solladdning på – tryck för Tibber') : 'Laddning sol';
       btn.className = 'btn' + (solOn === true ? ' go' : '');
       btn.setAttribute('aria-pressed', solOn === true ? 'true' : 'false');
-      const solSt = $('solSt'); solSt.textContent = solOn === true && /^Tibber/.test(st) ? 'Startar inom en minut …' : solOn !== true && /^Sol/.test(st) ? 'Återgår till Tibber inom en minut …' : /ej startad/.test(st) ? 'Tibber styr laddningen' : st;
+      const solSt = $('solSt'); solSt.textContent = solOn === true && /^Tibber/.test(st) && !/vilar/.test(st) ? 'Startar inom en minut …' : solOn !== true && /^Sol/.test(st) ? 'Återgår till Tibber inom en minut …' : /ej startad/.test(st) ? 'Tibber styr laddningen' : st;
       solSt.className = 'solst num' + (/^FEL/.test(st) ? ' bad' : '');
     }
     kv($('solar'), sun ? [

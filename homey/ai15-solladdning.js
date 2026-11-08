@@ -2,6 +2,7 @@
 // Variabeln "AI Solladdning" (Ja/Nej) slås på av knappen "Laddning sol" i Hem Vinäs.
 // På:  Tibbers smartladdning stängs av och Easee laddas bara med solöverskott (bilen före batteriet).
 //      Moln = laddningen pausas och väntar på solen. 1-fas vid lite sol, 3-fas vid mycket.
+//      Pausad i 15 min → Tibber tar över, men solläget VILAR: kommer rejäl sol (≥ 2,5 kW i 5 min) tas det upp igen.
 // Av (tillbaka till Tibber) när: bilen är full (laddgräns i bilen), kabeln dras ur,
 //      solen är borta för dagen, eller knappen slås av. Ström och faser återställs FÖRE Tibber tar över.
 // Skriver "AI Solladdning status" (text) som appen visar i laddbox-kortet.
@@ -22,6 +23,10 @@ const MARGIN_W = 100;    // marginal så vi inte köper el
 const DARK_W = 300;      // solen borta: produktion < detta ...
 const DARK_MIN = 30;     // ... i så här många minuter → tillbaka till Tibber
 const FULL_MIN = 6;      // erbjuden ström ≥ A_MIN men bilen tar < 100 W i så här många min → full
+const PAUSE_TO_TIBBER_MIN = 15; // pausad (för lite sol) så här länge → Tibber tar över, solläget vilar
+const REARM_W = 2500;    // vilande solläge vaknar när överskottet i snitt är minst detta ...
+const REARM_MIN = 5;     // ... i så här många minuter
+const MAX_REARM_DAY = 4; // högst så här många omstarter per dag (varje byte skriver smartladdning till laddarens flash)
 const SETTLE_S = 60;     // efter en strömändring: vänta så här länge innan nästa justering (Pulse ligger efter 30–60 s)
 const IMPORT_W = 100;    // dödband: köp under detta räknas som noll (inget ned-steg)
 const SAMPLE_S = 30;    // flödets intervall i sekunder (snitten räknas i minuter oavsett intervall)
@@ -55,7 +60,7 @@ const cmd = async (c, args) => {
 
 // Återgång till Tibber: först ström/faser tillbaka, sedan smartladdning på.
 const restore = async (why) => {
-  try {
+  if (!S.standby) try {
     const c = S.prevCircuit || 40, a = S.prevCharger || 16;
     await card('circuitCurrentControlPerPhase', { current1: c, current2: c, current3: c });
     await card('setDynamicChargerCurrent', { current: a });
@@ -64,6 +69,19 @@ const restore = async (why) => {
   S = {}; save();
   await setVar(vOn, false);
   await setVar(vSt, 'Tibber · ' + why + ' ' + hm());
+};
+
+// Tibber tar över men solläget vilar (knappen ligger kvar på). Ström/faser återställs först, som vid avslut.
+const handOver = async () => {
+  try {
+    const c = S.prevCircuit || 40, a = S.prevCharger || 16;
+    await card('circuitCurrentControlPerPhase', { current1: c, current2: c, current3: c });
+    await card('setDynamicChargerCurrent', { current: a });
+    await card('enableSmartCharging');
+  } catch (e) { await setVar(vSt, 'FEL vid återgång till Tibber ' + hm() + ': ' + e.message); return; }
+  Object.assign(S, { standby: true, standbySince: now, mode: 'off', amps: 0, hist: [], offSince: null, idleSince: null, upWant: 0 });
+  save();
+  await setVar(vSt, 'Tibber · solläget vilar, för lite sol ' + PAUSE_TO_TIBBER_MIN + ' min (startar igen vid ' + kw(REARM_W) + ') ' + hm());
 };
 
 // Knappen avslagen
@@ -98,6 +116,25 @@ if (plug === 'plugged_out') { await restore('bilen urkopplad'); return true; }
 // Avslut: solen borta för dagen
 if (solar < DARK_W) { S.darkSince = S.darkSince || now; } else S.darkSince = null;
 if (S.darkSince && now - S.darkSince >= DARK_MIN * 60000) { await restore('solen borta för dagen'); return true; }
+
+// Vilande solläge: Tibber styr. Överskottet = laddbox + batteri − nät räknar bort Tibbers egen laddning.
+if (S.standby) {
+  const day = new Date(now).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm' });
+  if (S.rearmDay !== day) { S.rearmDay = day; S.rearms = 0; }
+  S.hist = (S.hist || []).concat(surplus).slice(-N(REARM_MIN));
+  const avgAll = S.hist.reduce((a, b) => a + b, 0) / S.hist.length;
+  if (S.hist.length >= N(REARM_MIN) && avgAll >= REARM_W && S.rearms < MAX_REARM_DAY) {
+    try {
+      await card('setDynamicChargerCurrent', { current: 0 });
+      await card('disableSmartCharging');
+    } catch (e) { save(); await setVar(vSt, 'FEL vid omstart av solläget ' + hm() + ': ' + e.message); return false; }
+    Object.assign(S, { standby: false, since: now, mode: 'off', amps: 0, hist: [], offSince: null, rearms: S.rearms + 1 });
+    save(); await setVar(vSt, 'Sol · startar igen, rejäl sol (' + kw(avgAll) + ') ' + hm()); return true;
+  }
+  save();
+  await setVar(vSt, 'Tibber · solläget vilar (överskott ' + kw(Math.max(0, surplus)) + ', startar igen vid ' + kw(REARM_W) + (S.rearms >= MAX_REARM_DAY ? ', max omstarter idag' : '') + ') ' + hm());
+  return true;
+}
 
 // Avslut: bilen full (vi erbjuder ström men bilen tar inget)
 if (S.amps >= A_MIN && chg < 100 && S.ampsSince && now - S.ampsSince >= 3 * 60000) { S.idleSince = S.idleSince || now; } else S.idleSince = null;
@@ -153,6 +190,10 @@ try {
     S.amps = amps; S.ampsSince = now;
   }
 } catch (e) { save(); await setVar(vSt, 'FEL ' + hm() + ': Easee svarade inte (' + e.message + ')' + (S.errPause ? ', pausar kommandon ' + ERR_PAUSE_MIN + ' min' : '')); return false; }
+
+// För lite sol för länge → Tibber tar över, solläget vilar
+if (mode === 'off') { S.offSince = S.offSince || now; } else S.offSince = null;
+if (S.offSince && now - S.offSince >= PAUSE_TO_TIBBER_MIN * 60000) { await handOver(); return true; }
 
 save();
 await setVar(vSt, mode === 'off'
