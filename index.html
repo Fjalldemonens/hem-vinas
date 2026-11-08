@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.4">
+<meta name="app-version" content="2026-11-08.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,7 +23,7 @@
   --fg:#eaf1f8; --muted:#8696ab; --faint:#33435c;
   --accent:#1fd3b0; --accent-ink:#04231d; --accent-soft:rgba(31,211,176,.14);
   --sun:#ffb547; --grid:#5aa9ff; --batt:#4be08a; --ev:#b28cff; --home:#eaf1f8;
-  --warm:#ffbf5a; --cold:#7fc4ff; --danger:#ff6b6b; --warn:#ffc94d; --ok:#4be08a;
+  --warm:#ffbf5a; --cold:#7fc4ff; --danger:#ff6b6b; --warn:#ffc94d; --orange:#ff9440; --ok:#4be08a;
   --f-disp:"Sora","Manrope",system-ui,sans-serif;
   --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:22px; color-scheme:dark;
@@ -33,13 +33,13 @@
   --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
   --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
   --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
-  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --ok:#1aa45a; color-scheme:light}}
+  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --orange:#e2680f; --ok:#1aa45a; color-scheme:light}}
 :root[data-theme="light"]{
   --bg:#eef2f6; --bg-2:#e6ecf2; --card:#ffffff; --card-2:#f2f5f9; --line:#dbe3ec;
   --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
   --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
   --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
-  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --ok:#1aa45a; color-scheme:light}
+  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --orange:#e2680f; --ok:#1aa45a; color-scheme:light}
 html,body{background:var(--bg);color:var(--fg)}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--f-body);font-size:15px;line-height:1.4}
@@ -284,9 +284,14 @@ body.noscroll{overflow:hidden}
 .car{display:flex;flex-direction:column;gap:6px}
 .carl{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;color:var(--muted)}
 .carl .num{color:var(--fg);font-weight:600}
-.carbar{position:relative;height:12px;border-radius:6px;background:var(--card-2)}
-.carbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:var(--ev)}
-.carbar s{position:absolute;top:-4px;bottom:-4px;width:3px;border-radius:2px;background:var(--fg);transform:translateX(-50%)}
+/* Batteri-grafik (Homevolt och bilen): färg efter nivå – <10 % röd, <20 % orange, <30 % gul, annars grön */
+.batwrap{padding:16px 16px 2px}
+.bat{display:flex;align-items:center;max-width:280px}
+.bat-b{position:relative;flex:1;height:60px;border:3px solid var(--muted);border-radius:16px;padding:4px}
+.bat-b i{display:block;height:100%;min-width:6px;border-radius:10px;background:var(--lvl,var(--batt));transition:width .4s}
+.bat-b s{position:absolute;top:2px;bottom:2px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--fg);opacity:.85}
+.bat-b span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--f-disp);font-size:1.55rem;font-weight:500;color:var(--fg);text-shadow:0 0 6px var(--card),0 0 2px var(--card)}
+.bat-n{width:8px;height:22px;border:3px solid var(--muted);border-left:0;border-radius:0 8px 8px 0}
 .carsub{font-size:.8rem;color:var(--muted)}
 #ev:empty{display:none}
 .solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
@@ -443,10 +448,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="card"><div class="kv num" id="solar"></div></div>
 
     <div class="h2">Husbatteri</div>
-    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="kv num" id="batt"></div><div class="socbar" id="soc" hidden><i></i></div><div class="blog num" id="battLog" hidden></div></div>
+    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div class="blog num" id="battLog" hidden></div></div>
 
     <div class="h2">Laddbox &amp; bil</div>
-    <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div class="carbar"><i></i><s></s></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
+    <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div id="carBat"></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
 
     <div class="h2">Apparater</div>
     <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
@@ -462,8 +467,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.4"></script>
-<script src="homey.js?v=2026-11-08.4"></script>
+<script src="config.js?v=2026-11-08.5"></script>
+<script src="homey.js?v=2026-11-08.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -809,6 +814,18 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     el.classList.toggle('rev', !towardHome);
     el.style.animationDuration = (Math.max(0.45, 1.6 - Math.min(Math.abs(w), 6000) / 5000)) + 's';
   }
+  // Batteri-grafik: fylld efter nivå, färg efter nivå, valfritt streck vid laddmål och blixt när det laddar.
+  const batColor = (p) => p < 10 ? 'var(--danger)' : p < 20 ? 'var(--orange)' : p < 30 ? 'var(--warn)' : 'var(--batt)';
+  function batGfx(el, pct, target, charging) {
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    el.replaceChildren();
+    const w = mk('div', 'bat'), b = mk('div', 'bat-b'), fill = mk('i');
+    fill.style.width = p + '%'; fill.style.setProperty('--lvl', batColor(p)); b.append(fill);
+    if (target != null) { const t = mk('s'); t.style.left = 'calc(4px + (100% - 8px) * ' + Math.max(0, Math.min(100, target)) / 100 + ')'; t.title = 'Laddmål ' + f0.format(target) + ' %'; b.append(t); }
+    b.append(mk('span', 'num', (charging ? '⚡ ' : '') + f0.format(p) + ' %'));
+    w.setAttribute('role', 'img'); w.setAttribute('aria-label', 'Laddnivå ' + f0.format(p) + ' %' + (target != null ? ', laddmål ' + f0.format(target) + ' %' : '') + (charging ? ', laddar' : ''));
+    w.append(b, mk('div', 'bat-n')); el.append(w);
+  }
   function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k' + (cls === 'sep' ? ' sep' : ''), k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
   // När en enhet senast skickade ett värde till Homey (nyaste tidsstämpeln bland dess funktioner).
   const lastSeen = (d) => Math.max(0, ...Object.values(d.caps || {}).map((c) => c.at || 0));
@@ -1103,7 +1120,6 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     kv($('batt'), batt ? [
       ['Kontakt', batt.available === false ? 'Otillgänglig i Homey' : bSeen ? (bStale ? 'Ingen data ' : 'OK, data ') + ago(bSeen) : '–', bStale ? 'bad' : 'okc'],
       ['Batteri', bState, bFault ? 'bad' : ''],
-      has(batt, 'measure_battery') && ['Laddnivå', f0.format(val(batt, 'measure_battery')) + ' %'],
       ['Effekt', W(Math.abs(b))],
       has(batt, 'meter_power.available') && ['Tillgängligt', f1.format(val(batt, 'meter_power.available')) + ' kWh'],
       has(batt, 'measure_temperature') && ['Temperatur', f1.format(val(batt, 'measure_temperature')) + ' °C'],
@@ -1122,7 +1138,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       }
     }
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
-    if (!soc.hidden) soc.firstElementChild.style.width = Math.max(1, Math.min(100, val(batt, 'measure_battery'))) + '%';
+    if (!soc.hidden) batGfx(soc, val(batt, 'measure_battery'), null, (Number(val(batt, 'measure_power')) || 0) > 50);
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
     // Laddbox & bil: stor statusrad, bilens laddnivå som stapel med streck vid laddmålet, sedan statistik.
     const evState = ev ? val(ev, 'evcharger_charging_state') : null;
@@ -1135,10 +1151,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!carRow.hidden) {
       const pc = Math.max(0, Math.min(100, Number(cSoc))), tg = cTgt == null ? null : Math.max(0, Math.min(100, Number(cTgt)));
       $('carName').textContent = String(car.name || 'Bil').trim();
-      $('carPct').textContent = f0.format(pc) + ' %' + (tg != null ? ' → ' + f0.format(tg) + ' %' : '');
-      const bar = carRow.querySelector('.carbar');
-      bar.firstElementChild.style.width = Math.max(1, pc) + '%';
-      bar.lastElementChild.hidden = tg == null; if (tg != null) bar.lastElementChild.style.left = tg + '%';
+      $('carPct').textContent = tg != null ? 'Laddmål ' + f0.format(tg) + ' %' : '';
+      batGfx($('carBat'), pc, tg, evState === 'plugged_in_charging');
       $('carSub').textContent = tg == null ? '' : pc >= tg ? 'Laddmålet nått' : f0.format(tg - pc) + ' % kvar till laddmålet';
     }
     kv($('ev'), ev ? [
