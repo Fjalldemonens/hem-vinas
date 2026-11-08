@@ -119,7 +119,11 @@ else if (mode === '3p' && a5 < DOWN1_W) mode = '1p';
 if (mode === S.mode && (mode === '1p' || mode === '3p') && a3 < PAUSE_W && now - (S.modeSince || now) >= 3 * 60000) mode = 'off';
 
 const ph = mode === '3p' ? 3 : 1;
-let amps = mode === 'off' ? 0 : Math.floor((surplus - MARGIN_W) / (V * ph));
+// Laddar bilen redan i samma läge: reglera mot nätet (erbjuden ström + export − marginal). Det rättar automatiskt
+// för att bilen ofta tar mindre än den erbjuds (7,1 A vid 8 A erbjudet, 2026-11-08). Annars: räkna från överskottet.
+let amps = mode === 'off' ? 0
+  : (mode === S.mode && S.amps > 0 && chg > 300) ? S.amps + Math.floor((-grid - MARGIN_W) / (V * ph))
+  : Math.floor((surplus - MARGIN_W) / (V * ph));
 if (mode !== 'off') amps = Math.min(A_MAX, Math.max(A_MIN, amps));
 // Höjning först när två mätningar i rad räcker (sänkning direkt) – färre anrop när huset fladdrar
 if (mode === S.mode && amps > S.amps && S.amps > 0) { if (!(S.upWant > S.amps)) { S.upWant = amps; amps = S.amps; } else { amps = Math.min(amps, S.upWant); S.upWant = 0; } } else S.upWant = 0;
