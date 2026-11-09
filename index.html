@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-09.6">
+<meta name="app-version" content="2026-11-09.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -472,8 +472,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-09.6"></script>
-<script src="homey.js?v=2026-11-09.6"></script>
+<script src="config.js?v=2026-11-09.7"></script>
+<script src="homey.js?v=2026-11-09.7"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -630,8 +630,12 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
     $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–';
     const st = $('lightStatus'); st.replaceChildren();
-    const sk = varVal('AI Skumt ute');
-    if (sk !== undefined) { const c = mk('span', 'chip ' + (sk ? 'acc' : '')); c.append(mk('span', 'cd'), document.createTextNode(sk ? 'Skumt ute, automatiken tänder' : 'Ljust ute')); st.append(c); }
+    // Innebelysningen styrs av AI Skumt inne (< 120 lux), utebelysningen av AI Skumt ute (< 40 lux). Däremellan: skymning.
+    const sk = varVal('AI Skumt ute'), ski = varVal('AI Skumt inne');
+    if (sk !== undefined || ski !== undefined) {
+      const txt = sk ? 'Mörkt ute' : ski ? 'Skumt inne' : 'Ljust ute';
+      const c = mk('span', 'chip ' + (sk || ski ? 'acc' : '')); c.append(mk('span', 'cd'), document.createTextNode(txt)); st.append(c);
+    }
     const wd = varVal('AI Arbetsdag idag');
     if (wd !== undefined) st.append(mk('span', 'chip', wd ? 'Arbetsdag' : 'Ledig dag'));
     const lm = varVal('AI Ledig dag imorgon');
