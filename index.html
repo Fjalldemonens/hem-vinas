@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-09.2">
+<meta name="app-version" content="2026-11-09.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -471,8 +471,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-09.2"></script>
-<script src="homey.js?v=2026-11-09.2"></script>
+<script src="config.js?v=2026-11-09.3"></script>
+<script src="homey.js?v=2026-11-09.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -842,11 +842,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const tv = mk('span', 'tv num', f1.format(sp) + '°');
       let cur = sp;
       const step = (delta) => () => {
-        cur = Math.min(28, Math.max(5, Math.round((cur + delta) * 2) / 2)); tv.textContent = f1.format(cur) + '°';
+        cur = Math.min(28, Math.max(5, Math.round((cur + delta) * 10) / 10)); tv.textContent = f1.format(cur) + '°';
         throttled('vt' + name, () => saveVT(name, { sp: cur }, name + ': ' + f1.format(cur) + '°'), 900);
       };
-      const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.5));
-      const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
+      const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.2));
+      const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.2));
       right.append(minus, tv, plus);
       row.append(left, right); tc.append(row);
     });
