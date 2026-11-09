@@ -1,5 +1,5 @@
 // AI 16 · Termostater. Körs varje minut.
-// Gör en vanlig på/av-enhet (puck/uttag till ett element) till en termostat: ärvärde från en givare,
+// Gör en vanlig på/av-enhet (puck/uttag till ett element) till en termostat: ärvärde från en givare (valfri temperatur-capability, `cap`),
 // börvärde och på/av från variabeln "AI Termostater" som appen Hem Vinäs skriver.
 // Skriver "AI Termostat status" (JSON) som appen visar i Värme-kortet.
 //   AI Termostater:      {"Badrum":{"sp":22,"on":true}}            (appen skriver, skriptet läser)
@@ -8,7 +8,8 @@
 // === KONFIG (husspecifikt) ===
 const ROOMS = {
   Badrum: { heater: 'dc366413-f3e0-426e-b3f2-68f98b14b8a5',   // "Element " (puck i uttaget)
-            sensor: 'eb3031b5-7571-49d1-9ec6-d41d7b1bf2ee' }, // "Temp badrum"
+            sensor: 'ceb98956-c246-43c9-8e9c-57c2d24115a2',    // "Z-TRM6 badrum" (golvvärmetermostaten) ...
+            cap: 'measure_temperature.internal' },             // ... dess inbyggda rumsgivare (measure_temperature = golvet). Tidigare "Temp badrum" eb3031b5-…, tyst sedan aug 2026
 };
 const DEFAULT_SP = 22;   // börvärde om appen inte satt något
 const ON_BELOW = 0.3;    // slå på när ärvärdet är så här mycket under börvärdet ...
@@ -35,7 +36,8 @@ for (const [name, r] of Object.entries(ROOMS)) {
   let t = null, h = null, tAt = 0, heaterOn = null, err = '';
   try {
     const d = await Homey.devices.getDevice({ id: r.sensor }); const co = d.capabilitiesObj || {};
-    if (co.measure_temperature && co.measure_temperature.value !== null) { t = Number(co.measure_temperature.value); tAt = new Date(co.measure_temperature.lastUpdated || 0).getTime(); }
+    const tc = co[r.cap || 'measure_temperature'];
+    if (tc && tc.value !== null) { t = Number(tc.value); tAt = new Date(tc.lastUpdated || 0).getTime(); }
     if (co.measure_humidity && co.measure_humidity.value !== null) h = Math.round(Number(co.measure_humidity.value));
   } catch (e) { err = 'givaren hittas inte'; }
   try {
