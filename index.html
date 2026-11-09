@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-08.6">
+<meta name="app-version" content="2026-11-09.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -471,8 +471,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-08.6"></script>
-<script src="homey.js?v=2026-11-08.6"></script>
+<script src="config.js?v=2026-11-09.1"></script>
+<script src="homey.js?v=2026-11-09.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -556,6 +556,26 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return t != null ? tempRgb(t) : 'var(--warm)';
   }
   const varVal = (name) => { const v = vars.find((x) => x.name === name); return v ? v.value : undefined; };
+  const jsonVar = (name) => { try { const v = varVal(name); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+  // Sparar börvärde/på-av för en termostat som flödet AI 16 sköter (läs–ändra–skriv på hela JSON:en).
+  let vtBusy = Promise.resolve();
+  function saveVT(name, patch, msg) {
+    vtBusy = vtBusy.then(async () => {
+      try {
+        const fresh = (await api.variables()).find((x) => x.name === 'AI Termostater');
+        let all = {}; try { all = JSON.parse((fresh && fresh.value) || '{}') || {}; } catch (e) { all = {}; }
+        all[name] = { ...(all[name] || {}), ...patch };
+        const txt = JSON.stringify(all);
+        await api.setVariable('AI Termostater', txt);
+        const v = vars.find((x) => x.name === 'AI Termostater'); if (v) v.value = txt;
+        toast(msg);
+      } catch (e) {
+        banner(e && e.status === 403 || /scope|forbidden|permission/i.test(String(e && e.message))
+          ? 'Appen får inte ändra variabler än. Lägg till behörigheten homey.logic för Hem Vinäs i Homey Developer Tools, logga sedan ut och in i appen.'
+          : 'Termostaten kunde inte ändras: ' + ((e && e.message) || 'okänt fel'));
+      } finally { renderTemp(); }
+    });
+  }
 
   /* ---------- actions ---------- */
   async function setCaps(map, label) {
@@ -793,6 +813,39 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       if (has(d, 'se_onoff')) right.append(sw(!!val(d, 'se_onoff'), (val(d, 'se_onoff') ? 'Stäng av ' : 'Starta ') + name, () => setCaps({ [d.id]: { se_onoff: !val(d, 'se_onoff') } }, 'Ändringen')));
       row.append(left, right); tc.append(row);
     });
+    // Termostater som Homey-flödet AI 16 sköter (puck/uttag + givare). Börvärde och på/av i AI Termostater, läget i AI Termostat status.
+    const vtCfg = jsonVar('AI Termostater'), vtSt = jsonVar('AI Termostat status');
+    Object.keys(vtCfg || {}).forEach((name) => {
+      const c = vtCfg[name] || {}, st = (vtSt || {})[name] || {};
+      const on = c.on !== false, sp = Number.isFinite(Number(c.sp)) ? Number(c.sp) : 22;
+      const row = mk('div', 'thermo'); const left = mk('div');
+      left.append(mk('div', 'n', name));
+      const parts = [st.t != null ? 'Nu ' + f1.format(st.t) + '°' : 'Ingen temperatur'];
+      if (st.h != null) parts.push(f0.format(st.h) + ' % fukt');
+      const s = mk('div', 's num', parts.join(' · '));
+      s.append(document.createTextNode(' · ')); s.append(st.heat ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
+      left.append(s);
+      const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
+      const mb = mk('button', 'chip ' + (on ? 'acc' : ''), on ? 'Värme' : 'Avstängd'); mb.type = 'button';
+      mb.setAttribute('aria-pressed', on ? 'true' : 'false'); mb.setAttribute('aria-label', (on ? 'Stäng av ' : 'Slå på ') + name);
+      mb.addEventListener('click', () => saveVT(name, { on: !on }, on ? name + ': avstängd inom en minut' : name + ': termostaten på'));
+      chips.append(mb);
+      if (st.err) chips.append(mk('span', 'chip bad', st.err));
+      else if (st.u && Date.now() - st.u > 10 * 60000) chips.append(mk('span', 'chip warn', 'Flödet AI 16 har inte kört sedan ' + hhmm(st.u)));
+      left.append(chips);
+      const right = mk('div', 'step');
+      const tv = mk('span', 'tv num', f1.format(sp) + '°');
+      let cur = sp;
+      const step = (delta) => () => {
+        cur = Math.min(28, Math.max(5, Math.round((cur + delta) * 2) / 2)); tv.textContent = f1.format(cur) + '°';
+        throttled('vt' + name, () => saveVT(name, { sp: cur }, name + ': ' + f1.format(cur) + '°'), 900);
+      };
+      const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.5));
+      const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
+      right.append(minus, tv, plus);
+      row.append(left, right); tc.append(row);
+    });
+    if (Object.keys(vtCfg || {}).length) { const em = tc.querySelector('.empty'); if (em) em.remove(); }
     // room sensors
     const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id))
       .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
