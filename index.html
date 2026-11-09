@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-09.1">
+<meta name="app-version" content="2026-11-09.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -471,8 +471,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-09.1"></script>
-<script src="homey.js?v=2026-11-09.1"></script>
+<script src="config.js?v=2026-11-09.2"></script>
+<script src="homey.js?v=2026-11-09.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -818,12 +818,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     Object.keys(vtCfg || {}).forEach((name) => {
       const c = vtCfg[name] || {}, st = (vtSt || {})[name] || {};
       const on = c.on !== false, sp = Number.isFinite(Number(c.sp)) ? Number(c.sp) : 22;
+      // Live: givarens och elementets värden från enhetslistan (var 15:e s); statusvariabeln (var 2:a min i appen) är reserv.
+      const sd = st.sid && devices.find((x) => x.id === st.sid), hd = st.hid && devices.find((x) => x.id === st.hid);
+      const tLive = sd && has(sd, st.cap || 'measure_temperature') ? Number(val(sd, st.cap || 'measure_temperature')) : null;
+      const tNow = Number.isFinite(tLive) && tLive !== null ? tLive : st.t;
+      const heatNow = hd && has(hd, 'onoff') ? val(hd, 'onoff') === true : !!st.heat;
       const row = mk('div', 'thermo'); const left = mk('div');
       left.append(mk('div', 'n', name));
-      const parts = [st.t != null ? 'Nu ' + f1.format(st.t) + '°' : 'Ingen temperatur'];
+      const parts = [tNow != null ? 'Nu ' + f1.format(tNow) + '°' : 'Ingen temperatur'];
       if (st.h != null) parts.push(f0.format(st.h) + ' % fukt');
       const s = mk('div', 's num', parts.join(' · '));
-      s.append(document.createTextNode(' · ')); s.append(st.heat ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
+      s.append(document.createTextNode(' · ')); s.append(heatNow ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
       left.append(s);
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
       const mb = mk('button', 'chip ' + (on ? 'acc' : ''), on ? 'Värme' : 'Avstängd'); mb.type = 'button';

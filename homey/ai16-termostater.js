@@ -3,7 +3,7 @@
 // börvärde och på/av från variabeln "AI Termostater" som appen Hem Vinäs skriver.
 // Skriver "AI Termostat status" (JSON) som appen visar i Värme-kortet.
 //   AI Termostater:      {"Badrum":{"sp":22,"on":true}}            (appen skriver, skriptet läser)
-//   AI Termostat status: {"Badrum":{"t":22.4,"h":52,"heat":true,"u":1731130000000,"err":""}}
+//   AI Termostat status: {"Badrum":{"t":22.4,"h":52,"heat":true,"u":1731130000000,"err":"","sid":"…","cap":"…","hid":"…"}}
 
 // === KONFIG (husspecifikt) ===
 const ROOMS = {
@@ -56,15 +56,18 @@ for (const [name, r] of Object.entries(ROOMS)) {
   else if (t >= sp + OFF_ABOVE) want = false;
   else if (heaterOn === null) want = false;
 
-  // Säkerhetsavslag (av) går alltid igenom; vanliga omslag högst var MIN_SWITCH_MIN minut.
+  // Säkerhetsavslag (av) och ändring från appen (börvärde/på-av) går igenom direkt; annars högst ett omslag per MIN_SWITCH_MIN minut.
   const urgent = want === false && (!on || err || t >= MAX_T);
-  if (heaterOn !== null && want !== heaterOn && (urgent || !st.sw || now - st.sw >= MIN_SWITCH_MIN * 60000)) {
+  const changed = st.lsp !== undefined && (st.lsp !== sp || st.lon !== on);
+  st.lsp = sp; st.lon = on;
+  if (heaterOn !== null && want !== heaterOn && (urgent || changed || !st.sw || now - st.sw >= MIN_SWITCH_MIN * 60000)) {
     try {
       await Homey.devices.setCapabilityValue({ deviceId: r.heater, capabilityId: 'onoff', value: want });
       heaterOn = want; st.sw = now;
     } catch (e) { err = 'kunde inte styra elementet: ' + e.message; }
   }
-  out[name] = { sp, on, t: t === null ? null : Math.round(t * 10) / 10, h, heat: heaterOn === true, u: now, err };
+  // sid/cap/hid: så att appen kan visa givarens och elementets värden direkt (enheterna läses var 15:e s) i stället för att vänta på denna variabel
+  out[name] = { sp, on, t: t === null ? null : Math.round(t * 10) / 10, h, heat: heaterOn === true, u: now, err, sid: r.sensor, cap: r.cap || 'measure_temperature', hid: r.heater };
 }
 
 global.set('termS', JSON.stringify(S));
