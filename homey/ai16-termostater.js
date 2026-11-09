@@ -48,7 +48,7 @@ for (const [name, r] of Object.entries(ROOMS)) {
   let want = heaterOn;
   if (!on) want = false;
   else if (t === null || !Number.isFinite(t)) { want = false; err = err || 'ingen temperatur från givaren'; }
-  else if (tAt && now - tAt > STALE_MIN * 60000) { want = false; err = err || 'givaren har inte rapporterat på ' + Math.round((now - tAt) / 60000) + ' min'; }
+  else if (tAt && now - tAt > STALE_MIN * 60000) { want = false; err = err || 'givaren tyst sedan ' + new Date(tAt).toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' – byt batteri?'; }
   else if (t >= MAX_T) want = false;
   else if (t <= sp - ON_BELOW) want = true;
   else if (t >= sp + OFF_ABOVE) want = false;
