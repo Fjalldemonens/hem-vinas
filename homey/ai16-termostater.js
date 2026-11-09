@@ -12,8 +12,8 @@ const ROOMS = {
             cap: 'measure_temperature.internal' },             // ... dess inbyggda rumsgivare (measure_temperature = golvet). Tidigare "Temp badrum" eb3031b5-…, tyst sedan aug 2026
 };
 const DEFAULT_SP = 22;   // börvärde om appen inte satt något
-const ON_BELOW = 0.3;    // slå på när ärvärdet är så här mycket under börvärdet ...
-const OFF_ABOVE = 0.2;   // ... och av när det är så här mycket över (hysteres, skonar reläet)
+const ON_BELOW = 0.2;    // slå på när ärvärdet är så här mycket under börvärdet ... (2026-11-09: 0,3 → 0,2, badrummet kändes kallt fort)
+const OFF_ABOVE = 0.1;   // ... och av när det är så här mycket över (tät hysteres; MIN_SWITCH_MIN skonar reläet)
 const MIN_SWITCH_MIN = 5; // minst så här många minuter mellan två omslag
 const STALE_MIN = 180;   // givaren tyst längre än så här → elementet av (säkerhet)
 const MAX_T = 30;        // över detta → alltid av (säkerhet)
