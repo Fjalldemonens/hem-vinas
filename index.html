@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-09.4">
+<meta name="app-version" content="2026-11-09.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -472,8 +472,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-09.4"></script>
-<script src="homey.js?v=2026-11-09.4"></script>
+<script src="config.js?v=2026-11-09.5"></script>
+<script src="homey.js?v=2026-11-09.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -705,7 +705,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const s = mk('div', 's num');
     const inT = indoorTemp();
     if (inT) { const iv = mk('div', 'inne num'); iv.append(document.createTextNode('Inne nu '), mk('b', '', f1.format(inT.v) + '°')); left.append(iv); }
-    s.append(working ? mk('span', 'heat', st) : document.createTextNode(st || 'Status okänd'));
+    s.append(working ? mk('span', 'heat', nb(st)) : document.createTextNode(nb(st || 'Status okänd')));
     if (has(d, 'thermia_opmode')) s.append(document.createTextNode(' · ' + String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').replace(/^auto$/i, 'Auto')));
     left.append(s);
     const g = mk('div', 'kv num'); g.style.padding = '0 16px 6px'; g.style.fontSize = '.86rem';
@@ -784,12 +784,16 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const row = mk('div', 'thermo'); const left = mk('div');
       const name = String(d.name).replace(/^Z-TRM6\s*/i, 'Golvvärme ');
       left.append(mk('div', 'n', name));
-      const parts = ['Nu ' + f1.format(val(d, 'measure_temperature')) + '°'];
-      if (has(d, 'measure_temperature.floor')) parts.push('golv ' + f1.format(val(d, 'measure_temperature.floor')) + '°');
+      // Golvtermostat (Z-TRM6): measure_temperature är golvet, så visa rummet (internal) + golvet i stället för samma värde två gånger.
+      const floorT = has(d, 'measure_temperature.floor') ? val(d, 'measure_temperature.floor') : null;
+      const roomT = has(d, 'measure_temperature.internal') ? val(d, 'measure_temperature.internal') : floorT === null ? val(d, 'measure_temperature') : null;
+      const parts = [];
+      if (roomT !== null) parts.push((floorT !== null ? 'Rum ' : 'Nu ') + f1.format(roomT) + '°');
+      if (floorT !== null) parts.push((roomT !== null ? 'golv ' : 'Golv ') + f1.format(floorT) + '°');
       if (has(d, 'measure_humidity')) parts.push(f0.format(val(d, 'measure_humidity')) + ' % fukt');
-      const s = mk('div', 's num', parts.join(' · '));
+      const s = mk('div', 's num', nb(parts.join(' · ')));
       const heating = val(d, 'thermostat_state_IdleHeatCool') === 'Heating' || (has(d, 'measure_power') && val(d, 'measure_power') > 5);
-      if (has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power')) { s.append(document.createTextNode(' · ')); s.append(heating ? mk('span', 'heat', 'Värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : '')) : document.createTextNode('Vilar')); }
+      if (has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power')) { s.append(document.createTextNode(' · ')); s.append(heating ? mk('span', 'heat', nb('Värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : ''))) : document.createTextNode('Vilar')); }
       left.append(s);
       if (has(d, 'se_onoff') || has(d, 'thermostat_mode')) {
         const mode = val(d, 'thermostat_mode'), onoff = val(d, 'se_onoff');
@@ -828,7 +832,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       left.append(mk('div', 'n', name));
       const parts = [tNow != null ? 'Nu ' + f1.format(tNow) + '°' : 'Ingen temperatur'];
       if (st.h != null) parts.push(f0.format(st.h) + ' % fukt');
-      const s = mk('div', 's num', parts.join(' · '));
+      const s = mk('div', 's num', nb(parts.join(' · ')));
       s.append(document.createTextNode(' · ')); s.append(heatNow ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
       left.append(s);
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
@@ -891,6 +895,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     w.setAttribute('role', 'img'); w.setAttribute('aria-label', 'Laddnivå ' + f0.format(p) + ' %' + (target != null ? ', laddmål ' + f0.format(target) + ' %' : '') + (charging ? ', laddar' : ''));
     w.append(b, mk('div', 'bat-n')); el.append(w);
   }
+  // Statusrader: radbryt bara vid " · ", aldrig mellan tal och enhet ("292 W", "41 % fukt").
+  const nb = (t) => String(t).split(' · ').map((x) => x.replace(/ /g, '\u00a0')).join(' · ');
   function kv(el, rows) { el.replaceChildren(); rows.filter(Boolean).forEach(([k, v, cls]) => { el.append(mk('div', 'k' + (cls === 'sep' ? ' sep' : ''), k)); el.append(mk('div', 'v' + (cls ? ' ' + cls : ''), v)); }); }
   // När en enhet senast skickade ett värde till Homey (nyaste tidsstämpeln bland dess funktioner).
   const lastSeen = (d) => Math.max(0, ...Object.values(d.caps || {}).map((c) => c.at || 0));
