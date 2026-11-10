@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-09.8">
+<meta name="app-version" content="2026-11-10.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -472,8 +472,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-09.8"></script>
-<script src="homey.js?v=2026-11-09.8"></script>
+<script src="config.js?v=2026-11-10.1"></script>
+<script src="homey.js?v=2026-11-10.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -745,7 +745,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-09.8. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.1. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -826,7 +826,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       s.append(document.createTextNode(' · ')); s.append(heatNow ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
       left.append(s);
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
-      const mb = mk('button', 'chip ' + (on ? 'acc' : ''), on ? 'Värme' : 'Avstängd'); mb.type = 'button';
+      const mb = mk('button', 'chip', on ? 'Värme' : 'Avstängd'); // neutral som golvvärmens chip – grönt lästes som "värmer" (2026-11-10) mb.type = 'button';
       mb.setAttribute('aria-pressed', on ? 'true' : 'false'); mb.setAttribute('aria-label', (on ? 'Stäng av ' : 'Slå på ') + name);
       mb.addEventListener('click', () => saveVT(name, { on: !on }, on ? name + ': avstängd inom en minut' : name + ': termostaten på'));
       chips.append(mb);
