@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.3">
+<meta name="app-version" content="2026-11-10.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -322,6 +322,7 @@ body.noscroll{overflow:hidden}
 .btn{line-height:1.2;overflow-wrap:anywhere}
 .thermo .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .thermo > .n.full{grid-column:1 / -1;margin-bottom:-6px;white-space:normal;overflow:visible}
+.thermo > .chips.full{grid-column:1 / -1;margin-top:-4px !important}
 .thermo > div:first-child{min-width:0}
 /* surfplatta och dator: bredare app och två spalter */
 @media (min-width:800px){
@@ -474,8 +475,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.3"></script>
-<script src="homey.js?v=2026-11-10.3"></script>
+<script src="config.js?v=2026-11-10.4"></script>
+<script src="homey.js?v=2026-11-10.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -753,7 +754,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.3. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.4. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -859,7 +860,11 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     });
     if (Object.keys(vtCfg || {}).length) { const em = tc.querySelector('.empty'); if (em) em.remove(); }
     // Hela namnet: lyft namnet ur vänsterkolumnen till en egen rad över hela bredden (annars kapas "Bergvärmepump" av knapparna).
-    tc.querySelectorAll('.thermo').forEach((r) => { const n = r.querySelector(':scope > div:first-child > .n'); if (n) { n.classList.add('full'); r.prepend(n); } });
+    // Lägesrutan likaså: egen rad under (annars kapas t.ex. "Avstängd" när raden har fyra knappar och texten är förstorad i iOS).
+    tc.querySelectorAll('.thermo').forEach((r) => {
+      const n = r.querySelector(':scope > div:first-child > .n'); if (n) { n.classList.add('full'); r.prepend(n); }
+      const ch = r.querySelector(':scope > div:not(.n) > .chips'); if (ch) { ch.classList.add('full'); r.append(ch); }
+    });
     // room sensors
     const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id))
       .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
