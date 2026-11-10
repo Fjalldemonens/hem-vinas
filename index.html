@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.4">
+<meta name="app-version" content="2026-11-10.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -475,8 +475,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.4"></script>
-<script src="homey.js?v=2026-11-10.4"></script>
+<script src="config.js?v=2026-11-10.5"></script>
+<script src="homey.js?v=2026-11-10.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -754,7 +754,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.4. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.5. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -801,7 +801,15 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
         // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
         const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
-        chips.append(mk('span', 'chip' + cls, onoff === false ? 'Avstängd' : (ML[mode] || mode || 'På')));
+        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.5): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
+        const isOff = onoff === false || (!has(d, 'se_onoff') && mode === 'off');
+        const mb = mk('button', 'chip' + (isOff ? '' : cls), isOff ? 'Avstängd' : (mode === 'off' ? 'På' : ML[mode] || mode || 'På')); mb.type = 'button';
+        mb.setAttribute('aria-label', (isOff ? 'Slå på ' : 'Stäng av ') + name);
+        mb.addEventListener('click', () => {
+          if (has(d, 'se_onoff')) setCaps({ [d.id]: { se_onoff: !val(d, 'se_onoff') } }, 'Ändringen');
+          else setCaps({ [d.id]: { thermostat_mode: isOff ? 'heat' : 'off' } }, 'Ändringen');
+        });
+        chips.append(mb);
         if (val(d, 'alarm_filter')) chips.append(mk('span', 'chip warn', 'Filter behöver rengöras'));
         left.append(chips);
       }
@@ -817,7 +825,6 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
         right.append(minus, tv, plus);
       }
-      if (has(d, 'se_onoff')) right.append(sw(!!val(d, 'se_onoff'), (val(d, 'se_onoff') ? 'Stäng av ' : 'Starta ') + name, () => setCaps({ [d.id]: { se_onoff: !val(d, 'se_onoff') } }, 'Ändringen')));
       row.append(left, right); tc.append(row);
     });
     // Termostater som Homey-flödet AI 16 sköter (puck/uttag + givare). Börvärde och på/av i AI Termostater, läget i AI Termostat status.
