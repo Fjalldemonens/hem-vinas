@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.1">
+<meta name="app-version" content="2026-11-10.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -88,6 +88,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 button.chip{cursor:pointer}
 .chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--danger)} .chip.acc{color:var(--accent)}
 .chip.busy{opacity:.55}
+.chip.heating{background:color-mix(in srgb,var(--danger) 13%,var(--card));border-color:color-mix(in srgb,var(--danger) 45%,var(--line));color:var(--danger)}
+.chip.cooling{background:color-mix(in srgb,var(--cold) 13%,var(--card));border-color:color-mix(in srgb,var(--cold) 45%,var(--line));color:var(--cold)}
 .chip .cd{width:7px;height:7px;border-radius:50%;background:currentColor}
 .empty{color:var(--muted);font-size:.9rem;padding:16px}
 .skel{height:76px;border-radius:var(--r);background:linear-gradient(90deg,var(--card),var(--card-2),var(--card));background-size:200% 100%;animation:sk 1.4s infinite}
@@ -472,8 +474,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.1"></script>
-<script src="homey.js?v=2026-11-10.1"></script>
+<script src="config.js?v=2026-11-10.2"></script>
+<script src="homey.js?v=2026-11-10.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -745,7 +747,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.1. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.2. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -789,7 +791,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         const mode = val(d, 'thermostat_mode'), onoff = val(d, 'se_onoff');
         const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
         const ML = { off: 'Av', heat: 'Värme', cool: 'Kyla', auto: 'Auto', dry: 'Avfukta', fan: 'Fläkt' };
-        chips.append(mk('span', 'chip ' + (onoff ? 'acc' : ''), onoff === false ? 'Avstängd' : (ML[mode] || mode || 'På')));
+        // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
+        // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
+        const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
+        chips.append(mk('span', 'chip' + cls, onoff === false ? 'Avstängd' : (ML[mode] || mode || 'På')));
         if (val(d, 'alarm_filter')) chips.append(mk('span', 'chip warn', 'Filter behöver rengöras'));
         left.append(chips);
       }
@@ -826,8 +831,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       s.append(document.createTextNode(' · ')); s.append(heatNow ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
       left.append(s);
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
-      const mb = mk('button', 'chip', on ? 'Värme' : 'Avstängd'); // neutral som golvvärmens chip – grönt lästes som "värmer" (2026-11-10) mb.type = 'button';
-      mb.setAttribute('aria-pressed', on ? 'true' : 'false'); mb.setAttribute('aria-label', (on ? 'Stäng av ' : 'Slå på ') + name);
+      // Lägesrutan: svagt röd när elementet värmer, annars neutral (inte aria-pressed – det ger grönt).
+      const mb = mk('button', 'chip' + (heatNow ? ' heating' : ''), on ? 'Värme' : 'Avstängd'); mb.type = 'button';
+      mb.setAttribute('aria-label', (on ? 'Stäng av ' : 'Slå på ') + name);
       mb.addEventListener('click', () => saveVT(name, { on: !on }, on ? name + ': avstängd inom en minut' : name + ': termostaten på'));
       chips.append(mb);
       if (st.err) chips.append(mk('span', 'chip bad', st.err));
