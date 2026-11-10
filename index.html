@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.7">
+<meta name="app-version" content="2026-11-10.8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -50,10 +50,11 @@ body{font-family:var(--f-body);font-size:15px;line-height:1.4}
 
 /* header */
 .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.top>div:first-child{min-width:0;flex:1 1 auto}
 .top > div:first-child{min-width:0;flex:1}
 #date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .eyebrow{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-h1{font-family:var(--f-disp);font-weight:300;font-size:2rem;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;text-wrap:balance}
+h1{font-family:var(--f-disp);font-weight:300;font-size:2rem;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;white-space:nowrap}
 h1 b{font-weight:600}
 .live{display:inline-flex;align-items:center;gap:6px;flex:none;min-width:9.4em;font-variant-numeric:tabular-nums;font-size:.76rem;color:var(--muted);white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
@@ -66,7 +67,14 @@ button.live{font:inherit;font-size:.76rem;cursor:pointer}
 @keyframes spin{to{transform:rotate(360deg)}}
 .glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .gl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;min-width:0}
-.gl .k{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.04em}
+.gl{transition:background .4s,border-color .4s}
+.gl .k{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Färgade rutor (2026-11-10.8): Belysning ljust gul när någon lampa lyser, Ute i väderprognosens färger (varm ≥ 0°, kall < 0°, starkare ju längre från 0), Förbrukning svagt röd vid köp och svagt grön vid försäljning */
+.gl.lit{background:color-mix(in srgb,#ffd60a 24%,var(--card));border-color:color-mix(in srgb,#f2c200 60%,var(--line))}
+.gl.temp{background:color-mix(in srgb,var(--gt) var(--ga),var(--card));border-color:color-mix(in srgb,var(--gt) 40%,var(--line))}
+.gl.temp .v{color:var(--gt)}
+.gl.buy{background:color-mix(in srgb,var(--danger) 12%,var(--card));border-color:color-mix(in srgb,var(--danger) 38%,var(--line))}
+.gl.sell{background:color-mix(in srgb,var(--ok) 14%,var(--card));border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
 .gl .v{font-family:var(--f-disp);font-size:1.25rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gl .v small{font-size:.75rem;color:var(--muted);font-family:var(--f-body)}
 
@@ -382,9 +390,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   </header>
 
   <div class="glance">
-    <div class="gl"><div class="k">Lampor tända</div><div class="v num" id="gLights">–</div></div>
-    <div class="gl"><div class="k">Ute</div><div class="v num" id="gOut">–</div></div>
-    <div class="gl"><div class="k">Huset drar</div><div class="v num" id="gLoad">–</div></div>
+    <div class="gl" id="glLights"><div class="k">Belysning</div><div class="v num" id="gLights">–</div></div>
+    <div class="gl" id="glOut"><div class="k">Ute</div><div class="v num" id="gOut">–</div></div>
+    <div class="gl" id="glLoad"><div class="k">Förbrukning</div><div class="v num" id="gLoad">–</div></div>
   </div>
 
   <nav class="seg" role="tablist" aria-label="Välj vy">
@@ -475,8 +483,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.7"></script>
-<script src="homey.js?v=2026-11-10.7"></script>
+<script src="config.js?v=2026-11-10.8"></script>
+<script src="homey.js?v=2026-11-10.8"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -632,6 +640,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   function renderLights() {
     const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
     $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–';
+    $('glLights').classList.toggle('lit', onCount > 0);
     const st = $('lightStatus'); st.replaceChildren();
     // Innebelysningen styrs av AI Skumt inne (< 120 lux), utebelysningen av AI Skumt ute (< 40 lux). Däremellan: skymning.
     const sk = varVal('AI Skumt ute'), ski = varVal('AI Skumt inne');
@@ -754,7 +763,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.7. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.8. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -768,6 +777,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const t = val(out, 'measure_temperature');
       $('outT').replaceChildren(document.createTextNode(f1.format(t)), Object.assign(mk('sup'), { textContent: '°C' }));
       $('gOut').textContent = f1.format(t) + '°';
+      const go = $('glOut'), tn = Number(t);
+      go.classList.toggle('temp', Number.isFinite(tn));
+      if (Number.isFinite(tn)) { go.style.setProperty('--gt', tn >= 0 ? 'var(--warm)' : 'var(--cold)'); go.style.setProperty('--ga', Math.round(8 + Math.min(Math.abs(tn), 25) / 25 * 16) + '%'); }
       const meta = $('outMeta'); meta.replaceChildren();
       if (has(out, 'measure_luminance')) meta.append(mk('span', 'chip', f0.format(val(out, 'measure_luminance')) + ' lux'));
       const sk = varVal('AI Skumt ute'); if (sk !== undefined) meta.append(mk('span', 'chip ' + (sk ? 'acc' : ''), sk ? 'Skumt' : 'Dagsljus'));
@@ -801,7 +813,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
         // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
         const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
-        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.7): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
+        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.8): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
         const isOff = onoff === false || (!has(d, 'se_onoff') && mode === 'off');
         const mb = mk('button', 'chip' + (isOff ? '' : cls), isOff ? 'Avstängd' : (mode === 'off' ? 'På' : ML[mode] || mode || 'På')); mb.type = 'button';
         mb.setAttribute('aria-label', (isOff ? 'Slå på ' : 'Stäng av ') + name);
@@ -1153,6 +1165,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     $('vEv').textContent = ev ? (e > 15 ? W(e) : 'Vilar') : '–';
     $('vHome').textContent = grid || sun ? W(home) : '–';
     $('gLoad').textContent = grid || sun ? W(home) : '–';
+    $('glLoad').classList.toggle('buy', !!grid && g > 30); $('glLoad').classList.toggle('sell', !!grid && g < -30);
+    $('glLoad').title = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '';
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
 
     renderPrice(price);
@@ -1491,7 +1505,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const q = quick(B); if (q) wrap.append(q);
     if (schedOpen[d.id]) wrap.append(...schedPanel(d));
 
-    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.7).
+    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.8).
     const open = !!setOpen[d.id];
     const tb = mk('button', 'btn' + (open ? ' on' : ''), 'Städinställningar'); tb.type = 'button';
     tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.width = '100%'; tb.style.marginTop = '10px';
