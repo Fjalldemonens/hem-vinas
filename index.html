@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.6">
+<meta name="app-version" content="2026-11-10.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -475,8 +475,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.6"></script>
-<script src="homey.js?v=2026-11-10.6"></script>
+<script src="config.js?v=2026-11-10.7"></script>
+<script src="homey.js?v=2026-11-10.7"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -754,7 +754,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.6. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.7. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -801,7 +801,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
         // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
         const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
-        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.6): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
+        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.7): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
         const isOff = onoff === false || (!has(d, 'se_onoff') && mode === 'off');
         const mb = mk('button', 'chip' + (isOff ? '' : cls), isOff ? 'Avstängd' : (mode === 'off' ? 'På' : ML[mode] || mode || 'På')); mb.type = 'button';
         mb.setAttribute('aria-label', (isOff ? 'Slå på ' : 'Stäng av ') + name);
@@ -1491,29 +1491,24 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const q = quick(B); if (q) wrap.append(q);
     if (schedOpen[d.id]) wrap.append(...schedPanel(d));
 
-    wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
-    // Städinställningar bakom en knapp (som "Visa oktober" i Energi), med en sammanfattning av nuvarande val på knappen.
-    const setCaps4 = ['clean_mode', 'suction_power', 'scrub_intensity', 'mop_route'].filter((c) => opts(d, c).length);
-    if (setCaps4.length) {
-      const open = !!setOpen[d.id];
-      const sum = setCaps4.map((c) => has(d, c) && val(d, c) != null ? sv(capTitle(d, c, val(d, c))) : null).filter(Boolean).join(' · ');
-      const tb = mk('button', 'mtoggle', (open ? 'Dölj städinställningar' : 'Städinställningar') + (!open && sum ? ' · ' + sum : '')); tb.type = 'button';
-      tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.margin = '14px 0 4px'; tb.style.width = '100%';
-      tb.addEventListener('click', () => { setOpen[d.id] = !setOpen[d.id]; renderRobot(); });
-      wrap.append(tb);
-      if (open) {
-        wrap.append(...choice(d, 'clean_mode', 'Städläge'));
-        wrap.append(...choice(d, 'suction_power', 'Sugkraft'));
-        wrap.append(...choice(d, 'scrub_intensity', 'Moppning'));
-        wrap.append(...choice(d, 'mop_route', 'Mopprutt'));
-      }
+    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.7).
+    const open = !!setOpen[d.id];
+    const tb = mk('button', 'btn' + (open ? ' on' : ''), 'Städinställningar'); tb.type = 'button';
+    tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.width = '100%'; tb.style.marginTop = '10px';
+    tb.addEventListener('click', () => { setOpen[d.id] = !setOpen[d.id]; renderRobot(); });
+    wrap.append(tb);
+    if (open) {
+      wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
+      wrap.append(...choice(d, 'clean_mode', 'Städläge'));
+      wrap.append(...choice(d, 'suction_power', 'Sugkraft'));
+      wrap.append(...choice(d, 'scrub_intensity', 'Moppning'));
+      wrap.append(...choice(d, 'mop_route', 'Mopprutt'));
+      const S = [];
+      if (docked && settable(d, 'wash_mop')) S.push(actBtn(d, 'Tvätta moppen', '', { wash_mop: true }, 'Moppen tvättas'));
+      if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
+      if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm dammbehållaren', '', { empty_dustbin: true }, 'Stationen tömmer')); // sist = hel bredd, så ordet inte bryts
+      const qs = quick(S); if (qs) { wrap.append(mk('div', 'h2', 'Station')); wrap.append(qs); }
     }
-
-    const S = [];
-    if (docked && settable(d, 'wash_mop')) S.push(actBtn(d, 'Tvätta moppen', '', { wash_mop: true }, 'Moppen tvättas'));
-    if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
-    if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm dammbehållaren', '', { empty_dustbin: true }, 'Stationen tömmer')); // sist = hel bredd, så ordet inte bryts
-    const qs = quick(S); if (qs) { wrap.append(mk('div', 'h2', 'Station')); wrap.append(qs); }
     return wrap;
   }
 
