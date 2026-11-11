@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" rx="27" fill="#D6001C"/><polygon points="18,62 60,26 102,62" fill="#FFFFFF"/><rect x="30" y="62" width="60" height="40" fill="#FFFFFF"/><rect x="53" y="80" width="14" height="22" fill="#D6001C"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#17B394"/><stop offset="1" stop-color="#0A7A67"/></linearGradient></defs>
+<rect width="1024" height="1024" fill="url(#g)"/>
+<g stroke="#F5A623" stroke-width="30" stroke-linecap="round" fill="none"><circle cx="770" cy="250" r="52"/>
+<line x1="850.0" y1="250.0" x2="880.0" y2="250.0"/>
+<line x1="826.6" y1="306.6" x2="847.8" y2="327.8"/>
+<line x1="770.0" y1="330.0" x2="770.0" y2="360.0"/>
+<line x1="713.4" y1="306.6" x2="692.2" y2="327.8"/>
+<line x1="690.0" y1="250.0" x2="660.0" y2="250.0"/>
+<line x1="713.4" y1="193.4" x2="692.2" y2="172.2"/>
+<line x1="770.0" y1="170.0" x2="770.0" y2="140.0"/>
+<line x1="826.6" y1="193.4" x2="847.8" y2="172.2"/>
+</g>
+<g fill="none" stroke="#FFFFFF" stroke-width="56" stroke-linecap="round" stroke-linejoin="round"><path d="M292 506 L512 312 L732 506" /><path d="M372 446 V732 H652 V446" /><path d="M446 732 V600 Q446 578 468 578 H556 Q578 578 578 600 V732" /></g>
+<g fill="#FFFFFF" opacity="0.6"><circle cx="170" cy="732" r="16"/><circle cx="240" cy="732" r="16"/><circle cx="310" cy="732" r="16"/><circle cx="714" cy="732" r="16"/><circle cx="784" cy="732" r="16"/><circle cx="854" cy="732" r="16"/></g>
+</svg>

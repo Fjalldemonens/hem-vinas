@@ -6,14 +6,14 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-10.9">
+<meta name="app-version" content="2026-11-11.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hem Vinäs">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg?v=4" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon-180.png?v=4">
+<link rel="icon" href="icon.svg?v=5" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png?v=5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Manrope:wght@400;500;600;700&display=swap">
 <style>
@@ -486,8 +486,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-10.9"></script>
-<script src="homey.js?v=2026-11-10.9"></script>
+<script src="config.js?v=2026-11-11.1"></script>
+<script src="homey.js?v=2026-11-11.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -767,7 +767,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-10.9. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-11.1. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -817,7 +817,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
         // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
         const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
-        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.9): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
+        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-11.1): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
         const isOff = onoff === false || (!has(d, 'se_onoff') && mode === 'off');
         const mb = mk('button', 'chip' + (isOff ? '' : cls), isOff ? 'Avstängd' : (mode === 'off' ? 'På' : ML[mode] || mode || 'På')); mb.type = 'button';
         mb.setAttribute('aria-label', (isOff ? 'Slå på ' : 'Stäng av ') + name);
@@ -1509,7 +1509,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const q = quick(B); if (q) wrap.append(q);
     if (schedOpen[d.id]) wrap.append(...schedPanel(d));
 
-    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.9).
+    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-11.1).
     const open = !!setOpen[d.id];
     const tb = mk('button', 'btn' + (open ? ' on' : ''), 'Städinställningar'); tb.type = 'button';
     tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.width = '100%'; tb.style.marginTop = '10px';
