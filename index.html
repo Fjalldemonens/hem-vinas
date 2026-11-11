@@ -767,7 +767,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
     const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
     const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-11.1. Börvärdet syns under Mer info.
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-09.8. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     box.append(g, mw);
@@ -817,7 +817,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         // Svagt röd när den värmer, svagt blå när den kyler, annars neutral. Golvtermostaten har ett värmeläge (Heating/effekt),
         // luftvärmepumpen (Sensibo) har bara på/av + läge, så där räknas påslagen i läge värme/kyla som värmer/kyler.
         const cls = heating ? ' heating' : onoff === true && mode === 'cool' ? ' cooling' : onoff === true && mode === 'heat' ? ' heating' : '';
-        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-11.1): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
+        // Lägesrutan är på/av-knappen (samma som Badrum, 2026-11-10.5): Sensibo via se_onoff, golvtermostat via thermostat_mode heat ↔ off.
         const isOff = onoff === false || (!has(d, 'se_onoff') && mode === 'off');
         const mb = mk('button', 'chip' + (isOff ? '' : cls), isOff ? 'Avstängd' : (mode === 'off' ? 'På' : ML[mode] || mode || 'På')); mb.type = 'button';
         mb.setAttribute('aria-label', (isOff ? 'Slå på ' : 'Stäng av ') + name);
@@ -1509,7 +1509,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const q = quick(B); if (q) wrap.append(q);
     if (schedOpen[d.id]) wrap.append(...schedPanel(d));
 
-    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-11.1).
+    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.7).
     const open = !!setOpen[d.id];
     const tb = mk('button', 'btn' + (open ? ' on' : ''), 'Städinställningar'); tb.type = 'button';
     tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.width = '100%'; tb.style.marginTop = '10px';
