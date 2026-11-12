@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-12.2">
+<meta name="app-version" content="2026-11-12.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -486,12 +486,15 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-12.2"></script>
-<script src="homey.js?v=2026-11-12.2"></script>
+<script src="config.js?v=2026-11-12.3"></script>
+<script src="homey.js?v=2026-11-12.3"></script>
 <script>
 (() => {
   const S = 'Homey';
   const $ = (id) => document.getElementById(id);
+  // Översiktsrutornas värde krymper så det får plats (2026-11-12.3: "1,01 kW" kapades i Förbrukning)
+  function fitGl(el) { if (!el) return; el.style.fontSize = ''; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 12) { f -= 1; el.style.fontSize = f + 'px'; } }
+  addEventListener('resize', () => ['gLights', 'gOut', 'gLoad'].forEach((id) => fitGl(document.getElementById(id))));
   const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const nf = (d) => new Intl.NumberFormat('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
   const f0 = nf(0), f1 = nf(1), f2 = nf(2);
@@ -643,7 +646,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   }
   function renderLights() {
     const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
-    $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–';
+    $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–'; fitGl($('gLights'));
     $('glLights').classList.toggle('lit', onCount > 0);
     const st = $('lightStatus'); st.replaceChildren();
     // Innebelysningen styrs av AI Skumt inne (< 120 lux), utebelysningen av AI Skumt ute (< 40 lux). Däremellan: skymning.
@@ -780,7 +783,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (out) {
       const t = val(out, 'measure_temperature');
       $('outT').replaceChildren(document.createTextNode(f1.format(t)), Object.assign(mk('sup'), { textContent: '°C' }));
-      $('gOut').textContent = f1.format(t) + '°';
+      $('gOut').textContent = f1.format(t) + '°'; fitGl($('gOut'));
       const go = $('glOut'), tn = Number(t);
       go.classList.toggle('temp', Number.isFinite(tn));
       if (Number.isFinite(tn)) { go.style.setProperty('--gt', tn >= 0 ? 'var(--warm)' : 'var(--cold)'); go.style.setProperty('--ga', Math.round(8 + Math.min(Math.abs(tn), 25) / 25 * 16) + '%'); }
@@ -1168,7 +1171,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     $('vBatt').textContent = batt ? (has(batt, 'measure_battery') ? f0.format(val(batt, 'measure_battery')) + ' % · ' : '') + W(Math.abs(b)) : '–';
     $('vEv').textContent = ev ? (e > 15 ? W(e) : 'Vilar') : '–';
     $('vHome').textContent = grid || sun ? W(home) : '–';
-    $('gLoad').textContent = grid || sun ? W(home) : '–';
+    $('gLoad').textContent = grid || sun ? W(home) : '–'; fitGl($('gLoad'));
     $('glLoad').classList.toggle('buy', !!grid && g > 30); $('glLoad').classList.toggle('sell', !!grid && g < -30);
     $('glLoad').title = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '';
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
