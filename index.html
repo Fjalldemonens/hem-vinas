@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-12.3">
+<meta name="app-version" content="2026-11-12.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -486,8 +486,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-12.3"></script>
-<script src="homey.js?v=2026-11-12.3"></script>
+<script src="config.js?v=2026-11-12.4"></script>
+<script src="homey.js?v=2026-11-12.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1171,7 +1171,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     $('vBatt').textContent = batt ? (has(batt, 'measure_battery') ? f0.format(val(batt, 'measure_battery')) + ' % · ' : '') + W(Math.abs(b)) : '–';
     $('vEv').textContent = ev ? (e > 15 ? W(e) : 'Vilar') : '–';
     $('vHome').textContent = grid || sun ? W(home) : '–';
-    $('gLoad').textContent = grid || sun ? W(home) : '–'; fitGl($('gLoad'));
+    // Förbrukning = allt som förbrukas: huset + laddboxen (= nät + sol + batteri), sedan 2026-11-12.4. Hus-värdet i energiflödet är fortfarande utan laddbox.
+    $('gLoad').textContent = grid || sun ? W(home + e) : '–'; fitGl($('gLoad'));
     $('glLoad').classList.toggle('buy', !!grid && g > 30); $('glLoad').classList.toggle('sell', !!grid && g < -30);
     $('glLoad').title = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '';
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
