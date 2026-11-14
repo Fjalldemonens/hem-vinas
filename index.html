@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.9">
+<meta name="app-version" content="2026-11-14.10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -99,6 +99,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 button.chip{cursor:pointer}
 .chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--danger)} .chip.acc{color:var(--accent)}
 .chip.busy{opacity:.55}
+.chip.alarm{background:color-mix(in srgb,var(--danger) 22%,var(--card));border-color:var(--danger);color:var(--danger);font-weight:700;animation:pulseA 1.6s ease-in-out infinite}
+@keyframes pulseA{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--danger) 25%,transparent)}}
+@media (prefers-reduced-motion:reduce){.chip.alarm{animation:none}}
 .chip.heating{background:color-mix(in srgb,var(--danger) 13%,var(--card));border-color:color-mix(in srgb,var(--danger) 45%,var(--line));color:var(--danger)}
 .chip.cooling{background:color-mix(in srgb,var(--cold) 13%,var(--card));border-color:color-mix(in srgb,var(--cold) 45%,var(--line));color:var(--cold)}
 .chip .cd{width:7px;height:7px;border-radius:50%;background:currentColor}
@@ -520,8 +523,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.9"></script>
-<script src="homey.js?v=2026-11-14.9"></script>
+<script src="config.js?v=2026-11-14.10"></script>
+<script src="homey.js?v=2026-11-14.10"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -770,6 +773,13 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
       chips.append(mk('span', 'chip' + (working ? ' heating' : ''), om ? om.charAt(0).toUpperCase() + om.slice(1) : 'Okänt läge'));
       left.append(chips);
+    }
+    // Kondensvattenhinken (2026-11-14.10): vattenlarmet (givare med alarm_water, i Värmepump-zonen om sådan finns) – rutan syns bara vid larm.
+    const wet = devices.filter((x) => has(x, 'alarm_water'));
+    const bucket = wet.filter((x) => /värmepump/i.test(x.zone || '')).concat(wet).find((x) => val(x, 'alarm_water') === true);
+    if (bucket) {
+      let ch = left.querySelector('.chips'); if (!ch) { ch = mk('div', 'chips'); ch.style.marginTop = '8px'; left.append(ch); }
+      const c = mk('span', 'chip alarm', '💧 Töm hinken'); c.title = String(bucket.name).trim() + ' larmar'; ch.append(c);
     }
     const g = mk('div', 'kv num'); g.style.padding = '0 16px 6px'; g.style.fontSize = '.86rem';
     const T = (c) => has(d, c) ? f0.format(val(d, c)) + '°' : null;
