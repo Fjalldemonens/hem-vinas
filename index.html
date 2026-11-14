@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.6">
+<meta name="app-version" content="2026-11-14.7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -520,8 +520,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.6"></script>
-<script src="homey.js?v=2026-11-14.6"></script>
+<script src="config.js?v=2026-11-14.7"></script>
+<script src="homey.js?v=2026-11-14.7"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -824,7 +824,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const meta = $('outMeta'); meta.replaceChildren();
       if (has(out, 'measure_luminance')) meta.append(mk('span', 'chip', f0.format(val(out, 'measure_luminance')) + ' lux'));
       const sk = varVal('AI Skumt ute'); if (sk !== undefined) meta.append(mk('span', 'chip ' + (sk ? 'acc' : ''), sk ? 'Skumt' : 'Dagsljus'));
-      if (has(out, 'measure_battery') && val(out, 'measure_battery') < 20) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %'));
+      if (has(out, 'measure_battery') && val(out, 'measure_battery') < 10) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %'));
     }
     // thermostats
     const th = T.filter((d) => d.type === 'thermostat');
@@ -936,7 +936,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const t = mk('div', 't num'); t.append(document.createTextNode(f1.format(val(d, 'measure_temperature'))), mk('small', '', ' °C')); c.append(t);
       const s = mk('div', 's num');
       if (has(d, 'measure_humidity')) s.append(mk('span', '', f0.format(val(d, 'measure_humidity')) + ' % fukt'));
-      const lowB = val(d, 'alarm_battery') === true || (has(d, 'measure_battery') && val(d, 'measure_battery') < 25);
+      // Samma regel som push-larmet i AI 10 (2026-11-14.7): under 10 %, eller batterilarm om enheten saknar procentvärde
+      const lowB = has(d, 'measure_battery') ? val(d, 'measure_battery') < 10 : val(d, 'alarm_battery') === true;
       if (lowB) s.append(mk('span', 'lowb', 'Batteri ' + (has(d, 'measure_battery') ? f0.format(val(d, 'measure_battery')) + ' %' : 'lågt')));
       c.append(s); sg.append(c);
     });
