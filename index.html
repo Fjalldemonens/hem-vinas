@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.21">
+<meta name="app-version" content="2026-11-14.22">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.21"></script>
-<script src="homey.js?v=2026-11-14.21"></script>
+<script src="config.js?v=2026-11-14.22"></script>
+<script src="homey.js?v=2026-11-14.22"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1162,10 +1162,10 @@ body.noscroll{overflow:hidden}
         const modes = has(d, 'se_onoff') && settable(d, 'thermostat_mode') ? opts(d, 'thermostat_mode').filter((x) => x.id !== 'off') : [];
         if (modes.length) {
           // Lägesväljare (ny design 2026-11, beslut av Ulf): Av = se_onoff av; ett läge = på i det läget (samma capabilities som förut).
-          // Uppdrag 2: Av / Värme / Kyla / Auto på en rad, övriga lägen (Fläkt, Avfukta) som chips under "Fler lägen".
+          // Uppdrag 2: Av / Värme / Kyla / Auto på en rad, övriga lägen (Fläkt, Avfukta) visas inte längre (2026-11-14.22).
           const prim = ['heat', 'cool', 'auto'];
           const main = modes.filter((x) => prim.includes(x.id)).sort((a, b) => prim.indexOf(a.id) - prim.indexOf(b.id));
-          const segModes = main.length ? main : modes, rest = main.length ? modes.filter((x) => !prim.includes(x.id)) : [];
+          const segModes = main.length ? main : modes, rest = []; // Fläkt/Avfukta borttagna 2026-11-14.22 (används aldrig, Ulf)
           const act = (id, on) => () => { if (on) return; setCaps({ [d.id]: id === 'off' ? { se_onoff: false } : { se_onoff: true, thermostat_mode: id } }, 'Lägesändringen'); };
           const sg = mk('div', 'mini modes'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'Läge ' + name);
           [['off', 'Av']].concat(segModes.map((x) => [x.id, ML[x.id] || sv(x.title)])).forEach(([id, label]) => {
