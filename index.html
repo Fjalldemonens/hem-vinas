@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.8">
+<meta name="app-version" content="2026-11-14.9">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -520,8 +520,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.8"></script>
-<script src="homey.js?v=2026-11-14.8"></script>
+<script src="config.js?v=2026-11-14.9"></script>
+<script src="homey.js?v=2026-11-14.9"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -966,7 +966,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     w.append(b, mk('div', 'bat-n')); el.append(w);
   }
   // Batterityp vid lågt batteri (2026-11-14.8): drivrutinens uppgift i Homey, annars känd modell. SNZB-02P = CR2477 (SONOFF:s produktsida, Zigbee2MQTT).
-  const BATT_MODELS = { 'SNZB-02P': 'CR2477' };
+  const BATT_MODELS = { 'SNZB-02P': 'CR2477', 'lumi.flood.agl02': 'CR2032' };   // lumi.flood.agl02 = Aqara Water Leak Sensor T1
   function battType(d) {
     const b = (d && d.batteries) || [];
     if (b.length) { const cnt = {}; b.forEach((x) => { cnt[x] = (cnt[x] || 0) + 1; }); return Object.entries(cnt).map(([t, k]) => (k > 1 ? k + 'x ' : '') + t).join(' + '); }
