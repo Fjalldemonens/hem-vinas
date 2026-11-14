@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.3">
+<meta name="app-version" content="2026-11-14.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -301,7 +301,7 @@ body.noscroll{overflow:hidden}
 .bhc .bln{fill:none;stroke:var(--batt);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
 .bhc .pin{fill:var(--batt);opacity:.55}
 .bhc .pout{fill:var(--orange);opacity:.6}
-.bhc .still{fill:var(--warn)}
+.bhc .still{fill:var(--muted);opacity:.7}
 .bhc .scrl{stroke:var(--fg);stroke-width:1.2;opacity:.55}
 .bhc .cdot{fill:var(--batt)}
 .bhc .cring{fill:none;stroke:var(--batt);stroke-width:2;opacity:.45}
@@ -314,7 +314,7 @@ body.noscroll{overflow:hidden}
 .bh-leg span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .bh-leg .k-in::before{background:var(--batt)}
 .bh-leg .k-out::before{background:var(--orange)}
-.bh-leg .k-still::before{background:var(--warn);height:5px;vertical-align:2px}
+.bh-leg .k-still::before{background:var(--muted);opacity:.7;height:5px;vertical-align:2px}
 .bh-kv{padding:10px 0 0;font-size:.85rem}
 .bh .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
 .bh-sum{font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.4}
@@ -515,8 +515,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.3"></script>
-<script src="homey.js?v=2026-11-14.3"></script>
+<script src="config.js?v=2026-11-14.4"></script>
+<script src="homey.js?v=2026-11-14.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1007,7 +1007,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     setHead(-1);
     // Ett diagram: laddnivå överst, effekt under, samma tidsaxel och markör
     const NS = 'http://www.w3.org/2000/svg', el = (t, a, par) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (par) par.append(e); return e; };
-    const Wd = 340, L = 8, R = 8, cw = Wd - L - R, X = (i) => L + ((i + 0.5) / n) * cw;
+    const Wd = 340, L = 40, R = 8, cw = Wd - L - R, X = (i) => L + ((i + 0.5) / n) * cw;
     const sT = 8, sH = 150, gap = 22, pT = sT + sH + gap, pH = pp.length ? 64 : 0, Ht = pT + pH + 20;
     const mxv = Math.max(...pts.map((q) => q[1]));
     const step = mxv > 60 ? 25 : mxv > 30 ? 10 : 5, ymax = Math.min(100, Math.max(step * 2, Math.ceil((mxv + 2) / step) * step));
@@ -1015,7 +1015,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const svg = el('svg', { viewBox: '0 0 ' + Wd + ' ' + Ht, class: 'bhc', role: 'img', 'aria-label': 'Batteriets laddnivå och effekt under dygnet. Dra med fingret för att se värden.' });
     const gid = 'bhg' + bhDay, defs = el('defs', {}, svg), lg = el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
     el('stop', { offset: '0', 'stop-color': 'var(--batt)', 'stop-opacity': '.4' }, lg); el('stop', { offset: '1', 'stop-color': 'var(--batt)', 'stop-opacity': '.03' }, lg);
-    for (let y = step; y <= ymax; y += step) { el('line', { x1: L, x2: Wd - R, y1: Y(y), y2: Y(y), class: 'gl' }, svg); el('text', { x: L + 2, y: Y(y) - 3, class: 'ax' }, svg).textContent = y + ' %'; }
+    el('text', { x: L - 5, y: Y(0) + 3.5, 'text-anchor': 'end', class: 'ax' }, svg).textContent = '0 %';
+    for (let y = step; y <= ymax; y += step) { el('line', { x1: L, x2: Wd - R, y1: Y(y), y2: Y(y), class: 'gl' }, svg); el('text', { x: L - 5, y: Y(y) + 3.5, 'text-anchor': 'end', class: 'ax' }, svg).textContent = y + ' %'; }
     el('line', { x1: L, x2: Wd - R, y1: Y(0), y2: Y(0), class: 'gl' }, svg);
     const segsOf = (arr) => { const out = []; let cur = []; arr.forEach((q, k) => { if (k && q[0] - arr[k - 1][0] > 3) { out.push(cur); cur = []; } cur.push(q); }); out.push(cur); return out; };
     segsOf(pts).forEach((sg) => {
@@ -1029,8 +1030,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const mx = Math.max(500, ...pp.map((q) => Math.abs(q[1]))), lim = Math.ceil(mx / 1000) * 1000;
       const mid = pT + pH / 2; pY = (w) => mid - (w / lim) * (pH / 2);
       el('line', { x1: L, x2: Wd - R, y1: mid, y2: mid, class: 'gl' }, svg);
-      el('text', { x: L + 2, y: pT + 8, class: 'ax' }, svg).textContent = '+' + lim / 1000 + ' kW';
-      el('text', { x: L + 2, y: pT + pH, class: 'ax' }, svg).textContent = '−' + lim / 1000 + ' kW';
+      el('text', { x: L - 5, y: pT + 4, 'text-anchor': 'end', class: 'ax' }, svg).textContent = '+' + lim / 1000 + ' kW';
+      el('text', { x: L - 5, y: mid + 3.5, 'text-anchor': 'end', class: 'ax' }, svg).textContent = '0';
+      el('text', { x: L - 5, y: pT + pH + 3, 'text-anchor': 'end', class: 'ax' }, svg).textContent = '−' + lim / 1000 + ' kW';
       // yta ovanför (laddar) och under (laddar ur) nollinjen
       const area = (sign, cls) => segsOf(pp).forEach((sg) => {
         const d = sg.map((q, k) => (k ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + pY(sign * q[1] > 0 ? q[1] : 0).toFixed(1)).join(' ');
@@ -1038,7 +1040,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       });
       area(1, 'pin'); area(-1, 'pout');
     }
-    [0, 6, 12, 18, 24].forEach((h) => { el('text', { x: L + (h / 24) * cw, y: Ht - 4, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }, svg).textContent = (h === 24 ? 0 : h) + ':00'; });
+    [0, 6, 12, 18, 24].forEach((h) => { el('text', { x: L + (h / 24) * cw, y: Ht - 4, 'text-anchor': h === 24 ? 'end' : 'middle', class: 'ax' }, svg).textContent = (h === 24 ? 0 : h) + ':00'; });
     // Markör
     const cg = el('g', { style: 'display:none', 'pointer-events': 'none' }, svg);
     const cl = el('line', { y1: sT, y2: pT + pH, class: 'scrl' }, cg), cdot = el('circle', { r: 6, class: 'cdot' }, cg), cring = el('circle', { r: 10, class: 'cring' }, cg);
@@ -1067,7 +1069,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const lo = pts.reduce((a, b) => (b[1] < a[1] ? b : a)), hi = pts.reduce((a, b) => (b[1] > a[1] ? b : a));
     const kwh = (sign) => pp.reduce((a, [, w]) => a + (sign * w > 30 ? Math.abs(w) : 0), 0) * iv / 60 / 1000;
     const rows = [['Lägst', f1.format(lo[1]) + ' % kl ' + tm(lo[0])], ['Högst', f1.format(hi[1]) + ' % kl ' + tm(hi[0])]];
-    if (pp.length) rows.push(['Laddat / urladdat', f1.format(kwh(1)) + ' / ' + f1.format(kwh(-1)) + ' kWh']);
+    if (pp.length) rows.push(['Laddat', f1.format(kwh(1)) + ' kWh'], ['Urladdat', f1.format(kwh(-1)) + ' kWh']);
     rows.push(['Längst stilla', lr ? dur(lr[1] - lr[0]) + ' (' + tm(lr[0]) + '–' + tm(lr[1]) + ')' : '–']);
     const g = mk('div', 'kv num bh-kv'); rows.forEach(([k, val]) => g.append(mk('span', 'k', k), mk('span', 'v', val)));
     box.append(g);
