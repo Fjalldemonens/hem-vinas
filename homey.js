@@ -122,7 +122,11 @@
       });
       // Bilder som enheten publicerar i Homey, t.ex. robotens karta
       const images = (d.images || []).map((x) => ({ id: x.id, title: txt(x.title), url: x.imageObj && x.imageObj.url, at: x.imageObj && x.imageObj.lastUpdated })).filter((x) => x.url);
-      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps, images };
+      // Batterityp: från drivrutinen (energyObj.batteries, t.ex. ["CR2032"]) och Zigbee-modellen (settings.zb_product_id) som reserv när drivrutinen inte anger den
+      const en = d.energyObj || d.energy || {}, st = d.settings || {};
+      const batteries = Array.isArray(en.batteries) ? en.batteries.filter((x) => x && x !== 'INTERNAL' && x !== 'OTHER') : [];
+      const model = st.zb_product_id || st.zb_model_id || null;
+      return { id: d.id, name: d.name, zone: zonePath(zoneCache || {}, d.zone), type: d.virtualClass || d.class, available: d.available, state, caps, images, batteries, model };
     });
   }
   // Hämtar en bild från Homey (kräver inloggning) och ger en lokal adress som <img> kan visa.

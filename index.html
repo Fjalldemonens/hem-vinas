@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.7">
+<meta name="app-version" content="2026-11-14.8">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -520,8 +520,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.7"></script>
-<script src="homey.js?v=2026-11-14.7"></script>
+<script src="config.js?v=2026-11-14.8"></script>
+<script src="homey.js?v=2026-11-14.8"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -824,7 +824,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const meta = $('outMeta'); meta.replaceChildren();
       if (has(out, 'measure_luminance')) meta.append(mk('span', 'chip', f0.format(val(out, 'measure_luminance')) + ' lux'));
       const sk = varVal('AI Skumt ute'); if (sk !== undefined) meta.append(mk('span', 'chip ' + (sk ? 'acc' : ''), sk ? 'Skumt' : 'Dagsljus'));
-      if (has(out, 'measure_battery') && val(out, 'measure_battery') < 10) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %'));
+      if (has(out, 'measure_battery') && val(out, 'measure_battery') < 10) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %' + (battType(out) ? ' · byt ' + battType(out) : '')));
     }
     // thermostats
     const th = T.filter((d) => d.type === 'thermostat');
@@ -938,7 +938,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       if (has(d, 'measure_humidity')) s.append(mk('span', '', f0.format(val(d, 'measure_humidity')) + ' % fukt'));
       // Samma regel som push-larmet i AI 10 (2026-11-14.7): under 10 %, eller batterilarm om enheten saknar procentvärde
       const lowB = has(d, 'measure_battery') ? val(d, 'measure_battery') < 10 : val(d, 'alarm_battery') === true;
-      if (lowB) s.append(mk('span', 'lowb', 'Batteri ' + (has(d, 'measure_battery') ? f0.format(val(d, 'measure_battery')) + ' %' : 'lågt')));
+      if (lowB) s.append(mk('span', 'lowb', 'Batteri ' + (has(d, 'measure_battery') ? f0.format(val(d, 'measure_battery')) + ' %' : 'lågt') + (battType(d) ? ' · byt ' + battType(d) : '')));
       c.append(s); sg.append(c);
     });
     if (!rooms.length && devices.length) sg.append(mk('p', 'empty', 'Inga temperaturgivare hittades.'));
@@ -964,6 +964,13 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     b.append(mk('span', 'num', (charging ? '⚡ ' : '') + f0.format(p) + ' %'));
     w.setAttribute('role', 'img'); w.setAttribute('aria-label', 'Laddnivå ' + f0.format(p) + ' %' + (target != null ? ', laddmål ' + f0.format(target) + ' %' : '') + (charging ? ', laddar' : ''));
     w.append(b, mk('div', 'bat-n')); el.append(w);
+  }
+  // Batterityp vid lågt batteri (2026-11-14.8): drivrutinens uppgift i Homey, annars känd modell. SNZB-02P = CR2477 (SONOFF:s produktsida, Zigbee2MQTT).
+  const BATT_MODELS = { 'SNZB-02P': 'CR2477' };
+  function battType(d) {
+    const b = (d && d.batteries) || [];
+    if (b.length) { const cnt = {}; b.forEach((x) => { cnt[x] = (cnt[x] || 0) + 1; }); return Object.entries(cnt).map(([t, k]) => (k > 1 ? k + 'x ' : '') + t).join(' + '); }
+    return (d && d.model && BATT_MODELS[d.model]) || '';
   }
   // Statusrader: radbryt bara vid " · ", aldrig mellan tal och enhet ("292 W", "41 % fukt").
   const nb = (t) => String(t).split(' · ').map((x) => x.replace(/ /g, '\u00a0')).join(' · ');
