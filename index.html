@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.15">
+<meta name="app-version" content="2026-11-14.16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -495,6 +495,62 @@ body.noscroll{overflow:hidden}
 .mini.modes button{padding:0 2px;font-size:13px;white-space:normal;line-height:1.1;min-height:36px}
 @media (max-width:360px){.mini.modes button{font-size:12px}}
 .chips .mini.modes:has(> :nth-child(5)){grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr))}
+
+/* Uppdrag 2 (2026-11-14.16): etiketter, kompakta rader, Ute-kort */
+.tag{display:inline-flex;align-items:center;font-size:12px;font-weight:700;line-height:1.2;border-radius:10px;padding:4px 10px;background:var(--accent-soft);color:var(--accent-text);white-space:nowrap;flex:none}
+.tag.warm{background:var(--hot-soft);color:var(--hot)}
+.tag.plain{background:var(--sub);color:var(--muted);font-weight:600}
+.tag.price{background:var(--hot-soft);color:var(--price)}
+.tag.ok{background:var(--green-soft);color:var(--green-ink)}
+.hprow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:2px 10px;align-items:center;width:100%;padding:14px 16px;border:0;background:none;font:inherit;color:var(--fg);text-align:left;cursor:pointer}
+.hprow .hpt{min-width:0}
+.hprow .n{font-weight:700;font-size:16px}
+.hprow .s{font-size:13px;color:var(--muted);overflow-wrap:break-word;hyphens:manual}
+.hprow .s .heat{color:var(--hot);font-weight:700}
+.hprow b.cv{font-size:20px;font-weight:400;color:var(--faint-t)}
+.hpchips{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 14px}
+.thermo.slim{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px 16px}
+.thermo.slim .zn{flex:1 1 100%;display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;font-weight:700;font-size:16px;color:var(--fg);text-align:left;cursor:pointer;min-width:0}
+.thermo.slim .zn b{font-size:20px;font-weight:400;color:var(--faint-t)}
+.thermo.slim .s{flex:1 1 170px;min-width:0;font-size:13px;color:var(--muted);overflow-wrap:break-word;hyphens:manual}
+.thermo.slim .s .heat{color:var(--hot);font-weight:700}
+.thermo.slim .step{margin-left:auto}
+.thermo.slim .chips{flex:1 1 100%}
+.step button:disabled{opacity:.4;cursor:default}
+.chips .morem{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.morem .ml{font-size:12px;color:var(--muted);font-weight:600;margin-right:2px}
+.morem .chip{min-height:30px;padding:0 12px;font-size:13px}
+.zsheet{display:flex;flex-direction:column;gap:14px;padding:4px 2px 8px}
+.zsheet .zr{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.zsheet .zr .zl{font-weight:700;font-size:16px}
+.hero .meta .gar{font-size:13px;color:var(--muted);font-weight:600;text-align:right}
+.hero .meta .tag{max-width:100%}
+.robo .socbar{margin:2px 0 0}
+.robo .meta .tag{white-space:normal}
+.lrow .ls{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lj3{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px;padding:14px 16px}
+.lj3 > div{min-width:0}
+.lj3 small{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.lj3 b{display:block;font-size:16px;font-weight:700;margin-top:2px;overflow-wrap:break-word}
+.sech .sh{font-size:13px;color:var(--muted);font-weight:600}
+.ptop{align-items:center;min-height:26px}
+.ptit{font-size:15px;font-weight:700}
+.pair{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mini.full{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}
+.mini.full button{min-height:36px;padding:0 6px;white-space:nowrap}
+.tdy{padding:16px;display:flex;flex-direction:column;gap:12px}
+.tdy .th{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.tdy .th span{font-size:15px;color:var(--muted)}
+.tdy .th b{font-size:28px;font-weight:700;letter-spacing:-.01em}
+.tdy .th b.inc{color:var(--green-ink)}
+.tdy .m3{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
+.tdy .mc{background:var(--sub);border-radius:12px;padding:10px;min-width:0}
+.tdy .mc small{display:block;font-size:12px;color:var(--muted)}
+.tdy .mc b{display:block;font-size:15px;font-weight:700;overflow-wrap:break-word}
+.tdy .fromn{font-size:12px;color:var(--muted)}
+.tag .cd{width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;flex:none}
+#lightStatus{align-items:center;gap:6px}
+#lightStatus .lnote{flex:1 1 100%;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -537,9 +593,9 @@ body.noscroll{overflow:hidden}
   <div class="banner" id="banner" hidden></div>
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
-    <div class="chips" id="lightStatus"></div>
     <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
-    <div class="sech"><div class="h2">Tänt nu <span class="num" id="litN"></span></div><button class="tbtn" id="offInside" type="button">Släck allt inne</button></div>
+    <div class="chips" id="lightStatus"></div>
+    <div class="sech"><div class="h2">Tänt nu <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
     <div class="card" id="litList"><div class="empty">Hämtar lampor…</div></div>
     <div class="sech"><div class="h2">Rum</div><button class="tbtn warnb" id="offAll" type="button">Släck allt</button></div>
     <div class="panel" id="rooms"><div class="skel"></div><div class="skel"></div></div>
@@ -580,7 +636,7 @@ body.noscroll{overflow:hidden}
     <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
 
     <div class="h2">Idag</div>
-    <div class="card"><div class="kv num" id="today"></div></div>
+    <div class="card"><div class="tdy num" id="today"></div></div>
     <div class="card" id="moreList">
       <button class="lrow" type="button" data-more="batt" aria-haspopup="dialog"><span class="ln2">Husbatteri</span><span class="ls num" id="mBatt"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="ev" aria-haspopup="dialog"><span class="ln2">Laddbox &amp; bil</span><span class="ls num" id="mEv"></span><span class="chev" aria-hidden="true">›</span></button>
@@ -611,8 +667,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.15"></script>
-<script src="homey.js?v=2026-11-14.15"></script>
+<script src="config.js?v=2026-11-14.16"></script>
+<script src="homey.js?v=2026-11-14.16"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -820,12 +876,12 @@ body.noscroll{overflow:hidden}
     const sk = varVal('AI Skumt ute'), ski = varVal('AI Skumt inne');
     if (sk !== undefined || ski !== undefined) {
       const txt = sk ? 'Mörkt ute' : ski ? 'Skumt inne' : 'Ljust ute';
-      const c = mk('span', 'chip ' + (sk || ski ? 'acc' : '')); c.append(mk('span', 'cd'), document.createTextNode(txt)); st.append(c);
+      const c = mk('span', 'tag' + (sk || ski ? '' : ' plain')); c.append(mk('span', 'cd'), document.createTextNode(txt)); st.append(c);
     }
     const wd = varVal('AI Arbetsdag idag');
-    if (wd !== undefined) st.append(mk('span', 'chip', wd ? 'Arbetsdag' : 'Ledig dag'));
+    if (wd !== undefined) st.append(mk('span', 'tag plain', wd ? 'Arbetsdag' : 'Ledig dag'));
     const lm = varVal('AI Ledig dag imorgon');
-    if (lm !== undefined) st.append(mk('span', 'chip', 'Kvällsljus släcks ' + (lm ? '22:30' : '22:00')));
+    if (lm !== undefined) st.append(mk('div', 'lnote', 'Kvällsljus släcks ' + (lm ? '22:30' : '22:00')));
     st.hidden = !st.children.length;
 
     const floors = {};
@@ -875,7 +931,7 @@ body.noscroll{overflow:hidden}
     $('scenesWrap').hidden = !moods.length;
     const sc = $('scenes'); sc.replaceChildren();
     moods.forEach((m) => {
-      const c = mk('button', 'chip', '✦ ' + m.name); c.type = 'button';
+      const c = mk('button', 'chip', m.name); c.type = 'button';
       c.addEventListener('click', async () => {
         c.classList.add('busy');
         try { await api.setMood(m.id); toast('Scen ' + m.name + ' aktiverad'); setTimeout(refresh, 1500); }
@@ -914,31 +970,34 @@ body.noscroll{overflow:hidden}
   }
   function heatPumpRow(d) {
     const name = String(d.name).trim();
-    const row = mk('div', 'thermo'); const left = mk('div');
-    left.append(mk('div', 'n', name));
     const st = thSv(val(d, 'thermia_status')), working = st && st !== 'Inget värmebehov';
-    const s = mk('div', 's num');
     const inT = indoorTemp();
-    if (inT) { const iv = mk('div', 'inne num'); iv.append(document.createTextNode('Inne nu '), mk('b', '', f1.format(inT.v) + '°')); left.append(iv); }
-    s.append(working ? mk('span', 'heat', nb(st)) : document.createTextNode(nb(st || 'Status okänd')));
-    left.append(s);
-    // Lägesruta som de andra värmeraderna: driftläget, svagt röd när pumpen arbetar (värme/varmvatten), annars neutral.
+    const open = !!hpOpen[d.id];
+    // Kompakt tryckbar rad (Uppdrag 2): namn, "Inne 22,8° · Värmer", etikett med driftläge och ›. Hela raden öppnar bladet med detaljerna.
+    const row = mk('button', 'hprow'); row.type = 'button'; row.setAttribute('aria-haspopup', 'dialog');
+    const left = mk('div', 'hpt'); left.append(mk('div', 'n', name));
+    const parts = [];
+    if (inT) parts.push('Inne ' + f1.format(inT.v) + '°');
+    parts.push(st === 'Inget värmebehov' ? 'inget värmebehov' : st || 'status okänd');
+    const s = mk('div', 's num'); s.append(document.createTextNode(nb(parts.join(' · '))));
+    if (working) { s.replaceChildren(); if (inT) s.append(document.createTextNode(nb(parts[0]) + ' · ')); s.append(mk('span', 'heat', nb(st))); }
+    left.append(s); row.append(left);
     if (has(d, 'thermia_opmode')) {
       const om = String(val(d, 'thermia_opmode')).replace(/operation mode /i, '').trim();
-      const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
-      chips.append(mk('span', 'chip' + (working ? ' heating' : ''), om ? om.charAt(0).toUpperCase() + om.slice(1) : 'Okänt läge'));
-      left.append(chips);
+      row.append(mk('span', 'tag' + (working ? ' warm' : ''), om ? om.charAt(0).toUpperCase() + om.slice(1) : 'Okänt'));
     }
+    row.append(mk('b', 'cv', '›')); row.lastChild.setAttribute('aria-hidden', 'true');
+    row.addEventListener('click', () => { hpOpen[d.id] = true; renderTemp(); });
+    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
     // Kondensvattenhinken (2026-11-14.10): vattenlarmet (givare med alarm_water, i Värmepump-zonen om sådan finns) – rutan syns bara vid larm.
     const wet = devices.filter((x) => has(x, 'alarm_water'));
     const bucket = wet.filter((x) => /värmepump/i.test(x.zone || '')).concat(wet).find((x) => val(x, 'alarm_water') === true);
     if (bucket) {
-      let ch = left.querySelector('.chips'); if (!ch) { ch = mk('div', 'chips'); ch.style.marginTop = '8px'; left.append(ch); }
-      const c = mk('span', 'chip alarm', '💧 Töm hinken'); c.title = String(bucket.name).trim() + ' larmar'; ch.append(c);
+      const ch = mk('div', 'hpchips');
+      const c = mk('span', 'chip alarm', '💧 Töm hinken'); c.title = String(bucket.name).trim() + ' larmar'; ch.append(c); box.append(ch);
     }
-    const g = mk('div', 'kv num'); g.style.padding = '0 16px 6px'; g.style.fontSize = '.86rem';
+    const g = mk('div', 'kv num');
     const T = (c) => has(d, c) ? f0.format(val(d, c)) + '°' : null;
-    const open = !!hpOpen[d.id];
     const KNOWN = ['target_temperature', 'measure_temperature', 'measure_temperature.supply', 'measure_temperature.return', 'measure_temperature.brine_in', 'measure_temperature.brine_out', 'measure_temperature.hotwater', 'thermia_status', 'thermia_opmode', 'hotwater_status', 'hotwater_boost'];
     const dT = (a, b) => has(d, a) && has(d, b) ? f1.format(val(d, a) - val(d, b)) + '°' : null;
     const onoff = (c) => has(d, c) ? (val(d, c) ? 'På' : 'Av') : null;
@@ -964,18 +1023,71 @@ body.noscroll{overflow:hidden}
       }),
     ] : [];
     kv(g, rows);
-    // Mer info öppnas som blad (ny design 2026-11) i stället för att fällas ut i kortet
-    const mw = mk('button', 'hpmore'); mw.type = 'button'; mw.setAttribute('aria-haspopup', 'dialog');
-    mw.append(mk('span', '', 'Mer info'), mk('b', '', '›')); mw.lastChild.setAttribute('aria-hidden', 'true');
-    mw.addEventListener('click', () => { hpOpen[d.id] = true; renderTemp(); });
-    const right = mk('div', 'step');
-    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-09.8. Börvärdet syns under Mer info.
-    row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
-    const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
-    box.append(mw);
-    if (open) { g.style.padding = ''; g.style.fontSize = ''; const body = sheetOpen('hp' + d.id, name, () => { hpOpen[d.id] = false; }); body.replaceChildren(g); }
+    // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-09.8. Börvärdet syns i bladet.
+    if (open) { const body = sheetOpen('hp' + d.id, name, () => { hpOpen[d.id] = false; }); body.replaceChildren(g); }
     else if (SH.key === 'hp' + d.id) sheetClose(false);
     return box;
+  }
+  // Golvvärme-rad (Uppdrag 2): rubrik (tryck = blad med på/av), EN rad "Rum 23,6° · golv 23,2° · vilar" och stegknapp.
+  const zvOpen = {};
+  function zoneRow(d) {
+    const name = String(d.name).replace(/^Z-TRM6\s*/i, 'Golvvärme '), key = 'zv' + d.id;
+    const floorT = has(d, 'measure_temperature.floor') ? val(d, 'measure_temperature.floor') : null;
+    const roomT = has(d, 'measure_temperature.internal') ? val(d, 'measure_temperature.internal') : floorT === null ? val(d, 'measure_temperature') : null;
+    const parts = [];
+    if (roomT !== null) parts.push((floorT !== null ? 'Rum ' : 'Nu ') + f1.format(roomT) + '°');
+    if (floorT !== null) parts.push((roomT !== null ? 'golv ' : 'Golv ') + f1.format(floorT) + '°');
+    if (has(d, 'measure_humidity')) parts.push(f0.format(val(d, 'measure_humidity')) + ' % fukt');
+    const heating = val(d, 'thermostat_state_IdleHeatCool') === 'Heating' || (has(d, 'measure_power') && val(d, 'measure_power') > 5);
+    const canMode = has(d, 'thermostat_mode'), isOff = canMode && val(d, 'thermostat_mode') === 'off';
+    const hasState = has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power');
+    const stTxt = isOff ? 'avstängd' : hasState ? (heating ? 'värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : '') : 'vilar') : null;
+    const row = mk('div', 'thermo slim');
+    const nbtn = mk('button', 'zn'); nbtn.type = 'button'; nbtn.setAttribute('aria-haspopup', 'dialog');
+    nbtn.append(mk('span', '', name), mk('b', '', '›')); nbtn.lastChild.setAttribute('aria-hidden', 'true');
+    nbtn.addEventListener('click', () => { zvOpen[key] = true; renderTemp(); });
+    const s = mk('div', 's num'); s.append(document.createTextNode(nb(parts.join(' · '))));
+    if (stTxt) { s.append(document.createTextNode(' · ')); s.append(heating && !isOff ? mk('span', 'heat', nb(stTxt)) : document.createTextNode(nb(stTxt))); }
+    const right = mk('div', 'step');
+    if (has(d, 'target_temperature')) {
+      const tv = mk('span', 'tv num', f1.format(val(d, 'target_temperature')) + '°');
+      const step = (delta) => () => {
+        const nv = Math.round((Number(val(d, 'target_temperature')) + delta) * 2) / 2;
+        tv.textContent = f1.format(nv) + '°';
+        throttled('t' + d.id, () => setCaps({ [d.id]: { target_temperature: nv } }, 'Temperaturändringen'), 700);
+      };
+      const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.5));
+      const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
+      right.append(minus, tv, plus);
+    }
+    if (isOff) right.classList.add('off');
+    row.append(nbtn, s, right);
+    if (zvOpen[key]) {
+      const body = sheetOpen(key, name, () => { zvOpen[key] = false; });
+      const w = mk('div', 'zsheet');
+      if (canMode) {
+        // Samma funktion som den gamla Värme-knappen: thermostat_mode heat ↔ off
+        const zr = mk('div', 'zr'); zr.append(mk('span', 'zl', 'Värme'));
+        const sg = mk('div', 'mini'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'Värme ' + name);
+        [['off', 'Av'], ['heat', 'På']].forEach(([id, label]) => {
+          const on = id === 'off' ? isOff : !isOff;
+          const b = mk('button', '', label); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+          b.addEventListener('click', () => { if (on) return; setCaps({ [d.id]: { thermostat_mode: isOff ? 'heat' : 'off' } }, 'Ändringen'); });
+          sg.append(b);
+        });
+        zr.append(sg); w.append(zr);
+      }
+      const g = mk('div', 'kv num');
+      kv(g, [
+        roomT !== null && [floorT !== null ? 'Rum' : 'Nu', f1.format(roomT) + '°'],
+        floorT !== null && ['Golv', f1.format(floorT) + '°'],
+        has(d, 'measure_humidity') && ['Fukt', f0.format(val(d, 'measure_humidity')) + ' %'],
+        has(d, 'target_temperature') && ['Börvärde', f1.format(val(d, 'target_temperature')) + '°'],
+        stTxt && ['Status', stTxt.charAt(0).toUpperCase() + stTxt.slice(1)],
+      ]);
+      w.append(g); body.replaceChildren(w);
+    } else if (SH.key === key) sheetClose(false);
+    return row;
   }
   function renderTemp() {
     const T = devices.filter((d) => has(d, 'measure_temperature') && !ENERGY_TYPES.test(d.type));
@@ -983,14 +1095,20 @@ body.noscroll{overflow:hidden}
     const out = outs.find((d) => has(d, 'measure_luminance') && /temp/i.test(d.name)) || outs[0];
     if (out) {
       const t = val(out, 'measure_temperature');
-      $('outT').replaceChildren(document.createTextNode(f1.format(t)), Object.assign(mk('sup'), { textContent: '°C' }));
+      $('outT').textContent = f1.format(t) + '°';
       $('gOut').textContent = f1.format(t) + '°'; fitGl($('gOut'));
       const go = $('glOut'), tn = Number(t);
       go.classList.toggle('temp', Number.isFinite(tn));
       if (Number.isFinite(tn)) { go.style.setProperty('--gt', tn >= 0 ? 'var(--warm)' : 'var(--cold)'); go.style.setProperty('--ga', Math.round(8 + Math.min(Math.abs(tn), 25) / 25 * 16) + '%'); }
       const meta = $('outMeta'); meta.replaceChildren();
-      if (has(out, 'measure_luminance')) meta.append(mk('span', 'chip', f0.format(val(out, 'measure_luminance')) + ' lux'));
-      const sk = varVal('AI Skumt ute'); if (sk !== undefined) meta.append(mk('span', 'chip ' + (sk ? 'acc' : ''), sk ? 'Skumt' : 'Dagsljus'));
+      // En etikett: Dagsljus/Skumt + lux (samma data som förut), under den Garage-givaren (Strålkastare) som flyttats hit från rumsrutorna.
+      const sk = varVal('AI Skumt ute'), lux = has(out, 'measure_luminance') ? f0.format(val(out, 'measure_luminance')) + ' lux' : null;
+      const lbl = sk !== undefined ? (sk ? 'Skumt' : 'Dagsljus') : null;
+      if (lbl || lux) meta.append(mk('span', 'tag num', [lbl, lux].filter(Boolean).join(' · ').replace(/ /g, '\u00a0').replace(/\u00a0·\u00a0/g, ' · ')));
+      T.filter((x) => x.id !== out.id && /strålkastare/i.test(x.name) && Number.isFinite(Number(val(x, 'measure_temperature')))).forEach((x) => {
+        const z = roomOf(x.zone || ''), lab = z && !OUTSIDE.test(z) ? z : String(x.name).trim();
+        meta.append(mk('div', 'gar num', nb(lab + ' ' + f1.format(val(x, 'measure_temperature')) + '°')));
+      });
       if (has(out, 'measure_battery') && val(out, 'measure_battery') < 10) meta.append(mk('span', 'chip bad', 'Batteri ' + f0.format(val(out, 'measure_battery')) + ' %' + (battType(out) ? ' · byt ' + battType(out) : '')));
     }
     // thermostats
@@ -1000,6 +1118,7 @@ body.noscroll{overflow:hidden}
     th.sort((a, b) => has(b, 'measure_temperature.supply') - has(a, 'measure_temperature.supply'));
     th.forEach((d) => {
       if (has(d, 'measure_temperature.supply')) { tc.append(heatPumpRow(d)); return; }
+      if (!has(d, 'se_onoff')) { tc.append(zoneRow(d)); return; }
       const row = mk('div', 'thermo'); const left = mk('div');
       const name = String(d.name).replace(/^Z-TRM6\s*/i, 'Golvvärme ');
       left.append(mk('div', 'n', name));
@@ -1033,14 +1152,29 @@ body.noscroll{overflow:hidden}
         const modes = has(d, 'se_onoff') && settable(d, 'thermostat_mode') ? opts(d, 'thermostat_mode').filter((x) => x.id !== 'off') : [];
         if (modes.length) {
           // Lägesväljare (ny design 2026-11, beslut av Ulf): Av = se_onoff av; ett läge = på i det läget (samma capabilities som förut).
+          // Uppdrag 2: Av / Värme / Kyla / Auto på en rad, övriga lägen (Fläkt, Avfukta) som chips under "Fler lägen".
+          const prim = ['heat', 'cool', 'auto'];
+          const main = modes.filter((x) => prim.includes(x.id)).sort((a, b) => prim.indexOf(a.id) - prim.indexOf(b.id));
+          const segModes = main.length ? main : modes, rest = main.length ? modes.filter((x) => !prim.includes(x.id)) : [];
+          const act = (id, on) => () => { if (on) return; setCaps({ [d.id]: id === 'off' ? { se_onoff: false } : { se_onoff: true, thermostat_mode: id } }, 'Lägesändringen'); };
           const sg = mk('div', 'mini modes'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'Läge ' + name);
-          [['off', 'Av']].concat(modes.map((x) => [x.id, ML[x.id] || sv(x.title)])).forEach(([id, label]) => {
+          [['off', 'Av']].concat(segModes.map((x) => [x.id, ML[x.id] || sv(x.title)])).forEach(([id, label]) => {
             const on = id === 'off' ? isOff : !isOff && mode === id;
             const b = mk('button', '', label); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
-            b.addEventListener('click', () => { if (on) return; setCaps({ [d.id]: id === 'off' ? { se_onoff: false } : { se_onoff: true, thermostat_mode: id } }, 'Lägesändringen'); });
+            b.addEventListener('click', act(id, on));
             sg.append(b);
           });
           chips.append(sg);
+          if (rest.length) {
+            const more = mk('div', 'morem'); more.append(mk('span', 'ml', 'Fler lägen'));
+            rest.forEach((x) => {
+              const on = !isOff && mode === x.id;
+              const b = mk('button', 'chip', ML[x.id] || sv(x.title)); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+              b.addEventListener('click', act(x.id, on));
+              more.append(b);
+            });
+            chips.append(more);
+          }
         } else chips.append(mb);
         if (val(d, 'alarm_filter')) chips.append(mk('span', 'chip warn', 'Filter behöver rengöras'));
         left.append(chips);
@@ -1057,7 +1191,7 @@ body.noscroll{overflow:hidden}
         const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
         right.append(minus, tv, plus);
       }
-      if (has(d, 'se_onoff') && val(d, 'se_onoff') === false) right.classList.add('off');   // börvärdet tonas ner när pumpen är av
+      if (has(d, 'se_onoff') && val(d, 'se_onoff') === false) { right.classList.add('off'); right.querySelectorAll('button').forEach((b) => { b.disabled = true; }); }   // börvärdet tonas ner och −/+ är inaktiva när pumpen är av
       row.append(left, right); tc.append(row);
     });
     // Termostater som Homey-flödet AI 16 sköter (puck/uttag + givare). Börvärde och på/av i AI Termostater, läget i AI Termostat status.
@@ -1070,22 +1204,19 @@ body.noscroll{overflow:hidden}
       const tLive = sd && has(sd, st.cap || 'measure_temperature') ? Number(val(sd, st.cap || 'measure_temperature')) : null;
       const tNow = Number.isFinite(tLive) && tLive !== null ? tLive : st.t;
       const heatNow = hd && has(hd, 'onoff') ? val(hd, 'onoff') === true : !!st.heat;
-      const row = mk('div', 'thermo'); const left = mk('div');
-      left.append(mk('div', 'n', name));
+      const key = 'vt' + name;
+      const row = mk('div', 'thermo slim');
+      const nbtn = mk('button', 'zn'); nbtn.type = 'button'; nbtn.setAttribute('aria-haspopup', 'dialog');
+      nbtn.append(mk('span', '', name), mk('b', '', '›')); nbtn.lastChild.setAttribute('aria-hidden', 'true');
+      nbtn.addEventListener('click', () => { zvOpen[key] = true; renderTemp(); });
       const parts = [tNow != null ? 'Nu ' + f1.format(tNow) + '°' : 'Ingen temperatur'];
       if (st.h != null) parts.push(f0.format(st.h) + ' % fukt');
-      const s = mk('div', 's num', nb(parts.join(' · ')));
-      s.append(heatNow ? mk('div', 'heat', 'Värmer') : mk('div', '', on ? 'Vilar' : 'Av'));
-      left.append(s);
-      const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
-      // Lägesrutan: svagt röd när elementet värmer, annars neutral (inte aria-pressed – det ger grönt).
-      const mb = mk('button', 'chip' + (heatNow ? ' heating' : ''), on ? 'Värme' : 'Avstängd'); mb.type = 'button';
-      mb.setAttribute('aria-label', (on ? 'Stäng av ' : 'Slå på ') + name);
-      mb.addEventListener('click', () => saveVT(name, { on: !on }, on ? name + ': avstängd inom en minut' : name + ': termostaten på'));
-      chips.append(mb);
+      const stTxt = heatNow ? 'värmer' : on ? 'vilar' : 'av';
+      const s = mk('div', 's num'); s.append(document.createTextNode(nb(parts.join(' · ')) + ' · '));
+      s.append(heatNow ? mk('span', 'heat', stTxt) : document.createTextNode(stTxt));
+      const chips = mk('div', 'chips');
       if (st.err) chips.append(mk('span', 'chip bad', st.err));
       else if (st.u && Date.now() - st.u > 10 * 60000) chips.append(mk('span', 'chip warn', 'Flödet AI 16 har inte kört sedan ' + hhmm(st.u)));
-      left.append(chips);
       const right = mk('div', 'step');
       const tv = mk('span', 'tv num', f1.format(sp) + '°');
       let cur = sp;
@@ -1096,17 +1227,36 @@ body.noscroll{overflow:hidden}
       const minus = mk('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'Sänk ' + name); minus.addEventListener('click', step(-0.2));
       const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.2));
       right.append(minus, tv, plus);
-      row.append(left, right); tc.append(row);
+      if (!on) right.classList.add('off');
+      row.append(nbtn, s, right); if (chips.childElementCount) row.append(chips);
+      if (zvOpen[key]) {
+        // Samma funktion som den gamla Värme-knappen: AI Termostater on av/på via saveVT
+        const body = sheetOpen(key, name, () => { zvOpen[key] = false; });
+        const w = mk('div', 'zsheet');
+        const zr = mk('div', 'zr'); zr.append(mk('span', 'zl', 'Värme'));
+        const sg = mk('div', 'mini'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'Värme ' + name);
+        [['off', 'Av'], ['on', 'På']].forEach(([id, label]) => {
+          const isOn = id === 'on' ? on : !on;
+          const b = mk('button', '', label); b.type = 'button'; b.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+          b.addEventListener('click', () => { if (isOn) return; saveVT(name, { on: !on }, on ? name + ': avstängd inom en minut' : name + ': termostaten på'); });
+          sg.append(b);
+        });
+        zr.append(sg); w.append(zr);
+        const g = mk('div', 'kv num');
+        kv(g, [tNow != null && ['Nu', f1.format(tNow) + '°'], st.h != null && ['Fukt', f0.format(st.h) + ' %'], ['Börvärde', f1.format(sp) + '°'], ['Status', stTxt.charAt(0).toUpperCase() + stTxt.slice(1)]]);
+        w.append(g); body.replaceChildren(w);
+      } else if (SH.key === key) sheetClose(false);
+      tc.append(row);
     });
     if (Object.keys(vtCfg || {}).length) { const em = tc.querySelector('.empty'); if (em) em.remove(); }
     // Hela namnet: lyft namnet ur vänsterkolumnen till en egen rad över hela bredden (annars kapas "Bergvärmepump" av knapparna).
     // Lägesrutan likaså: egen rad under (annars kapas t.ex. "Avstängd" när raden har fyra knappar och texten är förstorad i iOS).
-    tc.querySelectorAll('.thermo').forEach((r) => {
+    tc.querySelectorAll('.thermo:not(.slim)').forEach((r) => {
       const n = r.querySelector(':scope > div:first-child > .n'); if (n) { n.classList.add('full'); r.prepend(n); }
       const ch = r.querySelector(':scope > div:not(.n) > .chips'); if (ch) { ch.classList.add('full'); r.append(ch); }
     });
     // room sensors
-    const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id))
+    const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id) && !(out && /strålkastare/i.test(d.name)))
       .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
     const sg = $('sensors'); sg.replaceChildren();
     const perRoom = {}; rooms.forEach((d) => { const k = roomOf(d.zone); perRoom[k] = (perRoom[k] || 0) + 1; });
@@ -1117,7 +1267,7 @@ body.noscroll{overflow:hidden}
       const room = roomOf(d.zone);
       const nm = mk('div', 'n'); nm.append(mk('span', 'nt', room)); c.append(nm);
       if (perRoom[room] > 1 && room !== String(d.name).trim()) c.append(mk('div', 'dn', String(d.name).trim()));
-      const t = mk('div', 't num'); t.append(document.createTextNode(f1.format(val(d, 'measure_temperature'))), mk('small', '', ' °C')); c.append(t);
+      const t = mk('div', 't num'); t.append(document.createTextNode(f1.format(val(d, 'measure_temperature')) + '°')); c.append(t);
       const s = mk('div', 's num');
       if (has(d, 'measure_humidity')) s.append(mk('span', '', f0.format(val(d, 'measure_humidity')) + ' % fukt'));
       if (hot) s.append(mk('span', 'hotl', 'Varmt'));
@@ -1403,37 +1553,38 @@ body.noscroll{overflow:hidden}
     const avg = (a) => a.reduce((x, y) => x + y, 0) / a.length;
     // Rubriken har alltid samma form (stort pris + chip på en rad, undertext på egen rad) för Idag, Imorgon och vid drag,
     // så att grafen under aldrig hoppar.
-    const sorted = arr.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
-    const level = (v) => v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
+    // Nivåetiketten gäller alltid köppriset (imp) mot dygnets köppriser
+    const sortedI = day.imp.slice().sort((a, b) => a - b), qi = (f) => sortedI[Math.floor(f * (sortedI.length - 1))];
+    const level = (v) => v >= qi(0.9) ? ['Mycket dyrt', 'price'] : v >= qi(0.66) ? ['Dyrt', 'price'] : v <= qi(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'plain'];
+    const diff = (i) => f2.format(day.imp[i] - day.exp[i]);
     const head = mk('div', 'phead');
-    // Ny design 2026-11: Köp och Sälj bredvid varandra – valt pris stort till vänster, det andra till höger (imp/exp ur AI Elpriser)
-    const setHead = (v, ov, sub, chip) => {
-      const top = mk('div', 'ptop'), cols = mk('div', 'pcols');
+    // Uppdrag 2: ELPRIS NU + nivåetikett till höger, Köp/Sälj bredvid varandra (valt pris stort till vänster, imp/exp ur AI Elpriser),
+    // raden "N min kvar på kvarten · skillnad X kr" (skillnad = köp − sälj)
+    const setHead = (v, ov, sub, tag, eyebrow) => {
+      const top = mk('div', 'ptop'); top.append(mk('div', 'eyebrow', eyebrow));
+      if (tag) top.append(mk('span', 'tag ' + tag[1], tag[0]));
+      const cols = mk('div', 'pcols');
       const c1 = mk('div', 'pcol'), big = mk('div', 'big num');
       big.style.color = priceColor(v, mn, mx, priceKind);
       big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh'));
-      const l1 = mk('div', 'plbl', priceKind === 'imp' ? 'Köp' : 'Sälj'); if (chip) l1.append(mk('span', 'chip ' + chip[1], chip[0]));
-      c1.append(l1, big);
+      c1.append(mk('div', 'plbl', priceKind === 'imp' ? 'Köp' : 'Sälj'), big);
       const c2 = mk('div', 'pcol pcol2'), b2 = mk('div', 'big2 num');
       b2.append(document.createTextNode(Number.isFinite(Number(ov)) && ov !== null ? f2.format(ov) : '–'), mk('small', '', ' kr/kWh'));
       if (priceKind === 'exp') b2.style.color = 'var(--price)';
       c2.append(mk('div', 'plbl', priceKind === 'imp' ? 'Sälj' : 'Köp'), b2);
-      cols.append(c1, c2); top.append(cols);
-      head.replaceChildren(top, mk('div', 'psub num', sub));
+      cols.append(c1, c2);
+      head.replaceChildren(top, cols, mk('div', 'psub num', sub));
     };
     const showDefault = () => {
       if (priceDay === 0 && arr[idx] != null) {
         const left = Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000));
-        setHead(arr[idx], day[otherK][idx], 'Nu · ' + left + ' min kvar på kvarten', priceKind === 'imp' && level(arr[idx]));
+        setHead(arr[idx], day[otherK][idx], left + ' min kvar på kvarten · skillnad ' + diff(idx) + ' kr', level(day.imp[idx]), 'Elpris nu');
       } else {
-        setHead(avg(arr), avg(day[otherK]), 'Snitt ' + (priceDay === 0 ? 'idag' : 'imorgon'), null);
+        const ai = avg(day.imp), ae = avg(day.exp);
+        setHead(avg(arr), avg(day[otherK]), 'Snitt ' + (priceDay === 0 ? 'idag' : 'imorgon') + ' · skillnad ' + f2.format(ai - ae) + ' kr', null, priceDay === 0 ? 'Idag' : 'Imorgon');
       }
     };
     showDefault();
-    const ctr = mk('div', 'pctl');
-    ctr.append(
-      segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
-      segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
     // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
     const onScrub = (i) => {
       if (i < 0) {
@@ -1443,14 +1594,18 @@ body.noscroll{overflow:hidden}
       }
       priceScrubbing = true;
       const st = dayT0 + i * iv;
-      setHead(arr[i], day[otherK][i], hm(st) + '–' + hm(st + iv), priceKind === 'imp' && level(arr[i]));
+      setHead(arr[i], day[otherK][i], 'skillnad ' + diff(i) + ' kr', level(day.imp[i]), (priceDay === 0 ? 'Idag ' : 'Imorgon ') + hm(st) + '–' + hm(st + iv));
     };
-    pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
+    const ctl = mk('div', 'pair');
+    ctl.append(mk('span', 'ptit', (priceKind === 'imp' ? 'Köppris' : 'Säljpris') + ' per timme'), segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
+    pc.append(head, ctl, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
     // Lägst/högst under grafen för både idag och imorgon
     const foot = mk('div', 'rangel num');
     foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slotStart(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slotStart(mx)));
     pc.append(foot);
     if (priceKind === 'exp') pc.append(mk('div', 'ptip', 'Högst säljpris ' + (priceDay === 0 ? 'idag' : 'imorgon') + ' kl ' + slotStart(mx) + ', ' + f2.format(mx) + ' kr/kWh. Gäller överskott från både solceller och batteri.'));
+    const dseg = segBtns([[0, 'Idag'], [1, 'Imorgon' + (P.days.length > 1 ? ' · snitt ' + f2.format(avg(P.days[1][priceKind])) : ''), P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); });
+    dseg.classList.add('full'); pc.append(dseg);
     if (P.days.length < 2) pc.append(mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.'));
   }
   /* ---------- apparater: förbrukning och kostnad från flödet AI 14 (variabeln AI Förbrukning) ---------- */
@@ -1497,7 +1652,7 @@ body.noscroll{overflow:hidden}
   function renderMonths(cur, prev) {
     const box = $('monBlock'); if (!box) return; box.replaceChildren(); box.hidden = !cur && !prev;
     const name = (m) => { const n = MON[Number(String(m).slice(5, 7)) - 1] || m; return n.charAt(0).toUpperCase() + n.slice(1); };
-    const net = (x) => { const n = x.ikr - x.ekr; return ['Netto', (n < 0 ? '+' + f0.format(-n) : '−' + f0.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
+    const net = (x) => { const n = x.ikr - x.ekr; return [n < 0 ? 'Intäkt netto' : 'Kostnad netto', f0.format(Math.abs(n)) + ' kr', n < 0 ? 'okc' : '']; };
     const rows = (x) => [['Köpt', f0.format(x.ik) + ' kWh · ' + f0.format(x.ikr) + ' kr'], ['Sålt', f0.format(x.ek) + ' kWh · ' + f0.format(x.ekr) + ' kr'], net(x)];
     const block = (x, label) => { const hd = mk('div', 'mhead'); hd.append(mk('span', '', name(x.m)), mk('span', '', label)); const k = mk('div', 'kv num'); kv(k, rows(x)); return [hd, k]; };
     if (cur) box.append(...block(cur, 'hittills'));
@@ -1546,16 +1701,26 @@ body.noscroll{overflow:hidden}
     // Köpt och sålt idag i kr från flödet AI 14 (kvartspriser); annars Tibbers egna siffror
     let G = null; try { const A = JSON.parse(varVal('AI Förbrukning') || ''); G = A && A.grid; } catch (e) {}
     const GM = G && G.month && G.month.m ? G.month : null, GP = G && G.prevMonth;
-    const netRow = (label, ink, ut, dec) => { const n = ink - ut, F = dec === 0 ? f0 : f2; return [label, (n < 0 ? '+' + F.format(-n) : '−' + F.format(n)) + ' kr', n < 0 ? 'okc' : '']; };
-    const fromTxt = (x) => (x.from ? ' (från ' + x.from + ')' : '');
-    kv($('today'), [
-      G ? ['Köpt idag' + fromTxt(G.imp), f1.format(G.imp.kwh) + ' kWh · ' + f2.format(G.imp.kr) + ' kr']
-        : grid && has(grid, 'meter_power') && ['Förbrukat idag', f1.format(val(grid, 'meter_power')) + ' kWh'],
-      G ? ['Sålt idag' + fromTxt(G.exp), f1.format(G.exp.kwh) + ' kWh · ' + f2.format(G.exp.kr) + ' kr']
-        : grid && has(grid, 'accumulatedCost') && ['Kostnad idag', f2.format(val(grid, 'accumulatedCost')) + ' kr'],
-      G && netRow('Netto idag', G.imp.kr, G.exp.kr),
-      sun && has(sun, 'meter_power') && ['Solel idag', f1.format(val(sun, 'meter_power')) + ' kWh'],
-    ]);
+    const fromTxt = (x) => (x.from ? 'från ' + x.from : '');
+    // Idag (Uppdrag 2): "Kostnad hittills" + summa, tre minikort (Köpt, Sålt, Sol). Kostnad skrivs utan minustecken; överskott = "Intäkt".
+    const td = $('today'); td.replaceChildren();
+    let cost = null, kIn = null, kOut = null;
+    if (G) { cost = G.imp.kr - G.exp.kr; kIn = G.imp.kwh; kOut = G.exp.kwh; }
+    else { if (grid && has(grid, 'accumulatedCost')) cost = Number(val(grid, 'accumulatedCost')); if (grid && has(grid, 'meter_power')) kIn = Number(val(grid, 'meter_power')); }
+    if (cost !== null && Number.isFinite(cost)) {
+      const th = mk('div', 'th'), bb = mk('b', cost < 0 ? 'inc' : '', f2.format(Math.abs(cost)) + '\u00a0kr');
+      th.append(mk('span', '', cost < 0 ? 'Intäkt hittills' : 'Kostnad hittills'), bb); td.append(th);
+    }
+    const cards = [];
+    if (kIn !== null && Number.isFinite(kIn)) cards.push([G ? 'Köpt' : 'Förbrukat', f1.format(kIn) + '\u00a0kWh']);
+    if (kOut !== null) cards.push(['Sålt', f1.format(kOut) + '\u00a0kWh', 'sol + batteri']);
+    if (sun && has(sun, 'meter_power')) cards.push(['Sol', f1.format(val(sun, 'meter_power')) + '\u00a0kWh']);
+    if (cards.length) {
+      const m3 = mk('div', 'm3'); m3.style.setProperty('--n', cards.length);
+      cards.forEach(([l, v, sub]) => { const c = mk('div', 'mc'); c.append(mk('small', '', l), mk('b', '', v)); if (sub) c.append(mk('small', '', sub)); m3.append(c); });
+      td.append(m3);
+    }
+    const fr = G && [fromTxt(G.imp), fromTxt(G.exp)].find(Boolean); if (fr) td.append(mk('div', 'fromn', 'Räknat ' + fr));
     renderMonths(GM && { m: GM.m, ik: GM.imp.kwh, ikr: GM.imp.kr, ek: GM.exp.kwh, ekr: GM.exp.kr }, GP);
     const ph = $('phases'); ph.replaceChildren();
     ['L1', 'L2', 'L3'].forEach((L) => { if (grid && has(grid, 'measure_current.' + L)) { const c = mk('div', 'ph'); c.append(mk('div', 'k', 'Fas ' + L), mk('div', 'v', f1.format(val(grid, 'measure_current.' + L)) + ' A')); ph.append(c); } });
@@ -1682,7 +1847,8 @@ body.noscroll{overflow:hidden}
   function renderMore(GM, sun, grid) {
     const set = (id, t) => { const el = $(id); if (el) el.textContent = t || ''; };
     const row = (k) => document.querySelector('#moreList [data-more="' + k + '"]');
-    if (GM) { const n = GM.imp.kr - GM.exp.kr; set('mMan', monName(GM.m) + ' · ' + (n < 0 ? '+' + f0.format(-n) : '−' + f0.format(n)) + ' kr'); } else set('mMan', '');
+    { const ml = row('man') && row('man').querySelector('.ln2'); if (ml) ml.textContent = GM ? monName(GM.m) : 'Månad'; }
+    if (GM) { const n = GM.imp.kr - GM.exp.kr; set('mMan', (n < 0 ? 'Intäkt ' : 'Kostnad ') + f0.format(Math.abs(n)) + ' kr'); } else set('mMan', '');
     row('man').hidden = !!$('monBlock').hidden;
     set('mSol', !sun ? '' : has(sun, 'meter_power.YEAR') ? f0.format(val(sun, 'meter_power.YEAR')) + ' kWh i år' : W(Math.max(0, Number(val(sun, 'measure_power')) || 0)));
     row('sol').hidden = !sun;
@@ -1726,14 +1892,18 @@ body.noscroll{overflow:hidden}
   const capTitle = (d, cap, v) => { const o = opts(d, cap).find((x) => x.id === String(v)); return o ? o.title : ''; };
   const isRR = (d) => has(d, 'is_cleaning') || has(d, 'dock');
 
-  function roboHero(d, stTxt, stCls, extra) {
+  let robMulti = true;   // robotväljaren visas (då står namnet redan där och versalraden i statuskortet utgår)
+  function roboHero(d, stTxt, stCls, extra, showBar) {
     const hero = mk('div', 'card robo' + (stCls ? ' ' + stCls : ''));
-    hero.append(mk('div', 'eyebrow', String(d.name).trim() + (d.zone ? ' · ' + roomOf(d.zone) : '')), mk('div', 'big', d.available === false ? 'Ej nåbar' : stTxt));
+    if (!robMulti) hero.append(mk('div', 'eyebrow', String(d.name).trim() + (d.zone ? ' · ' + roomOf(d.zone) : '')));
+    hero.append(mk('div', 'big', d.available === false ? 'Ej nåbar' : stTxt));
     const m = mk('div', 'meta');
-    if (has(d, 'measure_battery')) m.append(mk('span', 'chip ' + (val(d, 'measure_battery') < 20 ? 'bad' : 'ok'), f0.format(val(d, 'measure_battery')) + ' %'));
-    (extra || []).forEach((t) => t && m.append(mk('span', 'chip', t)));
-    hero.append(m);
-    if (has(d, 'measure_battery')) { const b = mk('div', 'socbar'); const i = mk('i'); i.style.width = Math.max(1, Math.min(100, val(d, 'measure_battery'))) + '%'; b.append(i); hero.append(b); }
+    // Batterinivån står redan i robotväljaren; här bara en varning när den är låg
+    if (has(d, 'measure_battery') && val(d, 'measure_battery') < 20) m.append(mk('span', 'tag price', 'Batteri ' + f0.format(val(d, 'measure_battery')) + ' %'));
+    (extra || []).forEach((t) => t && m.append(mk('span', 'tag plain', t)));
+    if (m.childElementCount) hero.append(m);
+    // Stapeln (batterinivå – städförlopp finns inte som data) visas bara medan roboten städar eller är pausad
+    if (showBar && has(d, 'measure_battery')) { const b = mk('div', 'socbar'); const i = mk('i'); i.style.width = Math.max(1, Math.min(100, val(d, 'measure_battery'))) + '%'; b.append(i); hero.append(b); }
     return hero;
   }
   function alarmChips(d) {
@@ -1784,11 +1954,12 @@ body.noscroll{overflow:hidden}
     if (has(d, 'clean_last') && val(d, 'clean_last') >= 0) {
       const end = Date.now() - val(d, 'clean_last') * 36e5;
       rows.push(['Avslutad', when(end)]);
-      if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Städtid', dur(val(d, 'clean_time'))]);
-    } else if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Städtid', dur(val(d, 'clean_time'))]);
+      if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Tid', dur(val(d, 'clean_time'))]);
+    } else if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Tid', dur(val(d, 'clean_time'))]);
     if (has(d, 'clean_area') && val(d, 'clean_area') > 0) rows.push(['Yta', f0.format(val(d, 'clean_area')) + ' m²']);
     if (!rows.length) return null;
-    const k = mk('div', 'kv num'); kv(k, rows); card.append(k);
+    const k = mk('div', 'lj3 num'); k.style.setProperty('--n', rows.length);
+    rows.forEach(([l, v]) => { const c = mk('div'); c.append(mk('small', '', l), mk('b', '', v)); k.append(c); }); card.append(k);
     return [mk('div', 'h2', 'Senaste städning'), card];
   }
   /* ---------- städschema (test): variabeln AI Städschema, körs av flödet AI 13 ---------- */
@@ -1917,7 +2088,7 @@ body.noscroll{overflow:hidden}
     const docked = val(d, 'dock') === true || (charging && !cleaning);
     const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
     const nx = nextRun(d.id);
-    const hero = roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label]);
+    const hero = roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label], cleaning || paused);
     wrap.append(hero);
     const al = alarmChips(d); if (al) wrap.append(al);
     const last = lastJob(d);
@@ -1928,9 +2099,9 @@ body.noscroll{overflow:hidden}
     } else if (paused) {
       if (settable(d, 'pause_clean')) B.push(actBtn(d, 'Fortsätt', 'go', { pause_clean: false }, 'Roboten fortsätter'));
     } else if (settable(d, 'clean_full')) B.push(actBtn(d, 'Städa allt', 'go', { clean_full: true }, 'Roboten startar'));
-    if ((cleaning || paused || !docked) && settable(d, 'cancel_and_dock')) B.push(actBtn(d, 'Åk hem', '', { cancel_and_dock: true }, 'Roboten åker hem'));
+    if ((cleaning || paused || !docked) && settable(d, 'cancel_and_dock')) B.push(actBtn(d, 'Skicka hem', '', { cancel_and_dock: true }, 'Roboten åker hem'));
     // Punktstäda borttagen 2026-11-12: Roborock-appens spot_clean får Saros 10R att säga "hitta roboten", och kortet clean_spot startar inget från stationen
-    if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
+    if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta', '', { locate: true }, 'Roboten piper'));
     // Ny design 2026-11: knapparna i statuskortet, stationsåtgärderna där också (handlingar, inte inställningar),
     // Städa rum och Senaste städning under kortet, Schema och Städinställningar som rader som öppnar blad.
     const q = quick(B); if (q) hero.append(q);
@@ -1939,7 +2110,9 @@ body.noscroll{overflow:hidden}
     if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
     if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm påse', '', { empty_dustbin: true }, 'Stationen tömmer'));
     if (S.length) { const qs = mk('div', 'quick3'); S.forEach((x) => qs.append(x)); hero.append(qs); }
-    wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
+    const cr = choice(d, 'clean_room_pick', 'Städa rum', 'Städar');
+    if (cr.length) { const hd = mk('div', 'sech'); hd.append(mk('div', 'h2', 'Städa rum'), mk('span', 'sh', 'Tryck på ett rum')); cr[0] = hd; }
+    wrap.append(...cr);
     if (last) wrap.append(...last);
     const lst = mk('div', 'card');
     const lrow = (label, sub, onClick) => {
@@ -1948,7 +2121,8 @@ body.noscroll{overflow:hidden}
       b.append(mk('span', 'ln2', label), mk('span', 'ls', sub || ''), ch); b.addEventListener('click', onClick); return b;
     };
     lst.append(lrow('Schema', nx ? 'Nästa ' + nx.label : '', () => { schedOpen[d.id] = true; renderRobot(); }));
-    lst.append(lrow('Städinställningar', has(d, 'clean_mode') ? sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))) : '', () => { setOpen[d.id] = true; renderRobot(); }));
+    const lsv = has(d, 'mop_route') && capTitle(d, 'mop_route', val(d, 'mop_route')) ? sv(capTitle(d, 'mop_route', val(d, 'mop_route'))) : has(d, 'clean_mode') ? sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))) : '';
+    lst.append(lrow('Läge och mopprutt', lsv, () => { setOpen[d.id] = true; renderRobot(); }));
     wrap.append(lst);
     const nm = String(d.name).trim();
     if (schedOpen[d.id]) {
@@ -1956,7 +2130,7 @@ body.noscroll{overflow:hidden}
       body.replaceChildren(...schedPanel(d));
     } else if (SH.key === 'sched' + d.id) sheetClose(false);
     if (setOpen[d.id]) {
-      const body = sheetOpen('set' + d.id, 'Städinställningar · ' + nm, () => { setOpen[d.id] = false; });
+      const body = sheetOpen('set' + d.id, 'Läge och mopprutt · ' + nm, () => { setOpen[d.id] = false; });
       const parts = [...choice(d, 'clean_mode', 'Städläge'), ...choice(d, 'suction_power', 'Sugkraft'), ...choice(d, 'scrub_intensity', 'Moppning'), ...choice(d, 'mop_route', 'Mopprutt')];
       body.replaceChildren(...(parts.length ? parts : [mk('div', 'empty', 'Inga inställningar att ändra för roboten.')]));
     } else if (SH.key === 'set' + d.id) sheetClose(false);
@@ -1968,21 +2142,21 @@ body.noscroll{overflow:hidden}
     const op = Number(val(d, 'operational_state'));
     const [st, cls] = OPS[op] || [sv(capTitle(d, 'operational_state', val(d, 'operational_state'))) || 'Okänt läge', ''];
     const cm = 'vacuumcleaner_job_mode.clean_mode';
-    wrap.append(roboHero(d, st, cls, [sv(capTitle(d, cm, val(d, cm)))]));
+    wrap.append(roboHero(d, st, cls, [sv(capTitle(d, cm, val(d, cm)))], op === 1 || op === 64 || op === 2));
     const al = alarmChips(d); if (al) wrap.append(al);
     const B = [], running = op === 1 || op === 64, paused = op === 2;
     if (running) {
       if (settable(d, 'button.operational_state_pause')) B.push(actBtn(d, 'Pausa', '', { 'button.operational_state_pause': true }, 'Roboten pausas'));
-      if (op === 1 && settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+      if (op === 1 && settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Skicka hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
     } else if (paused) {
       if (settable(d, 'button.operational_state_resume')) B.push(actBtn(d, 'Fortsätt', 'go', { 'button.operational_state_resume': true }, 'Roboten fortsätter'));
-      if (settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Åk hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
+      if (settable(d, 'button.operational_state_go_home')) B.push(actBtn(d, 'Skicka hem', '', { 'button.operational_state_go_home': true }, 'Roboten åker hem'));
     } else {
       const run = opts(d, 'vacuumcleaner_job_mode').filter((x) => !/idle|vila|tomgång|map|kart/i.test(x.title));
       if (run.length) run.forEach((x) => B.push(actBtn(d, run.length === 1 ? 'Starta städning' : 'Starta: ' + sv(x.title), 'go', { vacuumcleaner_job_mode: x.id }, 'Roboten startar')));
       else if (settable(d, 'vacuumcleaner_job_mode')) B.push(actBtn(d, 'Starta städning', 'go', { vacuumcleaner_job_mode: '1' }, 'Roboten startar'));
     }
-    if (settable(d, 'button.identify')) B.push(actBtn(d, 'Hitta roboten', '', { 'button.identify': true }, 'Roboten piper'));
+    if (settable(d, 'button.identify')) B.push(actBtn(d, 'Hitta', '', { 'button.identify': true }, 'Roboten piper'));
     const q = quick(B); if (q) wrap.append(q);
     wrap.append(...choice(d, cm, 'Städläge'));
     return wrap;
@@ -2023,6 +2197,7 @@ body.noscroll{overflow:hidden}
       parts.push(sel);
     }
     const d = R.find((x) => x.id === robSel);
+    robMulti = R.length > 1;
     parts.push(isRR(d) ? rrCard(d) : matterCard(d));
     box.replaceChildren(...parts);
   }
