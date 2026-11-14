@@ -5,249 +5,318 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
-<meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.12">
+<meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
+<meta name="app-version" content="2026-11-14.13">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Hem Vinäs">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg?v=5" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png?v=5">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600&family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
-/* Layout: one-column home control app. Header with live chips, a segmented switch (Belysning / Temperatur / Energi) and one panel at a time. Dark energy-app ground, teal accent; sun amber, grid blue, battery green as the energy colours. */
+/* Hem Vinäs – ny design (2026-11): ljust grundläge som följer telefonens mörka läge, en accentfärg (teal), Manrope, flikrad i nederkant och detaljer i blad.
+   Alla färger ligger som variabler här överst. Variabelnamnen från förra designen (--fg, --card-2, --danger, --batt …) finns kvar eftersom JS-koden använder dem. */
 :root{
-  --bg:#0a0f17; --bg-2:#0f1622; --card:#131c2a; --card-2:#1a2536; --line:#22304a;
-  --fg:#eaf1f8; --muted:#8696ab; --faint:#33435c;
-  --accent:#1fd3b0; --accent-ink:#04231d; --accent-soft:rgba(31,211,176,.14);
-  --sun:#ffb547; --grid:#5aa9ff; --batt:#4be08a; --ev:#b28cff; --home:#eaf1f8;
-  --warm:#ffbf5a; --cold:#7fc4ff; --danger:#ff6b6b; --warn:#ffc94d; --orange:#ff9440; --ok:#4be08a;
-  --f-disp:"Sora","Manrope",system-ui,sans-serif;
+  --bg:#EEF1F6; --bg-2:#E4E8EF; --card:#FFFFFF; --card-2:#EEF1F6; --sub:#EEF1F6; --line:#DCE2EA;
+  --fg:#121A26; --text:#121A26; --muted:#5B6472; --faint:#C9D1DC; --faint-t:#8A93A0;
+  --accent:#0B7A66; --accent-ink:#FFFFFF; --accent-soft:#E3F3EF; --accent-text:#0B5E4F;
+  --sun:#E39A1B; --grid:#2F63C4; --batt:#2E9E5B; --ev:#7C55C9; --home:#121A26;
+  --warm:#D9850A; --cold:#2F63C4; --danger:#C2392B; --warn:#A86307; --orange:#D9792B; --ok:#2E9E5B;
+  --price:#B4471F; --hot:#9A3D12; --hot-soft:#FFE7D6; --green-soft:#E2F4E9; --green-ink:#1E6B42;
+  --amber:#E8A33A; --amber-soft:#FFF6E5; --amber-ink:#8A5A0B; --sw-off:#D3D9E1; --knob:#FFFFFF;
+  --scrim:rgba(18,26,38,.45); --shadow:rgba(18,26,38,.10); --alarm-bg:#FDE3E0;
+  --map:#000000; --map-t:#99AAAA;
+  --cloud:#B9C4D3; --cloud-2:#8794A8; --snow:#9CC7F0;
+  --f-disp:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --r:22px; color-scheme:dark;
+  --r:20px; color-scheme:light;
 }
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
-  --bg:#eef2f6; --bg-2:#e6ecf2; --card:#ffffff; --card-2:#f2f5f9; --line:#dbe3ec;
-  --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
-  --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
-  --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
-  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --orange:#e2680f; --ok:#1aa45a; color-scheme:light}}
-:root[data-theme="light"]{
-  --bg:#eef2f6; --bg-2:#e6ecf2; --card:#ffffff; --card-2:#f2f5f9; --line:#dbe3ec;
-  --fg:#0e1621; --muted:#5e6b7d; --faint:#c5cfdb;
-  --accent:#0d9f84; --accent-ink:#ffffff; --accent-soft:rgba(13,159,132,.12);
-  --sun:#e08a00; --grid:#2f7fe0; --batt:#1aa45a; --ev:#7a52e0; --home:#0e1621;
-  --warm:#e08a00; --cold:#2f7fe0; --danger:#d9483b; --warn:#c78a00; --orange:#e2680f; --ok:#1aa45a; color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141C; --bg-2:#1B242F; --card:#18212C; --card-2:#222D39; --sub:#222D39; --line:#2A3542;
+  --fg:#E8EDF3; --text:#E8EDF3; --muted:#A0AAB7; --faint:#3A4654; --faint-t:#7D8794;
+  --accent:#1FB596; --accent-ink:#04261F; --accent-soft:#123A33; --accent-text:#7FE3CB;
+  --sun:#F2B33D; --grid:#86ABF2; --batt:#4CC07E; --ev:#A98AE8; --home:#E8EDF3;
+  --warm:#FFBF5A; --cold:#86ABF2; --danger:#FF8A7A; --warn:#F2C878; --orange:#FF9A5A; --ok:#4CC07E;
+  --price:#FF9A66; --hot:#FFB08A; --hot-soft:#3A2116; --green-soft:#173525; --green-ink:#8BE0AE;
+  --amber:#E8A33A; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#3A4654; --knob:#FFFFFF;
+  --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.35); --alarm-bg:#3A1A17;
+  --cloud:#C7D2E0; --cloud-2:#8E9BB0; --snow:#E8F3FF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141C; --bg-2:#1B242F; --card:#18212C; --card-2:#222D39; --sub:#222D39; --line:#2A3542;
+  --fg:#E8EDF3; --text:#E8EDF3; --muted:#A0AAB7; --faint:#3A4654; --faint-t:#7D8794;
+  --accent:#1FB596; --accent-ink:#04261F; --accent-soft:#123A33; --accent-text:#7FE3CB;
+  --sun:#F2B33D; --grid:#86ABF2; --batt:#4CC07E; --ev:#A98AE8; --home:#E8EDF3;
+  --warm:#FFBF5A; --cold:#86ABF2; --danger:#FF8A7A; --warn:#F2C878; --orange:#FF9A5A; --ok:#4CC07E;
+  --price:#FF9A66; --hot:#FFB08A; --hot-soft:#3A2116; --green-soft:#173525; --green-ink:#8BE0AE;
+  --amber:#E8A33A; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#3A4654; --knob:#FFFFFF;
+  --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.35); --alarm-bg:#3A1A17;
+  --cloud:#C7D2E0; --cloud-2:#8E9BB0; --snow:#E8F3FF; color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg)}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{font-family:var(--f-body);font-size:15px;line-height:1.4}
+body{font-family:var(--f-body);font-size:15px;line-height:1.4;font-variant-numeric:tabular-nums;margin:0;-webkit-tap-highlight-color:transparent}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-.app{max-width:36rem;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+:root{padding-top:env(safe-area-inset-top,0px)}
+.app{max-width:36rem;margin:0 auto;padding-block:16px calc(104px + env(safe-area-inset-bottom,0px));padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
 .num{font-variant-numeric:tabular-nums}
 
-/* header */
-.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+/* sidhuvud */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-top:8px}
 .top>div:first-child{min-width:0;flex:1 1 auto}
-.top > div:first-child{min-width:0;flex:1}
 #date{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.eyebrow{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
-h1{font-family:var(--f-disp);font-weight:300;font-size:2rem;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;white-space:nowrap}
-h1 b{font-weight:600}
-.live{display:inline-flex;align-items:center;gap:6px;flex:none;min-width:9.4em;font-variant-numeric:tabular-nums;font-size:.76rem;color:var(--muted);white-space:nowrap;padding:6px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
-.live.on .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-disp);font-weight:400;font-size:34px;letter-spacing:-.02em;margin:2px 0 0;line-height:1.1;white-space:nowrap}
+h1 b{font-weight:800}
+.live{display:inline-flex;align-items:center;gap:6px;flex:none;min-width:9.4em;font-variant-numeric:tabular-nums;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap;padding:0 12px;height:36px;border-radius:18px;background:var(--card);border:1px solid var(--line);margin-top:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.live.on .dot{background:var(--ok)}
 .live.err .dot{background:var(--danger)}
-.live.stale .dot{background:var(--warn)}
-button.live{font:inherit;font-size:.76rem;cursor:pointer}
+.live.stale .dot{background:var(--amber)}
+button.live{font:inherit;font-size:13px;cursor:pointer}
 .live .ic{width:12px;height:12px;opacity:.7}
 .live.spin .ic{animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-.gl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;min-width:0}
-/* Rutorna är knappar (2026-11-10.9): Belysning → fliken Belysning, Ute → Temperatur, Förbrukning → Energi */
-.glance .gl{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:10px 10px;-webkit-tap-highlight-color:transparent;transition:background .4s,border-color .4s,transform .12s}
-.glance .gl:active{transform:scale(.96)}
-.glance .gl:focus-visible{outline:2px solid var(--acc,currentColor);outline-offset:2px}
-.gl .k{font-size:.72rem;color:var(--muted);font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* Färgade rutor (2026-11-10.8): Belysning ljust gul när någon lampa lyser, Ute i väderprognosens färger (varm ≥ 0°, kall < 0°, starkare ju längre från 0), Förbrukning svagt röd vid köp och svagt grön vid försäljning */
-.gl.lit{background:color-mix(in srgb,#ffd60a 24%,var(--card));border-color:color-mix(in srgb,#f2c200 60%,var(--line))}
-.gl.temp{background:color-mix(in srgb,var(--gt) var(--ga),var(--card));border-color:color-mix(in srgb,var(--gt) 40%,var(--line))}
-.gl.temp .v{color:var(--gt)}
-.gl.buy{background:color-mix(in srgb,var(--danger) 12%,var(--card));border-color:color-mix(in srgb,var(--danger) 38%,var(--line))}
-.gl.sell{background:color-mix(in srgb,var(--ok) 14%,var(--card));border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
-.gl .v{font-family:var(--f-disp);font-size:1.25rem;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gl .v small{font-size:.75rem;color:var(--muted);font-family:var(--f-body)}
 
-/* segmented switch */
-.seg{display:grid;grid-template-columns:repeat(4,1fr);padding:4px;border-radius:999px;background:var(--bg-2);border:1px solid var(--line);position:relative}
-.seg button{font:inherit;font-weight:600;font-size:clamp(.74rem,3.4vw,.92rem);white-space:nowrap;overflow:hidden;min-width:0;border:0;background:none;color:var(--muted);padding:10px 6px;border-radius:999px;cursor:pointer;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:6px;transition:color .2s}
-.seg button[aria-selected="true"]{color:var(--accent-ink)}
-.seg .pill{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/4);border-radius:999px;background:var(--accent);transition:transform .28s cubic-bezier(.3,.7,.2,1);box-shadow:0 6px 18px -6px var(--accent)}
-.seg svg{width:16px;height:16px}
-button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* sammanfattningsrutor: vita knappar till flikarna */
+.glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.gl{background:var(--card);border:0;border-radius:16px;padding:10px;min-width:0}
+.glance .gl{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.glance .gl:active{transform:scale(.97)}
+.glance .gl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gl .k{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl .v{font-family:var(--f-disp);font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gl .v small{font-size:13px;color:var(--muted);font-weight:500}
+.gl.temp .v{color:var(--gt,var(--fg))}
+.gl.buy .v{color:var(--price)}
+.gl.sell .v{color:var(--green-ink)}
 
-.banner{border:1px solid var(--line);border-left:3px solid var(--danger);background:var(--card);border-radius:12px;padding:10px 12px;font-size:.88rem}
+/* flikrad i nederkant */
+.seg{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--card);border-top:1px solid var(--line);padding:6px max(8px,calc((100% - 36rem)/2)) calc(4px + env(safe-area-inset-bottom,0px))}
+.seg button{font:inherit;font-weight:600;font-size:12px;white-space:nowrap;min-width:0;border:0;background:none;color:var(--muted);padding:6px 2px 6px;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:color .2s}
+.seg button[aria-selected="true"]{color:var(--accent);font-weight:800}
+.seg .pill{display:none}
+.seg svg{width:24px;height:24px;display:block}
+button:focus-visible,input:focus-visible,[role="button"]:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.banner{border:0;border-left:3px solid var(--danger);background:var(--card);border-radius:12px;padding:10px 12px;font-size:14px}
 .banner.upd{border-left-color:var(--accent)}
-.h2{font-size:.74rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:6px 2px -4px}
+.h2{font-size:20px;font-weight:800;letter-spacing:0;color:var(--fg);margin:12px 2px -4px}
+.sech{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:12px 2px -4px}
+.sech .h2{margin:0}
+.sech .h2 span{color:var(--muted);font-weight:600}
+.flr{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:6px 2px -6px}
 .panel{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card{background:var(--card);border:0;border-radius:var(--r);overflow:hidden}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font:inherit;font-size:.82rem;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px}
+.chip{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:20px;padding:0 14px;min-height:36px;display:inline-flex;align-items:center;gap:6px}
+span.chip{min-height:30px;padding:0 12px;font-size:13px;background:var(--sub);border-color:transparent}
 button.chip{cursor:pointer}
-.chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--danger)} .chip.acc{color:var(--accent)}
+.chip.ok{color:var(--green-ink)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--danger)} .chip.acc{color:var(--accent-text)}
+span.chip.bad{background:var(--hot-soft)}
 .chip.busy{opacity:.55}
-.chip.alarm{background:color-mix(in srgb,var(--danger) 22%,var(--card));border-color:var(--danger);color:var(--danger);font-weight:700;animation:pulseA 1.6s ease-in-out infinite}
+.chip.alarm{background:var(--alarm-bg);border-color:var(--danger);color:var(--danger);font-weight:700;animation:pulseA 1.6s ease-in-out infinite}
 @keyframes pulseA{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--danger) 25%,transparent)}}
-@media (prefers-reduced-motion:reduce){.chip.alarm{animation:none}}
-.chip.heating{background:color-mix(in srgb,var(--danger) 13%,var(--card));border-color:color-mix(in srgb,var(--danger) 45%,var(--line));color:var(--danger)}
+.chip.heating{background:var(--hot-soft);border-color:color-mix(in srgb,var(--danger) 45%,var(--line));color:var(--hot)}
 .chip.cooling{background:color-mix(in srgb,var(--cold) 13%,var(--card));border-color:color-mix(in srgb,var(--cold) 45%,var(--line));color:var(--cold)}
 .chip .cd{width:7px;height:7px;border-radius:50%;background:currentColor}
-.empty{color:var(--muted);font-size:.9rem;padding:16px}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-text)}
+#scenes .chip{background:var(--card)}
+.empty{color:var(--muted);font-size:14px;padding:16px}
 .skel{height:76px;border-radius:var(--r);background:linear-gradient(90deg,var(--card),var(--card-2),var(--card));background-size:200% 100%;animation:sk 1.4s infinite}
 @keyframes sk{to{background-position:-200% 0}}
 
-/* buttons, switches, sliders */
-.btn{font:inherit;font-weight:700;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
-.btn.warnb{color:var(--danger)}
-.btn.confirm{background:var(--danger);border-color:var(--danger);color:#fff}
+/* knappar, brytare, reglage */
+.btn{font:inherit;font-weight:700;font-size:15px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:14px;padding:12px 14px;cursor:pointer;min-height:48px}
+.btn.warnb{color:var(--price)}
+.btn.confirm{background:var(--danger);border-color:var(--danger);color:var(--accent-ink)}
 .btn:disabled{opacity:.45;cursor:default}
-.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sw{position:relative;width:52px;height:30px;border-radius:999px;border:0;background:var(--faint);cursor:pointer;transition:background .2s;flex:none;padding:0}
-.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .2s}
+.tbtn{font:inherit;font-size:15px;font-weight:700;color:var(--accent-text);background:none;border:0;padding:8px 0;cursor:pointer;min-height:40px;white-space:nowrap}
+.tbtn.warnb{color:var(--price)}
+.tbtn.confirm{color:var(--danger)}
+.tbtn:disabled{opacity:.4;cursor:default}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quick3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.quick3 .btn{background:var(--sub);border-color:transparent;font-size:13px;font-weight:600;min-height:56px;padding:8px 6px}
+.sw{position:relative;width:51px;height:31px;border-radius:16px;border:0;background:var(--sw-off);cursor:pointer;transition:background .2s;flex:none;padding:0}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:var(--knob);box-shadow:0 1px 3px var(--shadow);transition:transform .2s}
 .sw[aria-checked="true"]{background:var(--accent)}
-.sw[aria-checked="true"]::after{transform:translateX(22px)}
+.sw[aria-checked="true"]::after{transform:translateX(20px)}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;margin:0}
-input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--card-2),var(--warm))}
-input[type=range]::-moz-range-track{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--card-2),var(--warm))}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line);box-shadow:0 1px 4px rgba(0,0,0,.35);margin-top:-7px}
-input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--line)}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--amber) var(--p,50%),var(--sub) var(--p,50%))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:linear-gradient(90deg,var(--amber) var(--p,50%),var(--sub) var(--p,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--knob);border:1px solid var(--line);box-shadow:0 1px 4px var(--shadow);margin-top:-9px}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--knob);border:1px solid var(--line)}
 
-/* lighting */
-.rh{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+/* Ljus */
+.rh{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--sub)}
 .rh .t{flex:1;min-width:0}
-.rh .n{font-family:var(--f-disp);font-weight:600;font-size:1rem}
-.rh .c{font-size:.8rem;color:var(--muted)}
-.card.lit .rh{background:linear-gradient(90deg,color-mix(in srgb,var(--warm) 14%,transparent),transparent 70%)}
-.lamp{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--line)}
+.rh .n{font-weight:700;font-size:16px}
+.rh .c{font-size:13px;color:var(--muted)}
+.lamp{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--sub)}
 .lamp:last-child{border-bottom:0}
-.bulb{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--muted);transition:box-shadow .3s,background .3s}
-.bulb svg{width:19px;height:19px}
-.lamp.on .bulb{color:var(--lc,var(--warm));background:color-mix(in srgb,var(--lc,var(--warm)) 20%,var(--card-2));box-shadow:0 0 18px 1px color-mix(in srgb,var(--lc,var(--warm)) 55%,transparent)}
-.ln .name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ln .st{font-size:.8rem;color:var(--muted)}
-.dimrow{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:.8rem;color:var(--muted)}
+.bulb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--sub);color:var(--faint-t);transition:background .3s}
+.bulb svg{width:20px;height:20px}
+.lamp.on .bulb{color:var(--lc,var(--warm));background:var(--amber-soft)}
+.ln{min-width:0}
+.ln .name{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.ln .st{font-size:13px;color:var(--muted)}
+.dimrow{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
 .dimrow .v{text-align:right}
+#rooms{gap:10px}
+.tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tile{background:var(--card);border-radius:16px;padding:12px 12px 10px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile.lit{background:var(--amber-soft)}
+.tile .open{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .ts{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.tile .ts span{font-size:13px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile.lit .ts span{color:var(--amber-ink)}
 
-/* temperature */
-.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:18px;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--cold) 18%,transparent),transparent 60%),var(--card)}
-.hero .big{font-family:var(--f-disp);font-weight:300;font-size:3.2rem;line-height:1;letter-spacing:-.03em}
-.hero .big sup{font-size:1.2rem;color:var(--muted);vertical-align:top;margin-left:2px}
-.hero .meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center}
-/* Väderprognos */
-:root{--cloud:#c7d2e0;--cloud-2:#8e9bb0;--snow:#e8f3ff}
-@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}}
-:root[data-theme="light"]{--cloud:#b9c4d3;--cloud-2:#8794a8;--snow:#9cc7f0}
-.wxbtn{grid-column:1/-1;margin-top:6px;display:flex;align-items:center;gap:10px;width:100%;font:inherit;font-size:.92rem;font-weight:600;color:var(--fg);background:var(--card-2);border:1px solid var(--line);border-radius:16px;padding:9px 14px 9px 10px;cursor:pointer;text-align:left;min-width:0}
+/* Klimat */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:18px;background:var(--card)}
+.hero .big{font-family:var(--f-disp);font-weight:400;font-size:56px;line-height:1.05;letter-spacing:-.03em;color:var(--cold)}
+.hero .big sup{font-size:20px;color:var(--muted);vertical-align:top;margin-left:2px}
+.hero .meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;justify-content:center;min-width:0}
+.wxbtn{grid-column:1/-1;margin-top:6px;display:flex;align-items:center;gap:10px;width:100%;font:inherit;font-size:15px;font-weight:600;color:var(--fg);background:var(--sub);border:0;border-radius:14px;padding:10px 14px 10px 10px;cursor:pointer;text-align:left;min-width:0}
 .wxbtn .wxbi{display:inline-flex;color:var(--muted);flex:none} .wxbtn .wxbi svg{display:block}
-.wxbtn .wxbl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;color:var(--muted)}
+.wxbtn .wxbl{flex:1;min-width:0;font-weight:500;color:var(--fg)}
 .wxbtn .wxbl b{font-weight:700;color:var(--fg)}
-.wxbtn .wxbr{flex:none;color:var(--accent);font-size:.86rem;white-space:nowrap}
+.wxbtn .wxbr{flex:none;color:var(--accent-text);font-size:14px;font-weight:700;white-space:nowrap}
 body.noscroll{overflow:hidden}
-.wx{position:fixed;inset:0;z-index:50;background:rgba(5,9,15,.55);display:flex;align-items:flex-end;justify-content:center;animation:wxfade .2s ease}
+/* gemensamt blad (väder, batterihistorik, bergvärmepump, schema, inställningar, rum, månad …) */
+.wx{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:wxfade .2s ease}
 .wx[hidden]{display:none}
-.wxsheet{background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:24px 24px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px -10px rgba(0,0,0,.4);animation:wxup .28s cubic-bezier(.3,.7,.2,1)}
+.wxsheet{position:relative;background:var(--bg);width:100%;max-width:560px;max-height:calc(100% - 40px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;border-radius:24px 24px 0 0;padding:10px 20px calc(28px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px -10px var(--shadow);animation:wxup .28s cubic-bezier(.3,.7,.2,1)}
+.wxsheet::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:var(--sw-off);margin:0 auto 4px}
 @keyframes wxup{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes wxfade{from{opacity:0}to{opacity:1}}
-.wxtop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
-.wxtitle{font-family:var(--f-disp);font-size:1.5rem;font-weight:600;letter-spacing:-.02em;margin-top:2px}
-.wxx{font:inherit;font-size:1rem;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+.wxtop{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:10px 0 14px}
+.wxtitle{font-family:var(--f-disp);font-size:22px;font-weight:800;letter-spacing:-.01em;margin-top:2px;min-width:0;overflow-wrap:anywhere}
+.wxx{font:inherit;font-size:16px;width:40px;height:40px;flex:none;border-radius:50%;border:0;background:var(--card);color:var(--fg);cursor:pointer;display:grid;place-items:center}
+.wxx svg{width:16px;height:16px}
+.sheetb{display:flex;flex-direction:column;gap:12px}
+.sheetb .h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:6px 2px -4px}
+.sheetb > .kv{background:var(--card);border-radius:16px}
 .wxdays{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.wxday{font:inherit;text-align:left;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;cursor:pointer;min-width:0}
-.wxday.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;background:radial-gradient(120% 140% at 100% 0%,var(--accent-soft),transparent 70%),var(--card)}
-.wxdn{font-weight:700;font-size:.9rem}
+.wxday{font:inherit;text-align:left;color:var(--fg);background:var(--card);border:2px solid transparent;border-radius:18px;padding:12px 14px;cursor:pointer;min-width:0}
+.wxday.on{border-color:var(--accent)}
+.wxdn{font-weight:700;font-size:15px}
 .wxdm{display:flex;align-items:center;gap:8px;margin:6px 0 4px}
-.wxdt{min-width:0;line-height:1.1} .wxdt b{display:block;font-family:var(--f-disp);font-size:1.6rem;font-weight:600;white-space:nowrap} .wxdt span{display:block;color:var(--muted);font-size:.82rem;white-space:nowrap;margin-top:2px}
+.wxdt{min-width:0;line-height:1.1} .wxdt b{display:block;font-size:28px;font-weight:600;white-space:nowrap} .wxdt span{display:block;color:var(--muted);font-size:13px;white-space:nowrap;margin-top:2px}
 .wxdm svg{flex:none}
-.wxds{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wxsun{font-size:.8rem;color:var(--muted);margin:14px 2px 4px}
-.wxcw{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:8px 8px 2px;margin:6px 0 12px}
+.wxds{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.wxsun{font-size:13px;color:var(--muted);margin:14px 2px 4px}
+.wxcw{background:var(--card);border-radius:18px;padding:8px 8px 2px;margin:6px 0 12px}
 .wxchart{width:100%;height:auto;display:block}
 .wxct{font:600 11px var(--f-body);fill:var(--fg)} .wxcx{font:500 10px var(--f-body);fill:var(--muted)}
-.wxlist{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.wxrow{display:grid;grid-template-columns:44px 40px 1fr 1fr 1.3fr;align-items:center;gap:6px;padding:6px 14px;border-bottom:1px solid var(--line);font-size:.95rem}
+.wxlist{background:var(--card);border-radius:18px;overflow:hidden}
+.wxrow{display:grid;grid-template-columns:40px 36px 1fr 1fr 1.4fr;align-items:center;gap:6px;padding:6px 14px;border-bottom:1px solid var(--sub);font-size:15px}
 .wxrow:last-child{border-bottom:0}
-.wxrow.wxhd{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:9px 14px}
+.wxrow.wxhd{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 14px}
 .wxrow.now{background:var(--accent-soft)}
-.wxh{color:var(--muted);font-weight:600} .wxrow.now .wxh{color:var(--accent)}
-.wxi{display:flex} .wxtemp{font-weight:700;font-family:var(--f-disp)}
+.wxh{color:var(--muted);font-weight:600} .wxrow.now .wxh{color:var(--accent-text)}
+.wxi{display:flex} .wxtemp{font-weight:700}
 .wxpr{color:var(--muted)} .wxpr.on{color:var(--grid);font-weight:600}
-.wxw{color:var(--fg);white-space:nowrap} .wxar{display:inline-block;color:var(--muted);font-size:.9rem;line-height:1}
+.wxw{color:var(--fg);white-space:nowrap} .wxar{display:inline-block;color:var(--muted);font-size:14px;line-height:1}
 .wxsrc{margin-top:10px}
-.wxlink{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--accent);font-weight:600;text-decoration:none}
+.wxlink{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:14px;background:var(--card);color:var(--accent-text);font-weight:700;text-decoration:none}
 
-.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.tc .n{font-size:.82rem;color:var(--muted);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tc .t{font-family:var(--f-disp);font-size:1.6rem;font-weight:400;line-height:1.1}
-.tc .t small{font-size:.8rem;color:var(--muted)}
-.tc .s{display:flex;gap:10px;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tc{background:var(--card);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tc .n{font-size:14px;color:var(--fg);font-weight:700;display:flex;justify-content:space-between;align-items:center;gap:6px;min-width:0}
+.tc .n .nt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc .t{font-family:var(--f-disp);font-size:30px;font-weight:600;line-height:1.1;letter-spacing:-.02em}
+.tc .t small{font-size:13px;color:var(--muted);font-weight:500}
+.tc .s{display:flex;gap:4px 10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 .tc .s .lowb{color:var(--danger);font-weight:700}
-.thermo{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+.tc .dn{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc.hot{background:var(--hot-soft)}
+.tc.hot .t{color:var(--hot)}
+.tc .hotl{font-size:11px;font-weight:700;color:var(--hot);background:color-mix(in srgb,var(--hot) 16%,transparent);border-radius:8px;padding:2px 7px;flex:none}
+.thermo{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 12px;align-items:center;padding:16px;border-bottom:1px solid var(--sub)}
 .thermo:last-child{border-bottom:0}
-.thermo .n{font-family:var(--f-disp);font-weight:600}
-.thermo .s{font-size:.8rem;color:var(--muted)}
-.thermo .heat{color:var(--warm);font-weight:700}
-.thermo .inne{font-size:.9rem;color:var(--muted);margin:2px 0}
-.thermo .inne b{color:var(--fg);font-family:var(--f-disp);font-weight:400;font-size:1.15rem}
-.step{display:flex;align-items:center;gap:6px}
-.step button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card-2);color:var(--fg);font:inherit;font-size:1.2rem;font-weight:600;cursor:pointer}
-.step .tv{font-family:var(--f-disp);font-size:1.25rem;min-width:62px;text-align:center}
+.thermo .n{font-weight:700;font-size:16px}
+.thermo .s{font-size:13px;color:var(--muted)}
+.thermo .heat{color:var(--hot);font-weight:700}
+.thermo .inne{font-size:14px;color:var(--muted);margin:2px 0}
+.thermo .inne b{color:var(--fg);font-weight:700;font-size:18px}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--fg);font:inherit;font-size:20px;font-weight:600;cursor:pointer}
+.step .tv{font-size:18px;font-weight:700;min-width:58px;text-align:center}
+.hpmore{width:100%;display:flex;align-items:center;gap:12px;padding:0 16px 16px;border:0;background:none;font:inherit;color:var(--accent-text);font-weight:700;cursor:pointer;text-align:left}
+.hpmore span{flex:1}
 
-/* energy */
-.flow{padding:12px 8px 6px}
-.flow svg{display:block;width:100%;height:auto;max-width:100%}
-.flow .lbl{font-family:var(--f-body);font-size:11px;fill:var(--muted);font-weight:600;letter-spacing:.06em}
-.flow .val{font-family:var(--f-disp);font-size:15px;fill:var(--fg)}
-.flow .sub{font-family:var(--f-body);font-size:11.5px;fill:var(--muted);font-weight:500}
+/* Energi: flödesdiagram */
+.flow{padding:14px 12px 16px}
+.flow svg{display:block;width:100%;height:auto;max-width:400px;margin:0 auto}
+.flow .lbl{font-family:var(--f-body);font-size:11px;fill:var(--muted);font-weight:700;letter-spacing:.08em}
+.flow .val{font-family:var(--f-body);font-size:16px;font-weight:800;fill:var(--fg)}
+.flow .hval{font-family:var(--f-body);font-size:18px;font-weight:800;fill:var(--fg)}
+.flow .hlbl{font-family:var(--f-body);font-size:11px;font-weight:700;letter-spacing:.08em;fill:var(--accent-text)}
+.flow .sub{font-family:var(--f-body);font-size:12px;fill:var(--muted);font-weight:700}
 .flow .sub.chg{fill:var(--ok)} .flow .sub.bad{fill:var(--danger)}
-.flow .ring{fill:var(--card-2);stroke-width:2}
-.flow .wire{fill:none;stroke:var(--line);stroke-width:2}
-.flow .run{fill:none;stroke-width:3;stroke-linecap:round;stroke-dasharray:2 12;animation:run 1.1s linear infinite}
+.flow .ring{fill:var(--card);stroke-width:3}
+.flow .hring{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3}
+.flow .soct{fill:none;stroke:var(--sub);stroke-width:3}
+.flow .socr{fill:none;stroke-width:3;stroke-linecap:round;opacity:.65}
+.flow .wire{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round}
+.flow .run{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:1 13;animation:run 1.1s linear infinite}
 .flow .run.rev{animation-direction:reverse}
 @keyframes run{to{stroke-dashoffset:-28}}
 .flow .idle{opacity:0}
-.estm{font-size:.74rem;color:var(--muted);text-align:center;padding:0 12px 12px}
-.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:14px 16px;font-size:.9rem}
-.kv .k{color:var(--muted)}
-.kv .v{text-align:right;font-weight:600}
-.app + .app{border-top:1px solid var(--line)}
+.flow .node{cursor:pointer}
+.flow .node:focus{outline:none}
+.flow .node:focus-visible .ring{stroke-width:5}
+.fsay{font-size:15px;font-weight:600;line-height:1.4;padding:6px 4px 0}
+.fsrc{padding:0 4px}
+.fsrc .fl{font-size:13px;color:var(--muted);margin:10px 0 6px}
+.fbar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--sub);gap:2px}
+.fbar i{display:block;height:100%}
+.fleg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:8px;font-size:12px;color:var(--muted)}
+.fleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;padding:14px 16px;font-size:15px}
+.kv .k{color:var(--muted);min-width:0;overflow-wrap:anywhere}
+.kv .v{text-align:right;font-weight:700}
+.app + .app{border-top:1px solid var(--sub)}
 .kv .k.ah{color:var(--fg);font-weight:700}
 .kv .v.ah{color:var(--muted);font-weight:500}
 .kv .v.run{color:var(--ok)}
-.kv .sep{border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
-.mblock{border-top:1px solid var(--line)}
-.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 16px 0;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kv .sep{border-top:1px solid var(--sub);padding-top:8px;margin-top:4px}
+.mblock{border-top:0}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:14px 16px 0;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .mblock .kv{padding-top:8px}
-.mtoggle{display:block;width:calc(100% - 32px);margin:0 16px 12px;padding:9px 12px;font:inherit;font-size:.85rem;font-weight:600;color:var(--fg);background:var(--bg-2);border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.mtoggle{display:block;width:calc(100% - 32px);margin:0 16px 14px;padding:10px 12px;font:inherit;font-size:14px;font-weight:700;color:var(--fg);background:var(--sub);border:0;border-radius:12px;cursor:pointer}
 .mtoggle[aria-expanded="true"]{color:var(--muted)}
-.appnote{font-size:.74rem;color:var(--muted);padding:0 16px 12px}
-.price{display:flex;flex-direction:column;gap:10px;padding:16px}
+.appnote{font-size:12px;color:var(--muted);padding:0 16px 14px}
+.lrow{display:flex;align-items:center;gap:12px;width:100%;padding:15px 16px;border:0;border-bottom:1px solid var(--sub);background:none;font:inherit;color:var(--fg);text-align:left;cursor:pointer;min-height:52px}
+.lrow:last-child{border-bottom:0}
+.lrow .ln2{flex:none;font-weight:700;font-size:16px;white-space:nowrap}
+.lrow .ls{flex:1;font-size:14px;color:var(--muted);text-align:right;min-width:0;overflow-wrap:break-word;line-height:1.3}
+.lrow .chev{font-size:20px;color:var(--faint-t);flex:none}
+#moreHome{display:none}
+/* elpris */
+.price{display:flex;flex-direction:column;gap:12px;padding:16px}
 .ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.ptop .big{min-width:0}
 .ptop>.chip{flex:none;white-space:nowrap}
-.psub{font-size:.8rem;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;flex:1;min-width:0}
+.pcol{min-width:0}
+.pcol2{border-left:1px solid var(--line);padding-left:12px}
+.plbl{font-size:13px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;min-height:26px}
+.plbl .chip{min-height:24px;padding:0 10px;font-size:12px}
+.psub{font-size:13px;color:var(--muted);margin-top:2px}
 .pctl{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.mini{display:inline-flex;background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px}
-.mini button{font:inherit;font-size:.8rem;font-weight:700;border:0;background:none;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
-.mini button[aria-pressed="true"]{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.mini{display:inline-flex;background:var(--sub);border:0;border-radius:12px;padding:3px;gap:2px}
+.mini button{font:inherit;font-size:13px;font-weight:600;border:0;background:none;color:var(--muted);padding:0 14px;min-height:32px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.mini button[aria-pressed="true"]{background:var(--card);color:var(--fg);font-weight:700;box-shadow:0 1px 2px var(--shadow)}
 .mini button:disabled{opacity:.4;cursor:default}
+.ptip{background:var(--green-soft);color:var(--green-ink);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;line-height:1.4}
 .pchart{width:100%;height:auto;display:block}
-.pchart .gl{stroke:var(--line);stroke-width:1}
+.pchart .gl{stroke:var(--sub);stroke-width:1}
 .pchart .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
-.pchart .ln{fill:none;stroke-width:2.2;stroke-linejoin:round}
+.pchart .ln{fill:none;stroke-width:2.4;stroke-linejoin:round}
 .pchart .area{stroke:none;opacity:.32}
 .pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.3}
 .pchart .oarea{fill:var(--faint);opacity:.12;stroke:none}
@@ -255,52 +324,60 @@ body.noscroll{overflow:hidden}
 .pchart .nowr{fill:none;stroke:var(--fg);stroke-width:2.2}
 .pchart .nowbg{fill:var(--fg)}
 .pchart .nowt{fill:var(--card);font-family:var(--f-body);font-size:10.5px;font-weight:700}
-.pchart .nowl{stroke:var(--faint);stroke-width:2;opacity:.6}
+.pchart .nowl{stroke:var(--fg);stroke-width:1;stroke-dasharray:3 3;opacity:.5}
 .pchart .nowd{stroke:var(--card);stroke-width:2.5}
 .pchart{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
 .pchart:focus{outline:none}
 .pchart .scrl{stroke:var(--fg);stroke-width:1.5;opacity:.55}
-.price .big{font-family:var(--f-disp);font-size:2.2rem;font-weight:300;letter-spacing:-.02em;line-height:1}
-.price .big small{font-size:.85rem;color:var(--muted);font-family:var(--f-body)}
-.range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--warn),var(--danger));position:relative;margin-top:6px}
+.price .big{font-family:var(--f-disp);font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1.05;overflow-wrap:anywhere}
+.price .big2{font-size:28px;font-weight:500;letter-spacing:-.02em;line-height:1.05;color:var(--green-ink);margin-top:8px;overflow-wrap:anywhere}
+.price .big small,.price .big2 small{font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0;display:inline-block}
+.range{grid-column:1/3;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok),var(--amber),var(--danger));position:relative;margin-top:6px}
 .range i{position:absolute;top:-5px;width:4px;height:18px;border-radius:2px;background:var(--fg);transform:translateX(-50%)}
-.rangel{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted)}
-.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px 16px}
-.ph{background:var(--card-2);border-radius:12px;padding:8px 10px}
-.ph .k{font-size:.72rem;color:var(--muted);font-weight:700}
-.ph .v{font-family:var(--f-disp);font-size:1.05rem}
-.socbar{height:10px;border-radius:5px;background:var(--card-2);overflow:hidden;margin:0 16px 14px}
-.kv .v.bad{color:var(--danger)} .kv .v.okc{color:var(--ok)}
-.balert{margin:14px 16px 0;padding:10px 12px;border-radius:10px;border-left:3px solid var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
-.balert b{display:block;color:var(--danger);font-size:.95rem}
-.balert span{display:block;margin-top:2px;color:var(--muted);font-size:.84rem;line-height:1.35}
-.blog{padding:0 16px 14px;font-size:.8rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
-.blog .lh{font-weight:700;color:var(--fg);font-size:.78rem;letter-spacing:.04em}
-.socbar i{display:block;height:100%;background:var(--batt);border-radius:5px}
+.rangel{display:flex;justify-content:space-between;gap:4px 10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.phases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:16px}
+.ph{background:var(--sub);border-radius:12px;padding:10px}
+.ph .k{font-size:12px;color:var(--muted);font-weight:700}
+.ph .v{font-size:17px;font-weight:700}
+.socbar{height:8px;border-radius:4px;background:var(--sub);overflow:hidden;margin:0 16px 14px}
+.socbar i{display:block;height:100%;background:var(--batt);border-radius:4px}
+.kv .v.bad{color:var(--danger)} .kv .v.okc{color:var(--green-ink)}
+.balert{margin:14px 16px 0;padding:10px 12px;border-radius:12px;border-left:3px solid var(--danger);background:var(--hot-soft)}
+.balert b{display:block;color:var(--danger);font-size:15px}
+.balert span{display:block;margin-top:2px;color:var(--muted);font-size:13px;line-height:1.35}
+.blog{padding:0 16px 14px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.blog .lh{font-weight:700;color:var(--fg);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
 
-.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,.3);z-index:20;max-width:calc(100% - 32px)}
-.foot{font-size:.76rem;color:var(--muted);text-align:center}
-/* robot vacuum */
-.robo{display:flex;flex-direction:column;gap:10px;padding:18px 18px 14px;background:radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 60%),var(--card)}
-.robo .big{font-family:var(--f-disp);font-weight:300;font-size:1.8rem;line-height:1.1;letter-spacing:-.02em}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:14px;font-size:14px;font-weight:600;box-shadow:0 8px 24px var(--shadow);z-index:60;max-width:calc(100% - 32px);text-align:center}
+.foot{font-size:13px;color:var(--muted);text-align:center;margin:8px 0 0}
+/* robotdammsugare */
+.rsel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rsel button{font:inherit;color:var(--fg);text-align:left;border:2px solid transparent;border-radius:16px;padding:12px;background:var(--card);cursor:pointer;min-width:0}
+.rsel button.on{border-color:var(--accent)}
+.rsel small{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsel b{display:block;font-size:16px;font-weight:800;margin-top:2px;overflow-wrap:anywhere}
+.rsel span{display:block;font-size:13px;margin-top:4px;color:var(--green-ink)}
+.rsel span.busy{color:var(--accent-text)}
+.robo{display:flex;flex-direction:column;gap:10px;padding:18px;background:var(--card)}
+.robo .big{font-family:var(--f-disp);font-weight:500;font-size:30px;line-height:1.1;letter-spacing:-.02em;overflow-wrap:anywhere}
 .robo .meta{display:flex;flex-wrap:wrap;gap:6px}
-.robo.run .big{color:var(--accent)} .robo.err .big{color:var(--danger)}
+.robo.run .big{color:var(--accent-text)} .robo.err .big{color:var(--danger)}
 .robo .socbar{margin:0}
-.quick .btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.robo .quick{margin-top:6px}
+.quick .btn.go,.btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .quick .btn.wide{grid-column:1/3}
-.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-.fine{font-size:.8rem;color:var(--muted);margin:0 2px}
-.btn.go{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.on{border-color:var(--accent);color:var(--accent)}
-/* Husbatteri → Historik (2026-11-14.1): laddnivå per dygn som i Homey Insights, data från AI Batterihistorik (AI 17) */
+.fine{font-size:13px;color:var(--muted);margin:0 2px}
+.btn.on{border-color:var(--accent);color:var(--accent-text)}
+/* Husbatteri → Historik (bladet) */
 #battHist{padding:0 16px 16px}
 #battHist:empty{display:none}
 #battHist>.btn{width:100%}
-.bh-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 6px}
-.bh-top .bh-d{font-size:.8rem;color:var(--muted)}
+.bh-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 6px;flex-wrap:wrap}
+.bh-top .bh-d{font-size:13px;color:var(--muted)}
+.bh{background:var(--card);border-radius:16px;padding:10px 8px 6px}
 .bh svg{display:block;width:100%;height:auto;overflow:visible}
 .bh .bhc{touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
-.bhc .gl{stroke:var(--line);stroke-width:1}
+.bhc .gl{stroke:var(--sub);stroke-width:1}
 .bhc .bln{fill:none;stroke:var(--batt);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
 .bhc .pin{fill:var(--batt);opacity:.75}
 .bhc .pout{fill:var(--orange);opacity:.85}
@@ -309,77 +386,76 @@ body.noscroll{overflow:hidden}
 .bhc .cdot{fill:var(--batt)}
 .bhc .cring{fill:none;stroke:var(--batt);stroke-width:2;opacity:.45}
 .bh-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 0 6px}
-.bh-ht{font-weight:700;font-size:.95rem}
-.bh-hs{font-size:.82rem;color:var(--muted);min-height:1.2em}
-.bh-hv{font-family:var(--f-disp);font-size:2.3rem;line-height:1;color:var(--batt);white-space:nowrap}
-.bh-hv small{font-size:1rem}
-.bh-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.75rem;color:var(--muted);margin-top:6px}
+.bh-ht{font-weight:700;font-size:15px}
+.bh-hs{font-size:13px;color:var(--muted);min-height:1.2em}
+.bh-hv{font-size:40px;font-weight:500;line-height:1;color:var(--fg);white-space:nowrap}
+.bh-hv small{font-size:16px}
+.bh-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:6px}
 .bh-leg span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .bh-leg .k-in::before{background:var(--batt)}
 .bh-leg .k-out::before{background:var(--orange)}
 .bh-leg .k-still::before{background:var(--muted);opacity:.7;height:5px;vertical-align:2px}
-.bh-kv{padding:10px 0 0;font-size:.85rem}
+.bh-kv{padding:14px 16px;font-size:14px;background:var(--card);border-radius:16px;margin-top:10px}
 .bh .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
-.bh-sum{font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.4}
+.bh-sum{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
 .evhero{padding:16px 16px 4px;display:flex;flex-direction:column;gap:14px}
-.evst{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.evst b{font-family:var(--f-disp);font-weight:400;font-size:1.45rem;letter-spacing:-.01em}
+.evst{display:flex;justify-content:space-between;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.evst b{font-weight:600;font-size:26px;letter-spacing:-.01em}
 .evst b.chg{color:var(--ev)}
-.evst span{color:var(--muted);font-size:.92rem;white-space:nowrap}
+.evst span{color:var(--muted);font-size:14px}
 .car{display:flex;flex-direction:column;gap:6px}
-.carl{display:flex;justify-content:space-between;gap:12px;font-size:.88rem;color:var(--muted)}
+.carl{display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
 .carl .num{color:var(--fg);font-weight:600}
-/* Batteri-grafik (Homevolt och bilen): färg efter nivå – <10 % röd, <20 % orange, <30 % gul, annars grön */
+/* Laddnivå (batGfx): platt stapel i nya designen, färg efter nivå, streck vid laddmål. Husbatteriets stora grafik visas inte (nivån syns i flödet). */
+#soc{display:none!important}
 .batwrap{padding:16px 16px 2px}
-/* Batteri-grafik i glas-stil (2026-11-14.6): liggande glaskropp med metallkapsel, blank fyllning som går rött → orange → gult → grönt längs batteriet (fyllningens slut får färgen för nivån), vit siffra med mörk kontur */
-.bat{display:flex;align-items:center;max-width:300px}
-.bat-b{position:relative;flex:1;height:64px;border-radius:14px;padding:6px 16px;background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 42%,rgba(0,0,0,.06) 58%,rgba(255,255,255,.12) 100%),color-mix(in srgb,var(--fg) 6%,transparent);border:1.5px solid color-mix(in srgb,#3a4048 55%,transparent);box-shadow:inset 0 1px 1px rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.18);overflow:hidden}
-.bat-b::before,.bat-b::after{content:'';position:absolute;top:0;bottom:0;width:11px;background:linear-gradient(180deg,#9aa3ad 0%,#5b636d 22%,#2b3036 50%,#454c55 72%,#8a929c 100%);z-index:2}
-.bat-b::before{left:0}
-.bat-b::after{right:0}
-.bat-b i{position:relative;display:block;height:100%;min-width:8px;border-radius:7px;background:linear-gradient(90deg,#e23a2c 0,#f0861b 10%,#f3cb34 20%,#a8d83e 30%,#4fb52c 100%);background-size:var(--bs,100%) 100%;background-repeat:no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);transition:width .4s;overflow:hidden}
-.bat-b i::after{content:'';position:absolute;left:0;right:0;top:0;height:48%;border-radius:7px 7px 40% 40%/7px 7px 10px 10px;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.12))}
-.bat-b s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--fg);box-shadow:0 0 0 1.5px var(--card);z-index:3}
-.bat-b span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--f-body);font-size:1.65rem;font-weight:800;color:var(--fg);z-index:3;text-shadow:0 0 2px var(--card),0 0 4px var(--card),0 0 8px var(--card)}
-.bat-n{width:9px;height:28px;border-radius:0 7px 7px 0;background:linear-gradient(180deg,#9aa3ad 0%,#5b636d 22%,#2b3036 50%,#454c55 72%,#8a929c 100%);box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.carsub{font-size:.8rem;color:var(--muted)}
+.bat{display:flex;align-items:center;max-width:none}
+.bat-b{position:relative;flex:1;height:30px;border-radius:10px;padding:0;background:var(--sub);border:0;box-shadow:none;overflow:hidden}
+.bat-b i{position:relative;display:block;height:100%;min-width:6px;border-radius:10px;background:var(--lvl,var(--batt));transition:width .4s}
+.bat-b s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--fg);z-index:3}
+.bat-b span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-size:15px;font-weight:800;color:var(--fg);z-index:3;text-shadow:0 0 2px var(--card),0 0 4px var(--card),0 0 8px var(--card)}
+.bat-n{display:none}
+.carsub{font-size:13px;color:var(--muted)}
 #ev:empty{display:none}
-.solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
+.solbox{padding:0 16px 16px;display:flex;flex-direction:column;gap:6px}
 .solbox .btn{width:100%}
-/* Solknappen: av = grå, på = solgul (samma färg som solen i energiflödet), vilande = solgul kant */
-.btn.sol{background:var(--card-2);border-color:var(--line);color:var(--muted)}
-.btn.sol.on{background:var(--sun);border-color:var(--sun);color:#1a1200;box-shadow:0 0 0 4px color-mix(in srgb,var(--sun) 22%,transparent)}
-.btn.sol.rest{background:color-mix(in srgb,var(--sun) 12%,transparent);border-color:var(--sun);color:var(--sun)}
-.solst{font-size:.8rem;color:var(--muted)}
+.btn.sol{background:var(--sub);border-color:transparent;color:var(--muted)}
+.btn.sol.on{background:var(--sun);border-color:var(--sun);color:var(--fg)}
+.btn.sol.rest{background:var(--amber-soft);border-color:var(--sun);color:var(--amber-ink)}
+.solst{font-size:13px;color:var(--muted)}
 .solst.bad{color:var(--danger)}
-.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--sub)}
 .srow:last-child{border-bottom:0}
 .srow .st{font:inherit;color:inherit;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-width:0}
-.srow .n{font-family:var(--f-disp);font-weight:600}
-.srow .s{font-size:.8rem;color:var(--muted)}
-.sched{padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.sched .sl{font-size:.74rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
-.tin{font:inherit;font-size:1.1rem;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card-2);color:var(--fg);width:9rem}
-#robots{gap:30px}
-.mapc{background:#000;display:grid;place-items:center;min-height:120px}
+.srow .n{font-weight:700;font-size:16px}
+.srow .s{font-size:13px;color:var(--muted)}
+.sched{padding:16px;display:flex;flex-direction:column;gap:8px}
+.sched .sl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.tin{font:inherit;font-size:17px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--sub);color:var(--fg);width:9rem}
+#robots{gap:12px}
+.mapc{background:var(--map);display:grid;place-items:center;min-height:120px}
 .mapc img{display:block;width:100%;height:auto;image-rendering:pixelated}
-.mapc .empty{color:#9aa}
-@media (max-width:520px){.seg svg{display:none}.seg button{padding:10px 2px}}
-@media (max-width:380px){.glance .gl .v{font-size:1.05rem}.step button{width:34px;height:34px}.step .tv{min-width:52px;font-size:1.1rem}}
-.chip{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.btn{line-height:1.2;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.mapc .empty{color:var(--map-t)}
+/* radbrytning: inget får sticka ut vid 320–375 px. Knappar bryter vid ord (inte mitt i ord) och avstavas på svenska. */
+.btn,.chip,.tbtn,.lrow,.name{overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.btn{white-space:normal;line-height:1.2}
+.chip{white-space:normal;max-width:100%;text-align:left}
 .thermo .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .thermo > .n.full{grid-column:1 / -1;margin-bottom:-6px;white-space:normal;overflow:visible}
-.thermo > .chips.full{grid-column:1 / -1;margin-top:-4px !important}
+.thermo > .chips.full{grid-column:1 / -1;margin-top:-2px !important}
 .thermo > div:first-child{min-width:0}
+@media (max-width:360px){
+  .app{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  #date{font-size:11px;letter-spacing:.06em}h1{font-size:28px}.live{min-width:7.6em;font-size:12px;padding:0 10px}.top{gap:8px}
+  .glance{gap:6px}.gl{padding:8px}.gl .k{font-size:11px}.glance .gl .v{font-size:17px}
+  .tile{padding:10px}.tile .ts span{font-size:12px}
+  .step button{width:36px;height:36px}.step .tv{min-width:50px;font-size:16px}
+  .price .big{font-size:32px}.price .big2{font-size:22px}
+}
 /* surfplatta och dator: bredare app och två spalter */
 @media (min-width:800px){
-  .app{max-width:72rem;gap:18px}
+  .app{max-width:72rem;gap:16px}
   .glance{max-width:40rem}
-  .seg{max-width:40rem}
-  #rooms{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start;gap:14px}
-  #rooms > .h2{grid-column:1 / -1;margin:14px 0 -4px}
-  #rooms > .h2:first-child{margin-top:0}
   #p-temperatur:not([hidden]),#p-energi:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:start;grid-auto-flow:row dense}
   #p-temperatur > *{grid-column:1}
   #p-temperatur > .h2.rumh,#p-temperatur > #sensors{grid-column:2}
@@ -387,24 +463,32 @@ body.noscroll{overflow:hidden}
   #p-temperatur > #sensors{grid-row:1 / span 8;margin-top:28px}
   #p-energi > *{grid-column:2}
   #p-energi > .flow{grid-column:1;grid-row:1 / span 12}
-  .flow svg{max-width:440px;margin:0 auto}
+  .tgrid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
   .pchart{max-height:260px}
-  #robots{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-items:start;gap:24px}
+  #robots{max-width:44rem}
 }
-@media (min-width:1200px){.glance{max-width:none}.seg{max-width:48rem}}
-@media (prefers-reduced-motion: reduce){.skel,.flow .run,.live.spin .ic{animation:none}.seg .pill,.sw,.sw::after{transition:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 
-:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;-webkit-tap-highlight-color:transparent}
-.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:radial-gradient(80% 60% at 50% 0%,var(--accent-soft),transparent 70%),var(--bg)}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:var(--bg)}
 .loginbox{max-width:22rem;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
-.logo{width:72px;height:72px;border-radius:22px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);color:var(--accent);box-shadow:0 10px 40px -12px var(--accent)}
+.logo{width:72px;height:72px;border-radius:22px;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink)}
 .logo svg{width:34px;height:34px}
 .lsub{color:var(--muted);margin:0}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);width:100%;font-size:1rem}
-.lmsg{color:var(--danger);font-size:.88rem;margin:0}
-.lfine{color:var(--muted);font-size:.78rem;margin:0}
-.more{font:inherit;font-size:inherit;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);width:100%;font-size:16px}
+.lmsg{color:var(--danger);font-size:14px;margin:0}
+.lfine{color:var(--muted);font-size:13px;margin:0}
+.more{font:inherit;font-size:inherit;color:var(--accent-text);font-weight:600;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+#battCard,#evCard{scroll-margin-top:16px}
+.hpmore b{font-size:20px;font-weight:400;color:var(--faint-t)}
+
+/* Husbatteri och Laddbox & bil visas som blad (öppnas från flödet eller listan) */
+.sheetb #soc:not([hidden]){display:block!important}
+#battAlertMain{margin:10px 4px 0;cursor:pointer}
+.step.off .tv{color:var(--faint-t)}
+.chips .mini.modes{flex:1 1 100%;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.mini.modes button{padding:0 2px;font-size:13px;white-space:normal;line-height:1.1;min-height:36px}
+@media (max-width:360px){.mini.modes button{font-size:12px}}
+.chips .mini.modes:has(> :nth-child(5)){grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr))}
 </style>
 </head>
 <body>
@@ -430,17 +514,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   </header>
 
   <div class="glance">
-    <button class="gl" id="glLights" type="button" data-v="belysning" aria-label="Visa Belysning"><div class="k">Belysning</div><div class="v num" id="gLights">–</div></button>
-    <button class="gl" id="glOut" type="button" data-v="temperatur" aria-label="Visa Temperatur"><div class="k">Ute</div><div class="v num" id="gOut">–</div></button>
+    <button class="gl" id="glLights" type="button" data-v="belysning" aria-label="Visa Ljus"><div class="k">Tänt</div><div class="v num" id="gLights">–</div></button>
+    <button class="gl" id="glOut" type="button" data-v="temperatur" aria-label="Visa Klimat"><div class="k">Ute</div><div class="v num" id="gOut">–</div></button>
     <button class="gl" id="glLoad" type="button" data-v="energi" aria-label="Visa Energi"><div class="k">Förbrukning</div><div class="v num" id="gLoad">–</div></button>
   </div>
 
   <nav class="seg" role="tablist" aria-label="Välj vy">
     <span class="pill" id="pill"></span>
-    <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Belysning</span></button>
-    <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Temperatur</span></button>
-    <button role="tab" id="t-energi" aria-controls="p-energi" data-v="energi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Energi</span></button>
-    <button role="tab" id="t-stad" aria-controls="p-stad" data-v="stad" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="2.5"/><path d="M7 16h10"/></svg><span>Städ</span></button>
+    <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ljus</span></button>
+    <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Klimat</span></button>
+    <button role="tab" id="t-energi" aria-controls="p-energi" data-v="energi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Energi</span></button>
+    <button role="tab" id="t-stad" aria-controls="p-stad" data-v="stad" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="2.5"/><path d="M7 16h10"/></svg><span>Städ</span></button>
   </nav>
 
   <div class="banner upd" id="upd" hidden></div>
@@ -448,11 +532,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
     <div class="chips" id="lightStatus"></div>
-    <div class="quick">
-      <button class="btn" id="offInside" type="button">Släck allt inne</button>
-      <button class="btn warnb" id="offAll" type="button">Släck allt</button>
-    </div>
-    <div id="scenesWrap" hidden><div class="h2">Scener</div><div class="chips" id="scenes" style="margin-top:10px"></div></div>
+    <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
+    <div class="sech"><div class="h2">Tänt nu <span class="num" id="litN"></span></div><button class="tbtn" id="offInside" type="button">Släck allt inne</button></div>
+    <div class="card" id="litList"><div class="empty">Hämtar lampor…</div></div>
+    <div class="sech"><div class="h2">Rum</div><button class="tbtn warnb" id="offAll" type="button">Släck allt</button></div>
     <div class="panel" id="rooms"><div class="skel"></div><div class="skel"></div></div>
   </section>
 
@@ -466,51 +549,52 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 
   <section class="panel" id="p-energi" role="tabpanel" aria-labelledby="t-energi" hidden>
     <div class="card flow">
-      <svg viewBox="0 0 340 300" role="img" aria-labelledby="flowT">
+      <div class="h2" style="margin:2px 4px 6px">Just nu</div>
+      <svg viewBox="0 0 340 352" role="img" aria-labelledby="flowT">
         <title id="flowT">Energiflöde mellan sol, nät, batteri, hus och laddbox</title>
-        <path class="wire" d="M170 62 V128"/><path class="wire" d="M62 150 H140"/><path class="wire" d="M200 150 H278"/><path class="wire" d="M170 172 V238"/>
-        <path class="run idle" id="fSun" stroke="var(--sun)" d="M170 62 V128"/>
-        <path class="run idle" id="fGrid" stroke="var(--grid)" d="M62 150 H140"/>
-        <path class="run idle" id="fBatt" stroke="var(--batt)" d="M278 150 H200"/>
-        <path class="run idle" id="fEv" stroke="var(--ev)" d="M170 172 V238"/>
-        <circle class="ring" cx="170" cy="36" r="26" stroke="var(--sun)"/>
-        <circle class="ring" cx="36" cy="150" r="26" stroke="var(--grid)"/>
-        <circle class="ring" cx="304" cy="150" r="26" stroke="var(--batt)"/>
-        <circle class="ring" cx="170" cy="264" r="26" stroke="var(--ev)"/>
-        <circle class="ring" cx="170" cy="150" r="30" stroke="var(--accent)" stroke-width="3"/>
-        <g fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <g stroke="var(--sun)"><circle cx="170" cy="36" r="6"/><path d="M170 23v4M170 45v4M157 36h4M179 36h4M161 27l3 3M176 42l3 3M161 45l3-3M176 30l3-3"/></g>
-          <path stroke="var(--grid)" d="M30 162l6-24 6 24M32 152h8M28 144h16"/>
-          <g stroke="var(--batt)"><rect x="295" y="141" width="18" height="11" rx="2"/><path d="M313 144.5v4"/></g>
-          <path stroke="var(--ev)" d="M159 268v-6l3-6h16l3 6v6zM163 268v3M177 268v3"/>
-          <path stroke="var(--accent)" d="M158 154l12-11 12 11M162 151v11h16v-11"/>
-        </g>
-        <text class="lbl" x="214" y="30">SOL</text><text class="val num" id="vSun" x="214" y="48">–</text>
-        <text class="lbl" x="18" y="196">NÄT</text><text class="val num" id="vGrid" x="18" y="214">–</text>
-        <text class="lbl" x="322" y="196" text-anchor="end">BATTERI</text><text class="val num" id="vBatt" x="322" y="214" text-anchor="end">–</text><text class="sub" id="vBattSt" x="322" y="231" text-anchor="end"></text>
-        <text class="lbl" x="214" y="258">LADDBOX</text><text class="val num" id="vEv" x="214" y="276">–</text>
-        <text class="lbl" x="184" y="94">HUS</text><text class="val num" id="vHome" x="184" y="112">–</text>
+        <path class="wire" d="M100.2 126.4 L126.2 147.1"/><path class="wire" d="M239.8 126.4 L213.8 147.1"/><path class="wire" d="M100.2 237.6 L126.2 216.9"/><path class="wire" d="M239.8 237.6 L213.8 216.9"/>
+        <path class="run idle" id="fSun" stroke="var(--sun)" d="M100.2 126.4 L126.2 147.1"/>
+        <path class="run idle" id="fBatt" stroke="var(--batt)" d="M239.8 126.4 L213.8 147.1"/>
+        <path class="run idle" id="fGrid" stroke="var(--grid)" d="M100.2 237.6 L126.2 216.9"/>
+        <path class="run idle" id="fEv" stroke="var(--ev)" d="M239.8 237.6 L213.8 216.9"/>
+        <g class="node" id="nSun" data-more="sol" role="button" tabindex="0" aria-label="Solceller" aria-haspopup="dialog"><circle class="ring" cx="72" cy="104" r="30" stroke="var(--sun)"/><g transform="translate(60 92)" fill="none" stroke="var(--sun)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></g>
+        <g class="node" id="nBatt" data-more="batt" role="button" tabindex="0" aria-label="Husbatteri" aria-haspopup="dialog"><circle class="soct" cx="268" cy="104" r="36"/><circle class="socr" id="rBatt" cx="268" cy="104" r="36" stroke="var(--batt)" stroke-dasharray="0 999" transform="rotate(-90 268 104)"/><circle class="ring" cx="268" cy="104" r="30" stroke="var(--batt)"/><g transform="translate(256 92)" fill="none" stroke="var(--batt)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></g></g>
+        <g class="node" id="nGrid" data-more="fas" role="button" tabindex="0" aria-label="Elnätet och faser" aria-haspopup="dialog"><circle class="ring" cx="72" cy="260" r="30" stroke="var(--grid)"/><g transform="translate(60 248)" fill="none" stroke="var(--grid)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M8 21l4-18 4 18M6 8h12M8 13h8"/></g></g>
+        <g class="node" id="nEv" data-more="ev" role="button" tabindex="0" aria-label="Laddbox och bil" aria-haspopup="dialog"><circle class="soct" cx="268" cy="260" r="36"/><circle class="socr" id="rEv" cx="268" cy="260" r="36" stroke="var(--ev)" stroke-dasharray="0 999" transform="rotate(-90 268 260)"/><circle class="ring" cx="268" cy="260" r="30" stroke="var(--ev)"/><g transform="translate(256 248)" fill="none" stroke="var(--ev)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16v-4l-2.2-5H6.2L4 12z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/></g></g>
+        <circle class="hring" cx="170" cy="182" r="50"/>
+        <g transform="translate(158 140)" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></g>
+        <text class="lbl" x="72" y="48" text-anchor="middle">SOL</text><text class="val num" id="vSun" x="72" y="68" text-anchor="middle">–</text>
+        <text class="lbl" x="268" y="48" text-anchor="middle">BATTERI</text><text class="val num" id="vBatt" x="268" y="68" text-anchor="middle">–</text><text class="sub" id="vBattSt" x="268" y="158" text-anchor="middle"></text>
+        <text class="lbl" x="72" y="320" text-anchor="middle">NÄT</text><text class="val num" id="vGrid" x="72" y="341" text-anchor="middle">–</text>
+        <text class="lbl" x="268" y="320" text-anchor="middle">LADDBOX</text><text class="val num" id="vEv" x="268" y="341" text-anchor="middle">–</text>
+        <text class="hval num" id="vHome" x="170" y="194" text-anchor="middle">–</text><text class="hlbl" x="170" y="212" text-anchor="middle">HUSET</text>
       </svg>
-      <div class="estm">Husets förbrukning är beräknad: nät + sol + batteri.</div>
+      <div class="balert" id="battAlertMain" data-more="batt" role="button" tabindex="0" hidden><b></b><span></span></div>
+      <div class="fsay" id="flowSay" hidden></div>
+      <div class="fsrc" id="flowSrc" hidden><div class="fl">Elen kommer från</div><div class="fbar" id="flowBar"></div><div class="fleg" id="flowLeg"></div></div>
     </div>
 
     <div class="h2">Elpris</div>
     <div class="card price" id="priceCard"><div class="empty">Hämtar elpris…</div></div>
 
     <div class="h2">Idag</div>
-    <div class="card"><div class="kv num" id="today"></div><div class="mblock" id="monBlock"></div><div class="phases num" id="phases"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
-
-    <div class="h2">Solceller</div>
-    <div class="card"><div class="kv num" id="solar"></div></div>
-
-    <div class="h2">Husbatteri</div>
-    <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div class="blog num" id="battLog" hidden></div><div id="battHist"></div></div>
-
-    <div class="h2">Laddbox &amp; bil</div>
-    <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div id="carBat"></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
-
-    <div class="h2">Apparater</div>
-    <div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div>
+    <div class="card"><div class="kv num" id="today"></div></div>
+    <div class="card" id="moreList">
+      <button class="lrow" type="button" data-more="batt" aria-haspopup="dialog"><span class="ln2">Husbatteri</span><span class="ls num" id="mBatt"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="ev" aria-haspopup="dialog"><span class="ln2">Laddbox &amp; bil</span><span class="ls num" id="mEv"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="man" aria-haspopup="dialog"><span class="ln2">Månad</span><span class="ls num" id="mMan"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="sol" aria-haspopup="dialog"><span class="ln2">Solceller</span><span class="ls num" id="mSol"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="fas" aria-haspopup="dialog"><span class="ln2">Faser</span><span class="ls num" id="mFas"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="app" aria-haspopup="dialog"><span class="ln2">Apparater</span><span class="ls num" id="mApp"></span><span class="chev" aria-hidden="true">›</span></button>
+    </div>
+    <div id="moreHome">
+      <div class="card" id="mvMan"><div class="mblock" id="monBlock"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
+      <div class="card" id="mvSol"><div class="kv num" id="solar"></div></div>
+      <div class="card" id="mvFas"><div class="phases num" id="phases"></div></div>
+      <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div class="blog num" id="battLog" hidden></div><div id="battHist"></div></div>
+      <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div id="carBat"></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
+      <div id="mvApp"><div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div></div>
+    </div>
 
   </section>
 
@@ -518,13 +602,15 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     <div class="panel" id="robots"><div class="skel"></div></div>
   </section>
 
-  <p class="foot">Data direkt från er Homey Pro. Uppdateras automatiskt var 15:e sekund, tryck på statusen uppe till höger för att uppdatera direkt. <button class="more" id="logout" type="button">Logga ut</button></p>
+  <p class="foot">Data från er Homey Pro · <button class="more" id="logout" type="button">Logga ut</button></p>
 </main>
-<div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
-<div class="toast" id="toast" hidden></div>
+<div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div id="wxBody"></div></div></div>
+<div class="wx" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden><div class="wxsheet" id="sheetBox"><div class="wxtop"><div class="wxtitle" id="sheetTitle"></div><button class="wxx" id="sheetClose" type="button" aria-label="Stäng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="sheetb" id="sheetBody"></div></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="config.js?v=2026-11-14.12"></script>
-<script src="homey.js?v=2026-11-14.12"></script>
+
+<script src="config.js?v=2026-11-14.13"></script>
+<script src="homey.js?v=2026-11-14.13"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -544,10 +630,49 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   let devices = [], moods = [], vars = [];
   const pending = {};
 
+  /* ---------- gemensamt blad (ny design 2026-11) ---------- */
+  // Ett blad i taget (som väderbladet). Funktionen som äger bladet ritar om innehållet vid varje uppdatering;
+  // stänger användaren bladet (knapp, bakgrund, Esc) anropas onClose så att ägaren nollställer sitt läge.
+  const SH = { key: null, onClose: null, home: null, node: null, ret: null };
+  function sheetOpen(key, title, onClose) {
+    const dlg = $('sheet'), body = $('sheetBody');
+    if (SH.key !== key) {
+      sheetRestore();
+      SH.key = key; body.replaceChildren();
+      if (dlg.hidden) {
+        SH.ret = document.activeElement; dlg.hidden = false; document.body.classList.add('noscroll'); $('sheetBox').scrollTop = 0;
+        setTimeout(() => { try { $('sheetClose').focus({ preventScroll: true }); } catch (e) {} }, 0);
+      }
+    }
+    SH.onClose = onClose || null; $('sheetTitle').textContent = title; return body;
+  }
+  // Blad som visar ett befintligt kort (Månad, Solceller, Faser, Apparater): kortet flyttas in och tillbaka, id:n och uppdatering är oförändrade.
+  function sheetRestore() { if (SH.home && SH.node) SH.home.append(SH.node); SH.home = null; SH.node = null; }
+  function sheetClose(byUser, why) {
+    if (!SH.key) return;
+    const f = SH.onClose; sheetRestore(); SH.key = null; SH.onClose = null;
+    $('sheet').hidden = true; $('sheetBody').replaceChildren(); document.body.classList.remove('noscroll');
+    const r = SH.ret; SH.ret = null;
+    if (r && r.isConnected && typeof r.focus === 'function') { try { r.focus({ preventScroll: true }); } catch (e) {} }
+    if (byUser && f) f(why);
+  }
+  function sheetNode(key, title, node) {
+    if (!node || SH.key === key) return;
+    const home = node.parentElement, body = sheetOpen(key, title, null);
+    SH.home = home; SH.node = node; body.replaceChildren(node);
+  }
+  $('sheetClose').addEventListener('click', () => sheetClose(true));
+  $('sheet').addEventListener('click', (e) => { if (e.target.id === 'sheet') sheetClose(true); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && SH.key) sheetClose(true); });
+
   /* ---------- tabs (hash + remembered) ---------- */
   const VIEWS = ['belysning', 'temperatur', 'energi', 'stad'];
+  // Specens namn #ljus och #klimat fungerar som alias för samma flikar (ny design 2026-11)
+  const ALIAS = { ljus: 'belysning', klimat: 'temperatur' };
   function show(v) {
+    v = ALIAS[v] || v;
     if (!VIEWS.includes(v)) v = 'belysning';
+    if (SH.key) sheetClose(true, 'tab');
     VIEWS.forEach((x, i) => {
       const on = x === v;
       $('t-' + x).setAttribute('aria-selected', on ? 'true' : 'false');
@@ -559,7 +684,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (v === 'stad' && typeof renderRobot === 'function' && devices.length) renderRobot();
   }
   document.querySelectorAll('.glance .gl[data-v]').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
-  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); }));
+  document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); window.scrollTo(0, 0); }));
   $('pill').parentElement.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     const cur = VIEWS.findIndex((x) => $('t-' + x).getAttribute('aria-selected') === 'true');
@@ -567,7 +692,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     location.hash = nx; $('t-' + nx).focus();
   });
   window.addEventListener('hashchange', () => show(location.hash.slice(1)));
-  let startView = location.hash.slice(1);
+  let startView = location.hash.slice(1); startView = ALIAS[startView] || startView;
   if (!VIEWS.includes(startView)) { try { startView = localStorage.getItem('hemvinas.view') || 'belysning'; } catch (e) { startView = 'belysning'; } }
   show(startView);
   $('date').textContent = new Date().toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -676,14 +801,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (dimmable && on) {
       const r = mk('div', 'dimrow'); const v = mk('span', 'v num', pct(val(d, 'dim')) + ' %');
       const s = mk('input'); s.type = 'range'; s.min = 1; s.max = 100; s.value = pct(val(d, 'dim')) || 1; s.id = 'dim-' + d.id; s.setAttribute('aria-label', 'Ljusstyrka ' + d.name);
-      s.addEventListener('input', () => { v.textContent = s.value + ' %'; throttled(d.id, () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen')); });
+      s.style.setProperty('--p', s.value + '%');
+      s.addEventListener('input', () => { v.textContent = s.value + ' %'; s.style.setProperty('--p', s.value + '%'); throttled(d.id, () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen')); });
       r.append(s, v); row.append(r);
     }
     return row;
   }
+  // Ny design 2026-11: "Tänt nu" överst, rummen som rutor och ett blad per rum med alla dess lampor.
+  let roomOpen = null;   // 'våning|rum' för rummet vars blad är öppet
   function renderLights() {
     const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
-    $('gLights').textContent = L.length ? onCount + ' / ' + L.length : '–'; fitGl($('gLights'));
+    $('gLights').textContent = L.length ? onCount + ' av ' + L.length : '–'; fitGl($('gLights'));
     $('glLights').classList.toggle('lit', onCount > 0);
     const st = $('lightStatus'); st.replaceChildren();
     // Innebelysningen styrs av AI Skumt inne (< 120 lux), utebelysningen av AI Skumt ute (< 40 lux). Däremellan: skymning.
@@ -696,25 +824,50 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (wd !== undefined) st.append(mk('span', 'chip', wd ? 'Arbetsdag' : 'Ledig dag'));
     const lm = varVal('AI Ledig dag imorgon');
     if (lm !== undefined) st.append(mk('span', 'chip', 'Kvällsljus släcks ' + (lm ? '22:30' : '22:00')));
+    st.hidden = !st.children.length;
 
     const floors = {};
     L.forEach((d) => { const f = floorOf(d.zone), r = roomOf(d.zone); ((floors[f] = floors[f] || {})[r] = floors[f][r] || []).push(d); });
-    const frag = document.createDocumentFragment();
-    Object.keys(floors).sort((a, b) => floorOrder(a) - floorOrder(b) || a.localeCompare(b, 'sv')).forEach((f) => {
-      frag.append(mk('div', 'h2', f));
-      Object.keys(floors[f]).sort((a, b) => a.localeCompare(b, 'sv')).forEach((r) => {
-        const ds = floors[f][r].sort((a, b) => String(a.name).localeCompare(String(b.name), 'sv'));
-        const lit = ds.filter((d) => val(d, 'onoff') === true).length;
-        const card = mk('section', 'card' + (lit ? ' lit' : '')); card.setAttribute('aria-label', f + ', ' + r);
-        const h = mk('div', 'rh'); const t = mk('div', 't');
-        t.append(mk('div', 'n', r), mk('div', 'c', lit ? lit + ' av ' + ds.length + ' tända' : 'Alla släckta'));
-        h.append(t, sw(lit > 0, (lit ? 'Släck ' : 'Tänd ') + r, () => setCaps(Object.fromEntries(ds.map((d) => [d.id, { onoff: !lit }])), lit ? 'Släckningen' : 'Tändningen')));
-        card.append(h); ds.forEach((d) => card.append(lampRow(d))); frag.append(card);
-      });
-    });
+    const roomToggle = (ds, r) => { const lit = ds.filter((d) => val(d, 'onoff') === true).length; return sw(lit > 0, (lit ? 'Släck ' : 'Tänd ') + r, () => setCaps(Object.fromEntries(ds.map((d) => [d.id, { onoff: !lit }])), lit ? 'Släckningen' : 'Tändningen')); };
     const focusId = document.activeElement && document.activeElement.id;
-    if (!(focusId && focusId.startsWith('dim-'))) $('rooms').replaceChildren(frag);
-    if (!L.length && devices.length) $('rooms').replaceChildren(mk('p', 'empty', 'Inga lampor hittades i Homey.'));
+    if (!(focusId && focusId.startsWith('dim'))) {   // inte mitt i ett dimmerdrag (dim- i listan, dims- i rumsbladet)
+      // Tänt nu
+      const lit = L.filter((d) => val(d, 'onoff') === true).sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || roomOf(a.zone).localeCompare(roomOf(b.zone), 'sv') || String(a.name).localeCompare(String(b.name), 'sv'));
+      $('litN').textContent = L.length ? String(lit.length) : '';
+      const ll = $('litList');
+      if (lit.length) ll.replaceChildren(...lit.map((d) => { const row = lampRow(d), s2 = row.querySelector('.st'); if (s2) s2.textContent += ' · ' + roomOf(d.zone); return row; }));
+      else ll.replaceChildren(mk('div', 'empty', !devices.length ? 'Hämtar lampor…' : L.length ? 'Allt är släckt.' : 'Inga lampor hittades i Homey.'));
+      // Rum som rutor, grupperade per våning
+      const frag = document.createDocumentFragment();
+      Object.keys(floors).sort((a, b) => floorOrder(a) - floorOrder(b) || a.localeCompare(b, 'sv')).forEach((f) => {
+        frag.append(mk('div', 'flr', f));
+        const grid = mk('div', 'tgrid');
+        Object.keys(floors[f]).sort((a, b) => a.localeCompare(b, 'sv')).forEach((r) => {
+          const ds = floors[f][r].sort((a, b) => String(a.name).localeCompare(String(b.name), 'sv'));
+          const n = ds.filter((d) => val(d, 'onoff') === true).length;
+          const t = mk('div', 'tile' + (n ? ' lit' : '')); t.setAttribute('role', 'group'); t.setAttribute('aria-label', f + ', ' + r);
+          const ob = mk('button', 'open', r); ob.type = 'button'; ob.setAttribute('aria-haspopup', 'dialog'); ob.title = 'Visa lamporna i ' + r;
+          ob.addEventListener('click', () => { roomOpen = f + '|' + r; renderLights(); });
+          const ts = mk('div', 'ts'); ts.append(mk('span', '', n ? n + ' av ' + ds.length + ' på' : 'Släckt'), roomToggle(ds, r));
+          t.append(ob, ts); grid.append(t);
+        });
+        frag.append(grid);
+      });
+      $('rooms').replaceChildren(frag);
+      if (!L.length && devices.length) $('rooms').replaceChildren(mk('p', 'empty', 'Inga lampor hittades i Homey.'));
+      // Rumsbladet
+      const parts = roomOpen ? roomOpen.split('|') : null, rds = parts && floors[parts[0]] && floors[parts[0]][parts[1]];
+      if (rds) {
+        const n = rds.filter((d) => val(d, 'onoff') === true).length;
+        const body = sheetOpen('room', parts[1], () => { roomOpen = null; });
+        const head = mk('div', 'card'), h = mk('div', 'rh'), tt = mk('div', 't'); h.style.borderBottom = '0';
+        tt.append(mk('div', 'n', 'Hela rummet'), mk('div', 'c', n ? n + ' av ' + rds.length + ' tända' : 'Alla släckta'));
+        h.append(tt, roomToggle(rds, parts[1])); head.append(h);
+        const list = mk('div', 'card');
+        rds.forEach((d) => { const row = lampRow(d), r2 = row.querySelector('input[type=range]'); if (r2) r2.id = 'dims-' + d.id; list.append(row); });
+        body.replaceChildren(head, list);
+      } else { roomOpen = null; if (SH.key === 'room') sheetClose(false); }
+    }
     $('offInside').disabled = !L.some((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone));
     $('offAll').disabled = !onCount;
     $('scenesWrap').hidden = !moods.length;
@@ -809,15 +962,17 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       }),
     ] : [];
     kv(g, rows);
-    const more = mk('button', 'more', open ? 'Mindre info' : 'Mer info'); more.type = 'button';
-    more.setAttribute('aria-expanded', open ? 'true' : 'false');
-    more.addEventListener('click', () => { hpOpen[d.id] = !open; renderTemp(); });
-    const mw = mk('div'); mw.style.padding = '0 16px 14px'; mw.style.fontSize = '.86rem'; mw.append(more);
+    // Mer info öppnas som blad (ny design 2026-11) i stället för att fällas ut i kortet
+    const mw = mk('button', 'hpmore'); mw.type = 'button'; mw.setAttribute('aria-haspopup', 'dialog');
+    mw.append(mk('span', '', 'Mer info'), mk('b', '', '›')); mw.lastChild.setAttribute('aria-hidden', 'true');
+    mw.addEventListener('click', () => { hpOpen[d.id] = true; renderTemp(); });
     const right = mk('div', 'step');
     // Bara visning (ärvärde, status, driftläge): börvärdet via Homey slog inte igenom i Thermia, +/− borttaget 2026-11-09.8. Börvärdet syns under Mer info.
     row.append(left, right); row.style.borderBottom = '0'; row.style.alignItems = 'start';
     const box = mk('div'); box.style.borderBottom = '1px solid var(--line)'; box.append(row);
-    box.append(g, mw);
+    box.append(mw);
+    if (open) { g.style.padding = ''; g.style.fontSize = ''; const body = sheetOpen('hp' + d.id, name, () => { hpOpen[d.id] = false; }); body.replaceChildren(g); }
+    else if (SH.key === 'hp' + d.id) sheetClose(false);
     return box;
   }
   function renderTemp() {
@@ -873,7 +1028,18 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
           if (has(d, 'se_onoff')) setCaps({ [d.id]: { se_onoff: !val(d, 'se_onoff') } }, 'Ändringen');
           else setCaps({ [d.id]: { thermostat_mode: isOff ? 'heat' : 'off' } }, 'Ändringen');
         });
-        chips.append(mb);
+        const modes = has(d, 'se_onoff') && settable(d, 'thermostat_mode') ? opts(d, 'thermostat_mode').filter((x) => x.id !== 'off') : [];
+        if (modes.length) {
+          // Lägesväljare (ny design 2026-11, beslut av Ulf): Av = se_onoff av; ett läge = på i det läget (samma capabilities som förut).
+          const sg = mk('div', 'mini modes'); sg.setAttribute('role', 'group'); sg.setAttribute('aria-label', 'Läge ' + name);
+          [['off', 'Av']].concat(modes.map((x) => [x.id, ML[x.id] || sv(x.title)])).forEach(([id, label]) => {
+            const on = id === 'off' ? isOff : !isOff && mode === id;
+            const b = mk('button', '', label); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+            b.addEventListener('click', () => { if (on) return; setCaps({ [d.id]: id === 'off' ? { se_onoff: false } : { se_onoff: true, thermostat_mode: id } }, 'Lägesändringen'); });
+            sg.append(b);
+          });
+          chips.append(sg);
+        } else chips.append(mb);
         if (val(d, 'alarm_filter')) chips.append(mk('span', 'chip warn', 'Filter behöver rengöras'));
         left.append(chips);
       }
@@ -889,6 +1055,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         const plus = mk('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'Höj ' + name); plus.addEventListener('click', step(0.5));
         right.append(minus, tv, plus);
       }
+      if (has(d, 'se_onoff') && val(d, 'se_onoff') === false) right.classList.add('off');   // börvärdet tonas ner när pumpen är av
       row.append(left, right); tc.append(row);
     });
     // Termostater som Homey-flödet AI 16 sköter (puck/uttag + givare). Börvärde och på/av i AI Termostater, läget i AI Termostat status.
@@ -940,13 +1107,18 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const rooms = T.filter((d) => d.type !== 'thermostat' && !(out && d.id === out.id))
       .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
     const sg = $('sensors'); sg.replaceChildren();
+    const perRoom = {}; rooms.forEach((d) => { const k = roomOf(d.zone); perRoom[k] = (perRoom[k] || 0) + 1; });
     rooms.forEach((d) => {
-      const c = mk('div', 'tc');
+      // Ny design 2026-11: rent rumsnamn (givarens namn bara om rummet har flera givare) och rum över 26° markerade som Varmt
+      const tv = Number(val(d, 'measure_temperature')), hot = Number.isFinite(tv) && tv > 26 && !OUTSIDE.test(d.zone);
+      const c = mk('div', 'tc' + (hot ? ' hot' : ''));
       const room = roomOf(d.zone);
-      c.append(mk('div', 'n', room === String(d.name) ? room : room + ' · ' + d.name));
+      const nm = mk('div', 'n'); nm.append(mk('span', 'nt', room)); c.append(nm);
+      if (perRoom[room] > 1 && room !== String(d.name).trim()) c.append(mk('div', 'dn', String(d.name).trim()));
       const t = mk('div', 't num'); t.append(document.createTextNode(f1.format(val(d, 'measure_temperature'))), mk('small', '', ' °C')); c.append(t);
       const s = mk('div', 's num');
       if (has(d, 'measure_humidity')) s.append(mk('span', '', f0.format(val(d, 'measure_humidity')) + ' % fukt'));
+      if (hot) s.append(mk('span', 'hotl', 'Varmt'));
       // Samma regel som push-larmet i AI 10 (2026-11-14.7): under 10 %, eller batterilarm om enheten saknar procentvärde
       const lowB = has(d, 'measure_battery') ? val(d, 'measure_battery') < 10 : val(d, 'alarm_battery') === true;
       if (lowB) s.append(mk('span', 'lowb', 'Batteri ' + (has(d, 'measure_battery') ? f0.format(val(d, 'measure_battery')) + ' %' : 'lågt') + (battType(d) ? ' · byt ' + battType(d) : '')));
@@ -993,13 +1165,16 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   let priceDay = 0, priceKind = 'imp';
   let bhOpen = false, bhDay = 0, bhScrub = false;   // Husbatteri → Historik
   function renderBattHist() {
-    const box = $('battHist'); if (!box || bhScrub) return;   // ritas inte om mitt i ett drag (som elpriset)
+    let box = $('battHist'); if (!box || bhScrub) return;   // ritas inte om mitt i ett drag (som elpriset)
     box.replaceChildren();
     const H = jsonVar('AI Batterihistorik'), days = (H && Array.isArray(H.days)) ? H.days : [];
-    if (!days.length) return;
-    const tb = mk('button', 'btn' + (bhOpen ? ' on' : ''), bhOpen ? 'Dölj historik' : 'Historik'); tb.type = 'button'; tb.setAttribute('aria-expanded', bhOpen ? 'true' : 'false');
-    tb.addEventListener('click', () => { bhOpen = !bhOpen; renderBattHist(); }); box.append(tb);
-    if (!bhOpen) return;
+    if (!days.length) { if (SH.key === 'bh') sheetClose(false); return; }
+    // Historiken öppnas som blad (ny design 2026-11); knappen ligger kvar i batterikortet
+    const tb = mk('button', 'btn', 'Historik'); tb.type = 'button'; tb.setAttribute('aria-haspopup', 'dialog');
+    tb.addEventListener('click', () => { bhOpen = true; renderBattHist(); }); box.append(tb);
+    if (!bhOpen) { if (SH.key === 'bh') sheetClose(false); return; }
+    box = sheetOpen('bh', 'Husbatteri · historik', (why) => { bhOpen = false; if (why !== 'tab') openMore('batt'); });   // stängs historiken visas batteribladet igen
+    box.replaceChildren();
     if (bhDay >= days.length) bhDay = 0;
     const D = days[bhDay], iv = Number(H.iv) || 5, v = D.v || [], pw = Array.isArray(D.p) ? D.p : [], n = v.length || 1440 / iv;
     const ok = (y) => y !== null && y !== undefined && Number.isFinite(Number(y));
@@ -1220,27 +1395,34 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const sorted = arr.slice().sort((a, b) => a - b), q = (f) => sorted[Math.floor(f * (sorted.length - 1))];
     const level = (v) => v >= q(0.9) ? ['Mycket dyrt', 'bad'] : v >= q(0.66) ? ['Dyrt', 'warn'] : v <= q(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'acc'];
     const head = mk('div', 'phead');
-    const setHead = (v, sub, chip) => {
-      const top = mk('div', 'ptop'), big = mk('div', 'big num');
+    // Ny design 2026-11: Köp och Sälj bredvid varandra – valt pris stort till vänster, det andra till höger (imp/exp ur AI Elpriser)
+    const setHead = (v, ov, sub, chip) => {
+      const top = mk('div', 'ptop'), cols = mk('div', 'pcols');
+      const c1 = mk('div', 'pcol'), big = mk('div', 'big num');
       big.style.color = priceColor(v, mn, mx, priceKind);
       big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh'));
-      top.append(big); if (chip) top.append(mk('span', 'chip ' + chip[1], chip[0]));
+      const l1 = mk('div', 'plbl', priceKind === 'imp' ? 'Köp' : 'Sälj'); if (chip) l1.append(mk('span', 'chip ' + chip[1], chip[0]));
+      c1.append(l1, big);
+      const c2 = mk('div', 'pcol pcol2'), b2 = mk('div', 'big2 num');
+      b2.append(document.createTextNode(Number.isFinite(Number(ov)) && ov !== null ? f2.format(ov) : '–'), mk('small', '', ' kr/kWh'));
+      if (priceKind === 'exp') b2.style.color = 'var(--price)';
+      c2.append(mk('div', 'plbl', priceKind === 'imp' ? 'Sälj' : 'Köp'), b2);
+      cols.append(c1, c2); top.append(cols);
       head.replaceChildren(top, mk('div', 'psub num', sub));
     };
-    const otherTxt = (v) => (priceKind === 'imp' ? 'export ' : 'import ') + f2.format(v) + ' kr';
     const showDefault = () => {
       if (priceDay === 0 && arr[idx] != null) {
         const left = Math.max(1, Math.ceil((t0 + (idx + 1) * iv - Date.now()) / 60000));
-        setHead(arr[idx], 'Nu · ' + left + ' min kvar · ' + otherTxt(day[otherK][idx]), priceKind === 'imp' && level(arr[idx]));
+        setHead(arr[idx], day[otherK][idx], 'Nu · ' + left + ' min kvar på kvarten', priceKind === 'imp' && level(arr[idx]));
       } else {
-        setHead(avg(arr), 'Snitt ' + (priceDay === 0 ? 'idag' : 'imorgon') + ' · ' + otherTxt(avg(day[otherK])), null);
+        setHead(avg(arr), avg(day[otherK]), 'Snitt ' + (priceDay === 0 ? 'idag' : 'imorgon'), null);
       }
     };
     showDefault();
     const ctr = mk('div', 'pctl');
     ctr.append(
       segBtns([[0, 'Idag'], [1, 'Imorgon', P.days.length < 2]], priceDay, (v) => { priceDay = v; renderPrice(dev); }),
-      segBtns([['imp', 'Import'], ['exp', 'Export']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
+      segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
     // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
     const onScrub = (i) => {
       if (i < 0) {
@@ -1250,13 +1432,14 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       }
       priceScrubbing = true;
       const st = dayT0 + i * iv;
-      setHead(arr[i], hm(st) + '–' + hm(st + iv) + ' · ' + otherTxt(day[otherK][i]), priceKind === 'imp' && level(arr[i]));
+      setHead(arr[i], day[otherK][i], hm(st) + '–' + hm(st + iv), priceKind === 'imp' && level(arr[i]));
     };
     pc.append(head, ctr, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
     // Lägst/högst under grafen för både idag och imorgon
     const foot = mk('div', 'rangel num');
     foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slotStart(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slotStart(mx)));
     pc.append(foot);
+    if (priceKind === 'exp') pc.append(mk('div', 'ptip', 'Högst säljpris ' + (priceDay === 0 ? 'idag' : 'imorgon') + ' kl ' + slotStart(mx) + ', ' + f2.format(mx) + ' kr/kWh. Gäller överskott från både solceller och batteri.'));
     if (P.days.length < 2) pc.append(mk('div', 'fine', 'Morgondagens priser kommer vid 13-tiden.'));
   }
   /* ---------- apparater: förbrukning och kostnad från flödet AI 14 (variabeln AI Förbrukning) ---------- */
@@ -1338,6 +1521,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     $('glLoad').classList.toggle('buy', !!grid && g > 30); $('glLoad').classList.toggle('sell', !!grid && g < -30);
     $('glLoad').title = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '';
     setFlow('fSun', s, true); setFlow('fGrid', g, g >= 0); setFlow('fBatt', b, b >= 0); setFlow('fEv', e, false);
+    flowSummary(!!(grid || sun || batt), g, s, b, e);
 
     renderPrice(price);
     renderApps();
@@ -1381,6 +1565,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
         al.lastElementChild.textContent = (why ? why + '. ' : '') + 'Kontakten fungerar – felet sitter i batterisystemet.';
       }
     }
+    // Batterilarmet syns även på Energi-sidan, eftersom batterikortet ligger i ett blad (ny design 2026-11)
+    const am = $('battAlertMain');
+    if (am && al) { am.hidden = al.hidden; am.firstElementChild.textContent = al.firstElementChild.textContent; am.lastElementChild.textContent = al.lastElementChild.textContent; }
     const bst = $('vBattSt');
     if (bst) {
       const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bFault ? 'Står still – fel' : bState;
@@ -1407,6 +1594,9 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       }
     }
     renderBattHist();
+    // Laddnivå som ring runt batteri- och bilnoden i flödesdiagrammet (ny design 2026-11)
+    const ring = (id, p) => { const el = $(id); if (!el) return; const C = 2 * Math.PI * 36, v = Math.max(0, Math.min(100, Number(p) || 0)); el.setAttribute('stroke-dasharray', (p == null ? 0 : C * v / 100).toFixed(1) + ' ' + C.toFixed(1)); };
+    ring('rBatt', batt && has(batt, 'measure_battery') ? val(batt, 'measure_battery') : null);
     const soc = $('soc'); soc.hidden = !(batt && has(batt, 'measure_battery'));
     if (!soc.hidden) batGfx(soc, val(batt, 'measure_battery'), null, (Number(val(batt, 'measure_power')) || 0) > 50);
     const EVS = { plugged_out: 'Ingen bil ansluten', plugged_in: 'Bil ansluten', plugged_in_charging: 'Laddar', plugged_in_paused: 'Pausad' };
@@ -1417,7 +1607,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     evSt.className = evState === 'plugged_in_charging' ? 'chg' : '';
     $('evPw').textContent = ev ? [e > 0 || evState === 'plugged_in_charging' ? W(e) : '', has(ev, 'target_charger_current') ? 'max ' + f0.format(val(ev, 'target_charger_current')) + ' A' : ''].filter(Boolean).join(' · ') : '';
     const cSoc = car ? val(car, 'measure_battery') : null, cTgt = car ? val(car, 'charging_target_level') : null;
-    const carRow = $('carRow'); carRow.hidden = cSoc == null;
+    const carRow = $('carRow'); carRow.hidden = cSoc == null; ring('rEv', cSoc);
     if (!carRow.hidden) {
       const pc = Math.max(0, Math.min(100, Number(cSoc))), tg = cTgt == null ? null : Math.max(0, Math.min(100, Number(cTgt)));
       $('carName').textContent = String(car.name || 'Bil').trim();
@@ -1447,7 +1637,57 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       has(sun, 'meter_power.YEAR') && ['I år', f0.format(val(sun, 'meter_power.YEAR')) + ' kWh'],
       has(sun, 'meter_power.TOTAL') && ['Totalt', f1.format(val(sun, 'meter_power.TOTAL') / 1000) + ' MWh'],
     ] : [['Solceller', 'Hittades inte']]);
+    renderMore(GM, sun, grid);
   }
+  // Förklarande mening och källstapel under flödesdiagrammet (ny design 2026-11): samma tal som diagrammet, inget nytt räknas fram.
+  function flowSummary(ok, g, s, b, e) {
+    const say = $('flowSay'), src = $('flowSrc'); if (!say || !src) return;
+    say.hidden = !ok; src.hidden = !ok; if (!ok) return;
+    const S2 = [['Sol', s, 'var(--sun)'], ['Batteri', Math.max(0, b), 'var(--batt)'], ['Nät', Math.max(0, g), 'var(--grid)']].filter((x) => x[1] > 15);
+    const tot = S2.reduce((a, x) => a + x[1], 0) || 1;
+    const out = [];
+    if (g < -15) out.push('säljer ' + W(-g) + ' till nätet');
+    if (b < -15) out.push('laddar batteriet med ' + W(-b));
+    if (e > 15) out.push('laddar bilen med ' + W(e));
+    const main = S2.slice().sort((x, y) => y[1] - x[1])[0];
+    const lead = !main ? 'Huset drar ingen el just nu' : main[0] === 'Sol' ? 'Solen driver huset' : main[0] === 'Batteri' ? 'Batteriet driver huset' : 'Huset köper el från nätet';
+    say.textContent = lead + (out.length ? ' och ' + out.join(' och ') : '') + '.';
+    const bar = $('flowBar'), leg = $('flowLeg'); bar.replaceChildren(); leg.replaceChildren();
+    src.hidden = !S2.length;
+    S2.forEach(([n, v, c]) => {
+      const i = mk('i'); i.style.flex = String(v); i.style.background = c; bar.append(i);
+      const l = mk('span'), k = mk('i'); k.style.background = c; l.append(k, document.createTextNode(n + ' ' + f0.format(Math.round(v / tot * 100)) + ' %')); leg.append(l);
+    });
+  }
+  // Raderna Månad/Solceller/Faser/Apparater (ny design 2026-11): kort sammanfattning, detaljerna öppnas som blad med de befintliga korten.
+  function renderMore(GM, sun, grid) {
+    const set = (id, t) => { const el = $(id); if (el) el.textContent = t || ''; };
+    const row = (k) => document.querySelector('#moreList [data-more="' + k + '"]');
+    if (GM) { const n = GM.imp.kr - GM.exp.kr; set('mMan', monName(GM.m) + ' · ' + (n < 0 ? '+' + f0.format(-n) : '−' + f0.format(n)) + ' kr'); } else set('mMan', '');
+    row('man').hidden = !!$('monBlock').hidden;
+    set('mSol', !sun ? '' : has(sun, 'meter_power.YEAR') ? f0.format(val(sun, 'meter_power.YEAR')) + ' kWh i år' : W(Math.max(0, Number(val(sun, 'measure_power')) || 0)));
+    row('sol').hidden = !sun;
+    const ph = ['L1', 'L2', 'L3'].filter((L) => grid && has(grid, 'measure_current.' + L)).map((L) => f1.format(val(grid, 'measure_current.' + L)));
+    set('mFas', ph.length ? ph.join(' · ') + ' A' : ''); row('fas').hidden = !ph.length;
+    // Husbatteri och Laddbox & bil (blad sedan ny design 2026-11): samma texter som i flödet och kortet
+    set('mBatt', [$('vBatt').textContent, $('vBattSt').textContent].filter((x) => x && x !== '–').join(' · '));
+    const sst = $('solSt'), solBad = !!sst && !$('solBox').hidden && sst.classList.contains('bad');
+    set('mEv', $('evSt').textContent + (solBad ? ' · fel i solladdningen' : ''));
+    const A = jsonVar('AI Förbrukning');
+    if (A && A.u) { const run = [['disk', 'Diskmaskin'], ['tvatt', 'Tvättmaskin']].filter(([k]) => A[k] && A[k].run).map(([k, n]) => A[k].n || n); set('mApp', run.length ? run.join(', ') + ' pågår' : ''); } else set('mApp', '');
+  }
+  const MORE = { batt: ['Husbatteri', 'battCard'], ev: ['Laddbox och bil', 'evCard'], man: ['Månad', 'mvMan'], sol: ['Solceller', 'mvSol'], fas: ['Faser', 'mvFas'], app: ['Apparater', 'mvApp'] };
+  function openMore(k) { const m = MORE[k]; if (m) sheetNode('more-' + k, m[0], $(m[1])); }
+  document.querySelectorAll('[data-more]').forEach((b) => {
+    const go = () => openMore(b.dataset.more);
+    b.addEventListener('click', go);
+    if (b.getAttribute('role') === 'button') b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+  document.querySelectorAll('[data-go]').forEach((n) => {
+    const go = () => { const t = $(n.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    n.addEventListener('click', go);
+    n.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
 
   /* ---------- robot vacuums ---------- */
   // Två sorters robotar i Homey: Roborock-appen (is_cleaning, rum, sugkraft …) och Matter (operational_state).
@@ -1658,9 +1898,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     const docked = val(d, 'dock') === true || (charging && !cleaning);
     const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
     const nx = nextRun(d.id);
-    wrap.append(roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label]));
+    const hero = roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label]);
+    wrap.append(hero);
     const al = alarmChips(d); if (al) wrap.append(al);
-    const last = lastJob(d); if (last) wrap.append(...last);
+    const last = lastJob(d);
 
     const B = [];
     if (cleaning && !paused) {
@@ -1671,31 +1912,35 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if ((cleaning || paused || !docked) && settable(d, 'cancel_and_dock')) B.push(actBtn(d, 'Åk hem', '', { cancel_and_dock: true }, 'Roboten åker hem'));
     // Punktstäda borttagen 2026-11-12: Roborock-appens spot_clean får Saros 10R att säga "hitta roboten", och kortet clean_spot startar inget från stationen
     if (settable(d, 'locate')) B.push(actBtn(d, 'Hitta roboten', '', { locate: true }, 'Roboten piper'));
-    const sb = mk('button', 'btn' + (schedOpen[d.id] ? ' on' : ''), schedOpen[d.id] ? 'Stäng schema' : 'Schema'); sb.type = 'button';
-    sb.setAttribute('aria-expanded', schedOpen[d.id] ? 'true' : 'false');
-    sb.addEventListener('click', () => { schedOpen[d.id] = !schedOpen[d.id]; if (!schedOpen[d.id] && draft && draft.dev === d.id) draft = null; renderRobot(); });
-    B.push(sb);
-    const q = quick(B); if (q) wrap.append(q);
-    if (schedOpen[d.id]) wrap.append(...schedPanel(d));
-
-    // Städinställningar (rum, läge, sugkraft, moppning, rutt och station) bakom en vanlig vit knapp (2026-11-10.7).
-    const open = !!setOpen[d.id];
-    const tb = mk('button', 'btn' + (open ? ' on' : ''), 'Städinställningar'); tb.type = 'button';
-    tb.setAttribute('aria-expanded', open ? 'true' : 'false'); tb.style.width = '100%'; tb.style.marginTop = '10px';
-    tb.addEventListener('click', () => { setOpen[d.id] = !setOpen[d.id]; renderRobot(); });
-    wrap.append(tb);
-    if (open) {
-      wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
-      wrap.append(...choice(d, 'clean_mode', 'Städläge'));
-      wrap.append(...choice(d, 'suction_power', 'Sugkraft'));
-      wrap.append(...choice(d, 'scrub_intensity', 'Moppning'));
-      wrap.append(...choice(d, 'mop_route', 'Mopprutt'));
-      const S = [];
-      if (docked && settable(d, 'wash_mop')) S.push(actBtn(d, 'Tvätta moppen', '', { wash_mop: true }, 'Moppen tvättas'));
-      if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
-      if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm dammbehållaren', '', { empty_dustbin: true }, 'Stationen tömmer')); // sist = hel bredd, så ordet inte bryts
-      const qs = quick(S); if (qs) { wrap.append(mk('div', 'h2', 'Station')); wrap.append(qs); }
-    }
+    // Ny design 2026-11: knapparna i statuskortet, stationsåtgärderna där också (handlingar, inte inställningar),
+    // Städa rum och Senaste städning under kortet, Schema och Städinställningar som rader som öppnar blad.
+    const q = quick(B); if (q) hero.append(q);
+    const S = [];
+    if (docked && settable(d, 'wash_mop')) S.push(actBtn(d, 'Tvätta moppen', '', { wash_mop: true }, 'Moppen tvättas'));
+    if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
+    if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm påse', '', { empty_dustbin: true }, 'Stationen tömmer'));
+    if (S.length) { const qs = mk('div', 'quick3'); S.forEach((x) => qs.append(x)); hero.append(qs); }
+    wrap.append(...choice(d, 'clean_room_pick', 'Städa rum', 'Städar'));
+    if (last) wrap.append(...last);
+    const lst = mk('div', 'card');
+    const lrow = (label, sub, onClick) => {
+      const b = mk('button', 'lrow'); b.type = 'button'; b.setAttribute('aria-haspopup', 'dialog');
+      const ch = mk('span', 'chev', '›'); ch.setAttribute('aria-hidden', 'true');
+      b.append(mk('span', 'ln2', label), mk('span', 'ls', sub || ''), ch); b.addEventListener('click', onClick); return b;
+    };
+    lst.append(lrow('Schema', nx ? 'Nästa ' + nx.label : '', () => { schedOpen[d.id] = true; renderRobot(); }));
+    lst.append(lrow('Städinställningar', has(d, 'clean_mode') ? sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))) : '', () => { setOpen[d.id] = true; renderRobot(); }));
+    wrap.append(lst);
+    const nm = String(d.name).trim();
+    if (schedOpen[d.id]) {
+      const body = sheetOpen('sched' + d.id, 'Schema · ' + nm, () => { schedOpen[d.id] = false; if (draft && draft.dev === d.id) draft = null; });
+      body.replaceChildren(...schedPanel(d));
+    } else if (SH.key === 'sched' + d.id) sheetClose(false);
+    if (setOpen[d.id]) {
+      const body = sheetOpen('set' + d.id, 'Städinställningar · ' + nm, () => { setOpen[d.id] = false; });
+      const parts = [...choice(d, 'clean_mode', 'Städläge'), ...choice(d, 'suction_power', 'Sugkraft'), ...choice(d, 'scrub_intensity', 'Moppning'), ...choice(d, 'mop_route', 'Mopprutt')];
+      body.replaceChildren(...(parts.length ? parts : [mk('div', 'empty', 'Inga inställningar att ändra för roboten.')]));
+    } else if (SH.key === 'set' + d.id) sheetClose(false);
     return wrap;
   }
 
@@ -1724,16 +1969,43 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     return wrap;
   }
 
+  // Robotväljare (ny design 2026-11): ett kort per robot överst, den valda visas i detalj.
+  let robSel = null;
+  function robStat(d) {
+    if (d.available === false) return ['Ej nåbar', ''];
+    if (isRR(d)) {
+      const cleaning = val(d, 'is_cleaning') === true, paused = val(d, 'pause_clean') === true;
+      const charging = /charg/i.test(String(val(d, 'battery_charging_state') || '')) && !/dis/i.test(String(val(d, 'battery_charging_state')));
+      const docked = val(d, 'dock') === true || (charging && !cleaning);
+      return paused ? ['Pausad', 'busy'] : cleaning ? ['Städar', 'busy'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
+    }
+    const o = OPS[Number(val(d, 'operational_state'))]; return o ? [o[0], o[1] === 'run' ? 'busy' : ''] : ['Okänt läge', ''];
+  }
   function renderRobot() {
     const ae = document.activeElement;
-    if (draft && ae && ae.classList && ae.classList.contains('tin') && $('robots').contains(ae)) return;
+    if (draft && ae && ae.classList && ae.classList.contains('tin') && ($('robots').contains(ae) || $('sheet').contains(ae))) return;
     const all = devices.filter((d) => d.type === 'vacuumcleaner');
     const rrNames = new Set(all.filter(isRR).map((d) => String(d.name).trim().toLowerCase()));
     const R = all.filter((d) => isRR(d) || !rrNames.has(String(d.name).trim().toLowerCase()))
       .sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || String(a.name).localeCompare(String(b.name), 'sv'));
     const box = $('robots');
     if (!R.length) { box.replaceChildren(devices.length ? mk('p', 'empty', 'Ingen robotdammsugare hittades i Homey.') : mk('div', 'skel')); return; }
-    box.replaceChildren(...R.map((d) => (isRR(d) ? rrCard(d) : matterCard(d))));
+    if (!R.some((d) => d.id === robSel)) robSel = R[0].id;
+    const parts = [];
+    if (R.length > 1) {
+      const sel = mk('div', 'rsel'); sel.setAttribute('role', 'group'); sel.setAttribute('aria-label', 'Välj robot');
+      R.forEach((d) => {
+        const [st, c] = robStat(d), on = d.id === robSel;
+        const b = mk('button', on ? 'on' : ''); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.append(mk('small', '', floorOf(d.zone)), mk('b', '', String(d.name).trim()), mk('span', c, st + (has(d, 'measure_battery') ? ' · ' + f0.format(val(d, 'measure_battery')) + ' %' : '')));
+        b.addEventListener('click', () => { robSel = d.id; renderRobot(); });
+        sel.append(b);
+      });
+      parts.push(sel);
+    }
+    const d = R.find((x) => x.id === robSel);
+    parts.push(isRR(d) ? rrCard(d) : matterCard(d));
+    box.replaceChildren(...parts);
   }
 
   // ===== Väderprognos (Open-Meteo, MET Nordic-modellen – samma familj som SMHI/Yr använder i Norden) =====
