@@ -16,6 +16,10 @@ Det här repot är **huvudversionen** av Hem Vinäs-appen. Alla ändringar görs
 - `config.js` – Client ID, Worker-adress, Redirect URL. Inga hemligheter.
 - `worker/worker.js` – Cloudflare Worker `hem-vinas-auth` (https://hem-vinas-auth.uffes-mora.workers.dev). Ändringar här måste klistras in manuellt i Cloudflare (Edit code → Deploy) av användaren.
 
+## Säkerhetskopia (sedan 2026-11-14)
+- Schemalagd uppgift "Hem Vinäs – veckobackup till Google Drive": torsdagar 10:30 (Europe/Stockholm), körs i molnet i auto-läge. Gör ett arkiv `hem-vinas-backup-ÅÅÅÅ-MM-DD.tar.gz` (appen via `git archive`, hela git-historiken som bundle, `homey/variabler.json` med AI-variablernas namn/typ + värden för AI Städschema, AI Termostater, AI Solladdning, `homey/flodeslista.json`, `ÅTERSKAPA.md`) och laddar upp till Drive-mappen "Backup Hem Vinäs appen" (id `1235jUwo4GGlSX5Jxw-XWq8CjgkIZw2Pq`). Behåller bara de två senaste backuperna, äldre går till papperskorgen.
+- Ligger inte i backupen: Cloudflare Workerns Client Secret (spara i lösenordshanterare) och Homeys flöden i sig (Homeys egen molnbackup under Inställningar → Säkerhetskopior). Ändras Drive-mappen eller repot måste uppgiften uppdateras.
+
 ## Regler
 - Lägg aldrig hemligheter (Client Secret, tokens) i repot. Repot är publikt.
 - Homey API-klientens scopes: zone.readonly, device.readonly, device.control, logic.readonly, mood.readonly, mood.set, samt homey.logic (för att spara städschemat i variabeln AI Städschema). Behöver en ny funktion fler scopes måste användaren lägga till dem i Homey Developer Tools.
