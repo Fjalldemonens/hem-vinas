@@ -3,10 +3,12 @@
 // variabeln "AI Batterihistorik" som appen Hem Vinäs ritar som diagram under Husbatteri → Historik.
 //   {"u":ms,"iv":5,"days":[{"d":"2026-11-14","v":[25.1,24,null,…]},{"d":"2026-11-13","v":[…]}]}
 //   v = ett värde per 5-minutersfack från 00:00 lokal tid (288 per dygn), null = inget värde, en decimal.
+//   p = batteriets effekt i W per fack (+ = laddar, − = laddar ur), heltal (sedan 2026-11-14, utökning av formatet).
 
 // === KONFIG (husspecifikt) ===
 const BATTERY = '';      // enhets-id; tomt = första enheten av typ battery som inte är en elbil (har inte charging_target_level)
 const CAP = 'measure_battery';
+const PCAPS = ['energy_power', 'measure_power'];   // Insights loggar enhetens effekt som energy_power; + = laddar (Homevolt, kontrollerat 2026-11-14)
 const TZ = 'Europe/Stockholm';
 const IV = 5;            // minuter per fack
 // === SLUT KONFIG ===
@@ -23,19 +25,28 @@ const parts = (ms) => {
   return { d: p.year + '-' + p.month + '-' + p.day, slot: Math.floor((Number(p.hour) * 60 + Number(p.minute)) / IV) };
 };
 const N = 1440 / IV;
-const days = {};
-for (const res of ['today', 'yesterday']) {
-  let r; try { r = await Homey.insights.getLogEntries({ id: 'homey:device:' + id + ':' + CAP, resolution: res }); } catch (e) { log('Insights ' + res + ': ' + e.message); continue; }
-  for (const e of (r && (r.values || r.entries)) || []) {
-    const v = Number(e.v); if (e.v === null || !Number.isFinite(v)) continue;
-    const { d, slot } = parts(new Date(e.t).getTime());
-    const arr = days[d] || (days[d] = new Array(N).fill(null));
-    if (slot >= 0 && slot < N) arr[slot] = Math.round(v * 10) / 10;
+const days = {}, pows = {};
+// Snitt per fack (Insights kan ge 1-minutersvärden). Returnerar antal värden.
+const read = async (cap, store, round) => {
+  const acc = {}; let cnt = 0;
+  for (const res of ['today', 'yesterday']) {
+    let r; try { r = await Homey.insights.getLogEntries({ id: 'homey:device:' + id + ':' + cap, resolution: res }); } catch (e) { continue; }
+    for (const e of (r && (r.values || r.entries)) || []) {
+      const v = Number(e.v); if (e.v === null || !Number.isFinite(v)) continue;
+      const { d, slot } = parts(new Date(e.t).getTime());
+      if (slot < 0 || slot >= N) continue;
+      const a = acc[d] || (acc[d] = Array.from({ length: N }, () => [0, 0]));
+      a[slot][0] += v; a[slot][1]++; cnt++;
+    }
   }
-}
+  for (const [d, a] of Object.entries(acc)) store[d] = a.map(([sum, k]) => (k ? round(sum / k) : null));
+  return cnt;
+};
+await read(CAP, days, (v) => Math.round(v * 10) / 10);
+for (const pc of PCAPS) { if (await read(pc, pows, (v) => Math.round(v))) break; }
 const today = parts(Date.now()).d;
 const yest = parts(Date.now() - 86400000).d;
-const out = { u: Date.now(), iv: IV, days: [today, yest].filter((d) => days[d]).map((d) => ({ d, v: days[d] })) };
+const out = { u: Date.now(), iv: IV, days: [today, yest].filter((d) => days[d]).map((d) => ({ d, v: days[d], p: pows[d] || new Array(N).fill(null) })) };
 const vars = Object.values(await Homey.logic.getVariables());
 const vh = vars.find((x) => x.name === 'AI Batterihistorik');
 if (!vh) throw new Error('Variabeln AI Batterihistorik saknas');
