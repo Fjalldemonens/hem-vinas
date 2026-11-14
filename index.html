@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.2">
+<meta name="app-version" content="2026-11-14.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -296,14 +296,28 @@ body.noscroll{overflow:hidden}
 .bh-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 6px}
 .bh-top .bh-d{font-size:.8rem;color:var(--muted)}
 .bh svg{display:block;width:100%;height:auto;overflow:visible}
+.bh .bhc{touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.bhc .gl{stroke:var(--line);stroke-width:1}
+.bhc .bln{fill:none;stroke:var(--batt);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.bhc .pin{fill:var(--batt);opacity:.55}
+.bhc .pout{fill:var(--orange);opacity:.6}
+.bhc .still{fill:var(--warn)}
+.bhc .scrl{stroke:var(--fg);stroke-width:1.2;opacity:.55}
+.bhc .cdot{fill:var(--batt)}
+.bhc .cring{fill:none;stroke:var(--batt);stroke-width:2;opacity:.45}
+.bh-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin:4px 0 6px}
+.bh-ht{font-weight:700;font-size:.95rem}
+.bh-hs{font-size:.82rem;color:var(--muted);min-height:1.2em}
+.bh-hv{font-family:var(--f-disp);font-size:2.3rem;line-height:1;color:var(--batt);white-space:nowrap}
+.bh-hv small{font-size:1rem}
+.bh-leg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.75rem;color:var(--muted);margin-top:6px}
+.bh-leg span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.bh-leg .k-in::before{background:var(--batt)}
+.bh-leg .k-out::before{background:var(--orange)}
+.bh-leg .k-still::before{background:var(--warn);height:5px;vertical-align:2px}
+.bh-kv{padding:10px 0 0;font-size:.85rem}
 .bh .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
 .bh-sum{font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.4}
-.bh-t{font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 2px}
-.bh-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
-.bh-st{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;min-width:0}
-.bh-st .k{font-size:.7rem;color:var(--muted);font-weight:600}
-.bh-st .v{font-size:.92rem;font-weight:700;white-space:nowrap}
-.bh-st .s{font-size:.7rem;color:var(--muted);white-space:nowrap}
 .evhero{padding:16px 16px 4px;display:flex;flex-direction:column;gap:14px}
 .evst{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .evst b{font-family:var(--f-disp);font-weight:400;font-size:1.45rem;letter-spacing:-.01em}
@@ -501,8 +515,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.2"></script>
-<script src="homey.js?v=2026-11-14.2"></script>
+<script src="config.js?v=2026-11-14.3"></script>
+<script src="homey.js?v=2026-11-14.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -951,9 +965,10 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'nyss' : m < 60 ? 'för ' + m + ' min sedan' : m < 1440 ? 'för ' + f1.format(m / 60) + ' h sedan' : 'för ' + Math.round(m / 1440) + ' dygn sedan'; };
   /* ---------- elpris: Homey Energys priser via variabeln AI Elpriser (flödet AI 12) ---------- */
   let priceDay = 0, priceKind = 'imp';
-  let bhOpen = false, bhDay = 0;   // Husbatteri → Historik
+  let bhOpen = false, bhDay = 0, bhScrub = false;   // Husbatteri → Historik
   function renderBattHist() {
-    const box = $('battHist'); if (!box) return; box.replaceChildren();
+    const box = $('battHist'); if (!box || bhScrub) return;   // ritas inte om mitt i ett drag (som elpriset)
+    box.replaceChildren();
     const H = jsonVar('AI Batterihistorik'), days = (H && Array.isArray(H.days)) ? H.days : [];
     if (!days.length) return;
     const tb = mk('button', 'btn' + (bhOpen ? ' on' : ''), bhOpen ? 'Dölj historik' : 'Historik'); tb.type = 'button'; tb.setAttribute('aria-expanded', bhOpen ? 'true' : 'false');
@@ -961,68 +976,100 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
     if (!bhOpen) return;
     if (bhDay >= days.length) bhDay = 0;
     const D = days[bhDay], iv = Number(H.iv) || 5, v = D.v || [], pw = Array.isArray(D.p) ? D.p : [], n = v.length || 1440 / iv;
+    const ok = (y) => y !== null && y !== undefined && Number.isFinite(Number(y));
     const top = mk('div', 'bh-top');
     top.append(segBtns([[0, 'Idag'], [1, 'Igår', days.length < 2]], bhDay, (x) => { bhDay = x; renderBattHist(); }));
     top.append(mk('span', 'bh-d', new Date(D.d + 'T12:00').toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' })));
     box.append(top);
-    const ok = (y) => y !== null && y !== undefined && Number.isFinite(Number(y));
     const pts = v.map((y, i) => [i, y]).filter((q) => ok(q[1]));
     if (!pts.length) { box.append(mk('div', 'bh-sum', 'Inga värden för dygnet ännu.')); return; }
-    const NS = 'http://www.w3.org/2000/svg', el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
-    const Wd = 320, L = 30, R = 6, cw = Wd - L - R, X = (i) => L + (i / n) * cw;
-    // Stilla = laddnivån ändras högst 0,2 %-enheter per 5 min och effekten är under 50 W. Perioder ≥ 1 h markeras (2026-11-14.2: "flatline längre tid = något knasigt")
+    const pp = pw.map((y, i) => [i, y]).filter((q) => ok(q[1]));
+    const tm = (i) => { const m = i * iv; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    const dur = (slots) => { const m = slots * iv; return m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : m + ' min'; };
+    const kW = (w) => f1.format(Math.abs(w) / 1000) + ' kW';
+    const state = (w) => !ok(w) ? '' : w > 30 ? 'Laddar ' + kW(w) : w < -30 ? 'Laddar ur ' + kW(w) : 'Vilar';
+    // Stilla = laddnivån ändras högst 0,2 %-enheter per 5 min och effekten är under 50 W; ≥ 1 h i sträck visas som gul list under kurvan
     const still = new Array(n).fill(false);
     for (let i = 1; i < n; i++) { if (ok(v[i]) && ok(v[i - 1]) && Math.abs(v[i] - v[i - 1]) <= 0.2 && !(ok(pw[i]) && Math.abs(pw[i]) >= 50)) still[i] = true; }
     const runs = []; for (let i = 0; i < n;) { if (!still[i]) { i++; continue; } let k = i; while (k < n && still[k]) k++; runs.push([i - 1, k - 1]); i = k; }
     const longRuns = runs.filter(([a, b]) => b - a >= 60 / iv);
-    const shade = (svg, T, ch) => longRuns.forEach(([a, b]) => svg.append(el('rect', { x: X(a).toFixed(1), y: T, width: Math.max(1, X(b) - X(a)).toFixed(1), height: ch, fill: 'var(--warn)', opacity: '.16' })));
-    const tm = (i) => { const m = i * iv; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    const lr = runs.reduce((a, b) => (b[1] - b[0] > (a ? a[1] - a[0] : -1) ? b : a), null);
+    // Rubrik som i Homey: stor siffra = senaste värdet, eller värdet under fingret
+    const last = pts[pts.length - 1];
+    const head = mk('div', 'bh-head'), hl = mk('div', 'bh-hl'), hT = mk('div', 'bh-ht'), hS = mk('div', 'bh-hs'), hV = mk('div', 'bh-hv num');
+    hl.append(hT, hS); head.append(hl, hV); box.append(head);
+    const setHead = (i) => {
+      const scrub = i >= 0, k = scrub ? i : last[0], val = ok(v[k]) ? v[k] : null;
+      hT.textContent = scrub ? 'kl ' + tm(k) : (bhDay === 0 ? 'Senast kl ' + tm(k) : 'Kl ' + tm(k));
+      hS.textContent = state(pw[k]) || (still[k] ? 'Vilar' : '');
+      hV.replaceChildren(document.createTextNode(val === null ? '–' : f1.format(val)), mk('small', '', ' %'));
+    };
+    setHead(-1);
+    // Ett diagram: laddnivå överst, effekt under, samma tidsaxel och markör
+    const NS = 'http://www.w3.org/2000/svg', el = (t, a, par) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (par) par.append(e); return e; };
+    const Wd = 340, L = 8, R = 8, cw = Wd - L - R, X = (i) => L + ((i + 0.5) / n) * cw;
+    const sT = 8, sH = 150, gap = 22, pT = sT + sH + gap, pH = pp.length ? 64 : 0, Ht = pT + pH + 20;
+    const mxv = Math.max(...pts.map((q) => q[1]));
+    const step = mxv > 60 ? 25 : mxv > 30 ? 10 : 5, ymax = Math.min(100, Math.max(step * 2, Math.ceil((mxv + 2) / step) * step));
+    const Y = (y) => sT + sH - (y / ymax) * sH;
+    const svg = el('svg', { viewBox: '0 0 ' + Wd + ' ' + Ht, class: 'bhc', role: 'img', 'aria-label': 'Batteriets laddnivå och effekt under dygnet. Dra med fingret för att se värden.' });
+    const gid = 'bhg' + bhDay, defs = el('defs', {}, svg), lg = el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el('stop', { offset: '0', 'stop-color': 'var(--batt)', 'stop-opacity': '.4' }, lg); el('stop', { offset: '1', 'stop-color': 'var(--batt)', 'stop-opacity': '.03' }, lg);
+    for (let y = step; y <= ymax; y += step) { el('line', { x1: L, x2: Wd - R, y1: Y(y), y2: Y(y), class: 'gl' }, svg); el('text', { x: L + 2, y: Y(y) - 3, class: 'ax' }, svg).textContent = y + ' %'; }
+    el('line', { x1: L, x2: Wd - R, y1: Y(0), y2: Y(0), class: 'gl' }, svg);
     const segsOf = (arr) => { const out = []; let cur = []; arr.forEach((q, k) => { if (k && q[0] - arr[k - 1][0] > 3) { out.push(cur); cur = []; } cur.push(q); }); out.push(cur); return out; };
-    const xAxis = (svg, y) => [0, 6, 12, 18, 24].forEach((h) => { const t = el('text', { x: X(h * 60 / iv), y, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = (h === 24 ? 0 : h) + ':00'; svg.append(t); });
-    const title = (t) => box.append(mk('div', 'bh-t', t));
-    // 1) Laddnivå %
-    title('Laddnivå');
-    {
-      const mxv = Math.max(...pts.map((q) => q[1]));
-      const step = mxv > 60 ? 20 : mxv > 30 ? 10 : 5, ymax = Math.min(100, Math.max(step * 2, Math.ceil((mxv + 2) / step) * step));
-      const Ht = 150, T = 6, B = 4, ch = Ht - T - B, Y = (y) => T + ch - (y / ymax) * ch;
-      const svg = el('svg', { viewBox: '0 0 ' + Wd + ' ' + Ht, role: 'img', 'aria-label': 'Batteriets laddnivå under dygnet' });
-      const gid = 'bhg' + bhDay, defs = el('defs', {}), lg = el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0, y2: 1 });
-      lg.append(el('stop', { offset: '0', 'stop-color': 'var(--batt)', 'stop-opacity': '.45' }), el('stop', { offset: '1', 'stop-color': 'var(--batt)', 'stop-opacity': '.04' }));
-      defs.append(lg); svg.append(defs); shade(svg, T, ch);
-      for (let y = 0; y <= ymax; y += step) { svg.append(el('line', { x1: L, x2: Wd - R, y1: Y(y), y2: Y(y), stroke: 'var(--line)', 'stroke-width': 1 })); const t = el('text', { x: L - 4, y: Y(y) + 3, 'text-anchor': 'end', class: 'ax' }); t.textContent = y + '%'; svg.append(t); }
-      segsOf(pts).forEach((sg) => {
-        const d = sg.map((q, k) => (k ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ');
-        svg.append(el('path', { d: d + ' L' + X(sg[sg.length - 1][0]).toFixed(1) + ' ' + Y(0) + ' L' + X(sg[0][0]).toFixed(1) + ' ' + Y(0) + ' Z', fill: 'url(#' + gid + ')' }));
-        svg.append(el('path', { d, fill: 'none', stroke: 'var(--batt)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-      });
-      const w = mk('div', 'bh'); w.append(svg); box.append(w);
-    }
-    // 2) Effekt kW: + laddar (grönt, uppåt), − laddar ur (orange, nedåt), samma tidsaxel
-    const pp = pw.map((y, i) => [i, y]).filter((q) => ok(q[1]));
+    segsOf(pts).forEach((sg) => {
+      const d = sg.map((q, k) => (k ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ');
+      el('path', { d: d + ' L' + X(sg[sg.length - 1][0]).toFixed(1) + ' ' + Y(0) + ' L' + X(sg[0][0]).toFixed(1) + ' ' + Y(0) + ' Z', fill: 'url(#' + gid + ')' }, svg);
+      el('path', { d, class: 'bln' }, svg);
+    });
+    longRuns.forEach(([a, b]) => el('rect', { x: X(a).toFixed(1), y: Y(0) + 3, width: Math.max(2, X(b) - X(a)).toFixed(1), height: 5, rx: 2.5, class: 'still' }, svg));
+    let pY = null;
     if (pp.length) {
-      title('Effekt · laddar ↑ / laddar ur ↓');
-      const mx = Math.max(1000, ...pp.map((q) => Math.abs(q[1])));
-      const stepK = mx > 4000 ? 2 : 1, top = Math.ceil(mx / 1000 / stepK) * stepK;   // kW
-      const Ht = 110, T = 6, B = 18, ch = Ht - T - B, Y = (w) => T + ch / 2 - (w / 1000 / top) * (ch / 2);
-      const svg = el('svg', { viewBox: '0 0 ' + Wd + ' ' + Ht, role: 'img', 'aria-label': 'Batteriets effekt under dygnet' }); shade(svg, T, ch);
-      [-top, 0, top].forEach((k) => { svg.append(el('line', { x1: L, x2: Wd - R, y1: Y(k * 1000), y2: Y(k * 1000), stroke: 'var(--line)', 'stroke-width': k === 0 ? 1.5 : 1 })); const t = el('text', { x: L - 4, y: Y(k * 1000) + 3, 'text-anchor': 'end', class: 'ax' }); t.textContent = (k > 0 ? '+' : k < 0 ? '−' : '') + Math.abs(k) + ' kW'; svg.append(t); });
-      const bw = Math.max(0.6, cw / n);
-      pp.forEach(([i, w]) => { if (Math.abs(w) < 30) return; const y0 = Y(0), y1 = Y(w); svg.append(el('rect', { x: X(i).toFixed(2), y: Math.min(y0, y1).toFixed(1), width: bw.toFixed(2), height: Math.max(0.5, Math.abs(y1 - y0)).toFixed(1), fill: w > 0 ? 'var(--batt)' : 'var(--orange)', opacity: '.85' })); });
-      xAxis(svg, Ht - 3);
-      const w = mk('div', 'bh'); w.append(svg); box.append(w);
+      const mx = Math.max(500, ...pp.map((q) => Math.abs(q[1]))), lim = Math.ceil(mx / 1000) * 1000;
+      const mid = pT + pH / 2; pY = (w) => mid - (w / lim) * (pH / 2);
+      el('line', { x1: L, x2: Wd - R, y1: mid, y2: mid, class: 'gl' }, svg);
+      el('text', { x: L + 2, y: pT + 8, class: 'ax' }, svg).textContent = '+' + lim / 1000 + ' kW';
+      el('text', { x: L + 2, y: pT + pH, class: 'ax' }, svg).textContent = '−' + lim / 1000 + ' kW';
+      // yta ovanför (laddar) och under (laddar ur) nollinjen
+      const area = (sign, cls) => segsOf(pp).forEach((sg) => {
+        const d = sg.map((q, k) => (k ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + pY(sign * q[1] > 0 ? q[1] : 0).toFixed(1)).join(' ');
+        el('path', { d: d + ' L' + X(sg[sg.length - 1][0]).toFixed(1) + ' ' + mid + ' L' + X(sg[0][0]).toFixed(1) + ' ' + mid + ' Z', class: cls }, svg);
+      });
+      area(1, 'pin'); area(-1, 'pout');
     }
-    // Nyckeltal i rutor i stället för en lång textrad
+    [0, 6, 12, 18, 24].forEach((h) => { el('text', { x: L + (h / 24) * cw, y: Ht - 4, 'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle', class: 'ax' }, svg).textContent = (h === 24 ? 0 : h) + ':00'; });
+    // Markör
+    const cg = el('g', { style: 'display:none', 'pointer-events': 'none' }, svg);
+    const cl = el('line', { y1: sT, y2: pT + pH, class: 'scrl' }, cg), cdot = el('circle', { r: 6, class: 'cdot' }, cg), cring = el('circle', { r: 10, class: 'cring' }, cg);
+    let cur = -1;
+    const show = (i) => {
+      i = Math.min(n - 1, Math.max(0, i)); if (!ok(v[i])) { let k = i; while (k > 0 && !ok(v[k])) k--; if (!ok(v[k])) return; i = k; }
+      if (i === cur) return; cur = i;
+      const cx = X(i), cy = Y(v[i]); cl.setAttribute('x1', cx); cl.setAttribute('x2', cx);
+      [cdot, cring].forEach((c) => { c.setAttribute('cx', cx); c.setAttribute('cy', cy); }); cg.style.display = ''; setHead(i);
+    };
+    const hide = () => { if (cur < 0) return; cur = -1; cg.style.display = 'none'; setHead(-1); };
+    const idxAt = (ev) => { const r = svg.getBoundingClientRect(); const vx = (ev.clientX - r.left) / r.width * Wd; return Math.floor((vx - L) / cw * n); };
+    let down = false;
+    svg.addEventListener('pointerdown', (ev) => { down = true; bhScrub = true; try { svg.setPointerCapture(ev.pointerId); } catch (e) {} show(idxAt(ev)); });
+    svg.addEventListener('pointermove', (ev) => { if (down || ev.pointerType === 'mouse') show(idxAt(ev)); });
+    const end = (ev) => { down = false; bhScrub = false; if (ev.type !== 'pointerup' || ev.pointerType !== 'mouse') hide(); };
+    ['pointerup', 'pointercancel'].forEach((t) => svg.addEventListener(t, end));
+    svg.addEventListener('pointerleave', () => { if (!down) hide(); });
+    svg.addEventListener('contextmenu', (ev) => ev.preventDefault());
+    const wrap = mk('div', 'bh'); wrap.append(svg); box.append(wrap);
+    // Förklaring + nyckeltal
+    const leg = mk('div', 'bh-leg');
+    if (pp.length) leg.append(mk('span', 'k-in', 'Laddar'), mk('span', 'k-out', 'Laddar ur'));
+    leg.append(mk('span', 'k-still', lr && lr[1] - lr[0] >= 60 / iv ? 'Stilla ≥ 1 h' : 'Stilla ≥ 1 h (inget idag)'));
+    box.append(leg);
     const lo = pts.reduce((a, b) => (b[1] < a[1] ? b : a)), hi = pts.reduce((a, b) => (b[1] > a[1] ? b : a));
     const kwh = (sign) => pp.reduce((a, [, w]) => a + (sign * w > 30 ? Math.abs(w) : 0), 0) * iv / 60 / 1000;
-    const stats = [['Lägst', f1.format(lo[1]) + ' %', 'kl ' + tm(lo[0])], ['Högst', f1.format(hi[1]) + ' %', 'kl ' + tm(hi[0])]];
-    const dur = (slots) => { const m = slots * iv; return m >= 60 ? Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + (m % 60) + ' min' : '') : m + ' min'; };
-    const lr = runs.reduce((a, b) => (b[1] - b[0] > (a ? a[1] - a[0] : -1) ? b : a), null);
-    stats.push(['Längst stilla', lr ? dur(lr[1] - lr[0]) : '–', lr ? tm(lr[0]) + '–' + tm(lr[1]) : '']);
-    if (pp.length) stats.push(['Laddat', f1.format(kwh(1)) + ' kWh', ''], ['Urladdat', f1.format(kwh(-1)) + ' kWh', '']);
-    stats.push(['Stilla totalt', dur(still.filter(Boolean).length), 'gult: ≥ 1 h i sträck']);
-    const g = mk('div', 'bh-stats num');
-    stats.forEach(([k, val, sub]) => { const c = mk('div', 'bh-st'); c.append(mk('div', 'k', k), mk('div', 'v', val)); if (sub) c.append(mk('div', 's', sub)); g.append(c); });
+    const rows = [['Lägst', f1.format(lo[1]) + ' % kl ' + tm(lo[0])], ['Högst', f1.format(hi[1]) + ' % kl ' + tm(hi[0])]];
+    if (pp.length) rows.push(['Laddat / urladdat', f1.format(kwh(1)) + ' / ' + f1.format(kwh(-1)) + ' kWh']);
+    rows.push(['Längst stilla', lr ? dur(lr[1] - lr[0]) + ' (' + tm(lr[0]) + '–' + tm(lr[1]) + ')' : '–']);
+    const g = mk('div', 'kv num bh-kv'); rows.forEach(([k, val]) => g.append(mk('span', 'k', k), mk('span', 'v', val)));
     box.append(g);
   }
   function priceData() { try { const j = JSON.parse(varVal('AI Elpriser') || ''); return j && j.days && j.days.length ? j : null; } catch (e) { return null; } }
