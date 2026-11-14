@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.10">
+<meta name="app-version" content="2026-11-14.11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -523,8 +523,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.10"></script>
-<script src="homey.js?v=2026-11-14.10"></script>
+<script src="config.js?v=2026-11-14.11"></script>
+<script src="homey.js?v=2026-11-14.11"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -855,7 +855,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       if (has(d, 'measure_humidity')) parts.push(f0.format(val(d, 'measure_humidity')) + ' % fukt');
       const s = mk('div', 's num', nb(parts.join(' · ')));
       const heating = val(d, 'thermostat_state_IdleHeatCool') === 'Heating' || (has(d, 'measure_power') && val(d, 'measure_power') > 5);
-      if (has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power')) { s.append(document.createTextNode(' · ')); s.append(heating ? mk('span', 'heat', nb('Värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : ''))) : document.createTextNode('Vilar')); }
+      // Värmer/Vilar på egen rad i alla värmerader (2026-11-14.11), så Golvvärme och Badrum ser likadana ut
+      if (has(d, 'thermostat_state_IdleHeatCool') || has(d, 'measure_power')) s.append(heating ? mk('div', 'heat', nb('Värmer' + (has(d, 'measure_power') ? ' ' + W(val(d, 'measure_power')) : ''))) : mk('div', '', 'Vilar'));
       left.append(s);
       if (has(d, 'se_onoff') || has(d, 'thermostat_mode')) {
         const mode = val(d, 'thermostat_mode'), onoff = val(d, 'se_onoff');
@@ -905,7 +906,7 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
       const parts = [tNow != null ? 'Nu ' + f1.format(tNow) + '°' : 'Ingen temperatur'];
       if (st.h != null) parts.push(f0.format(st.h) + ' % fukt');
       const s = mk('div', 's num', nb(parts.join(' · ')));
-      s.append(document.createTextNode(' · ')); s.append(heatNow ? mk('span', 'heat', 'Värmer') : document.createTextNode(on ? 'Vilar' : 'Av'));
+      s.append(heatNow ? mk('div', 'heat', 'Värmer') : mk('div', '', on ? 'Vilar' : 'Av'));
       left.append(s);
       const chips = mk('div', 'chips'); chips.style.marginTop = '8px';
       // Lägesrutan: svagt röd när elementet värmer, annars neutral (inte aria-pressed – det ger grönt).
