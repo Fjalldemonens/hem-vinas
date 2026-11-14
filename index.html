@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.20">
+<meta name="app-version" content="2026-11-14.21">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -644,7 +644,7 @@ body.noscroll{overflow:hidden}
       <button class="lrow" type="button" data-more="man" aria-haspopup="dialog"><span class="ln2">Månad</span><span class="ls num" id="mMan"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="sol" aria-haspopup="dialog"><span class="ln2">Solceller</span><span class="ls num" id="mSol"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="fas" aria-haspopup="dialog"><span class="ln2">Faser</span><span class="ls num" id="mFas"></span><span class="chev" aria-hidden="true">›</span></button>
-      <button class="lrow" type="button" data-more="app" aria-haspopup="dialog"><span class="ln2">Apparater</span><span class="ls num" id="mApp"></span><span class="chev" aria-hidden="true">›</span></button>
+      <button class="lrow" type="button" data-more="app" aria-haspopup="dialog"><span class="ln2">Vitvaror</span><span class="ls num" id="mApp"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
     <div id="moreHome">
       <div class="card" id="mvMan"><div class="mblock" id="monBlock"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.20"></script>
-<script src="homey.js?v=2026-11-14.20"></script>
+<script src="config.js?v=2026-11-14.21"></script>
+<script src="homey.js?v=2026-11-14.21"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1869,7 +1869,7 @@ body.noscroll{overflow:hidden}
     const A = jsonVar('AI Förbrukning');
     if (A && A.u) { const run = [['disk', 'Diskmaskin'], ['tvatt', 'Tvättmaskin']].filter(([k]) => A[k] && A[k].run).map(([k, n]) => A[k].n || n); set('mApp', run.length ? run.join(', ') + ' pågår' : ''); } else set('mApp', '');
   }
-  const MORE = { batt: ['Husbatteri', 'battCard'], ev: ['Laddbox och bil', 'evCard'], man: ['Månad', 'mvMan'], sol: ['Solceller', 'mvSol'], fas: ['Faser', 'mvFas'], app: ['Apparater', 'mvApp'] };
+  const MORE = { batt: ['Husbatteri', 'battCard'], ev: ['Laddbox och bil', 'evCard'], man: ['Månad', 'mvMan'], sol: ['Solceller', 'mvSol'], fas: ['Faser', 'mvFas'], app: ['Vitvaror', 'mvApp'] };
   function openMore(k) { const m = MORE[k]; if (m) sheetNode('more-' + k, m[0], $(m[1])); }
   document.querySelectorAll('[data-more]').forEach((b) => {
     const go = () => openMore(b.dataset.more);
