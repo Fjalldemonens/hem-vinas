@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.13">
+<meta name="app-version" content="2026-11-14.14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -352,10 +352,10 @@ body.noscroll{overflow:hidden}
 .foot{font-size:13px;color:var(--muted);text-align:center;margin:8px 0 0}
 /* robotdammsugare */
 .rsel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.rsel button{font:inherit;color:var(--fg);text-align:left;border:2px solid transparent;border-radius:16px;padding:12px;background:var(--card);cursor:pointer;min-width:0}
+.rsel button{font:inherit;color:var(--fg);text-align:left;border:2px solid transparent;border-radius:16px;padding:12px 10px;background:var(--card);cursor:pointer;min-width:0}
 .rsel button.on{border-color:var(--accent)}
-.rsel small{display:block;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rsel b{display:block;font-size:16px;font-weight:800;margin-top:2px;overflow-wrap:anywhere}
+.rsel small{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.03em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rsel b{display:block;font-size:15px;font-weight:800;margin-top:2px;overflow-wrap:anywhere}
 .rsel span{display:block;font-size:13px;margin-top:4px;color:var(--green-ink)}
 .rsel span.busy{color:var(--accent-text)}
 .robo{display:flex;flex-direction:column;gap:10px;padding:18px;background:var(--card)}
@@ -609,8 +609,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.13"></script>
-<script src="homey.js?v=2026-11-14.13"></script>
+<script src="config.js?v=2026-11-14.14"></script>
+<script src="homey.js?v=2026-11-14.14"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1997,7 +1997,7 @@ body.noscroll{overflow:hidden}
       R.forEach((d) => {
         const [st, c] = robStat(d), on = d.id === robSel;
         const b = mk('button', on ? 'on' : ''); b.type = 'button'; b.setAttribute('aria-pressed', on ? 'true' : 'false');
-        b.append(mk('small', '', floorOf(d.zone)), mk('b', '', String(d.name).trim()), mk('span', c, st + (has(d, 'measure_battery') ? ' · ' + f0.format(val(d, 'measure_battery')) + ' %' : '')));
+        b.append(mk('small', '', floorOf(d.zone)), mk('b', '', String(d.name).trim()), mk('span', c, (st === 'I laddstationen' ? 'Laddstation' : st) + (has(d, 'measure_battery') ? ' · ' + f0.format(val(d, 'measure_battery')) + ' %' : '')));
         b.addEventListener('click', () => { robSel = d.id; renderRobot(); });
         sel.append(b);
       });
