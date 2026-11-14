@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.14">
+<meta name="app-version" content="2026-11-14.15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -252,21 +252,27 @@ body.noscroll{overflow:hidden}
 /* Energi: flödesdiagram */
 .flow{padding:14px 12px 16px}
 .flow svg{display:block;width:100%;height:auto;max-width:400px;margin:0 auto}
-.flow .lbl{font-family:var(--f-body);font-size:11px;fill:var(--muted);font-weight:700;letter-spacing:.08em}
-.flow .val{font-family:var(--f-body);font-size:16px;font-weight:800;fill:var(--fg)}
-.flow .hval{font-family:var(--f-body);font-size:18px;font-weight:800;fill:var(--fg)}
-.flow .hlbl{font-family:var(--f-body);font-size:11px;font-weight:700;letter-spacing:.08em;fill:var(--accent-text)}
-.flow .sub{font-family:var(--f-body);font-size:12px;fill:var(--muted);font-weight:700}
-.flow .sub.chg{fill:var(--ok)} .flow .sub.bad{fill:var(--danger)}
-.flow .ring{fill:var(--card);stroke-width:3}
+.flow .lbl{font-family:var(--f-body);font-size:11px;fill:var(--muted);font-weight:700;letter-spacing:1px}
+.flow .val{font-family:var(--f-body);font-size:19px;font-weight:800;fill:var(--fg)}
+.flow .hval{font-family:var(--f-body);font-size:19px;font-weight:800;fill:var(--fg)}
+.flow .hlbl{font-family:var(--f-body);font-size:11px;font-weight:700;letter-spacing:1px;fill:var(--accent-text)}
+/* Nod: grå när den är inaktiv (≤ 50 W), nodens färg (--nc) på ram, ikon och status när den är aktiv */
+.flow .ring{fill:var(--card);stroke:var(--line);stroke-width:3}
+.flow .ic{fill:none;stroke:var(--faint-t);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.flow .nst{font-family:var(--f-body);font-size:12px;font-weight:700;fill:var(--muted)}
+.flow .node.on .ring{stroke:var(--nc)}
+.flow .node.on .ic{stroke:var(--nc)}
+.flow .node.on .nst{fill:var(--nc)}
+.flow .nst.bad,.flow .node.on .nst.bad{fill:var(--danger)}
 .flow .hring{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3}
 .flow .soct{fill:none;stroke:var(--sub);stroke-width:3}
-.flow .socr{fill:none;stroke-width:3;stroke-linecap:round;opacity:.65}
+.flow .socr{fill:none;stroke-width:3;stroke-linecap:round;opacity:.55}
 .flow .wire{fill:none;stroke:var(--line);stroke-width:3;stroke-linecap:round}
-.flow .run{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:1 13;animation:run 1.1s linear infinite}
+/* Animerad prickad linje ovanpå baslinjen, bara över 50 W; tjocklek och fart sätts av setFlow */
+.flow .run{fill:none;stroke-width:4;stroke-linecap:round;stroke-dasharray:.5 11.5;animation:run 1.1s linear infinite}
 .flow .run.rev{animation-direction:reverse}
-@keyframes run{to{stroke-dashoffset:-28}}
-.flow .idle{opacity:0}
+@keyframes run{to{stroke-dashoffset:-24}}
+.flow .idle{display:none}
 .flow .node{cursor:pointer}
 .flow .node:focus{outline:none}
 .flow .node:focus-visible .ring{stroke-width:5}
@@ -557,21 +563,17 @@ body.noscroll{overflow:hidden}
         <path class="run idle" id="fBatt" stroke="var(--batt)" d="M239.8 126.4 L213.8 147.1"/>
         <path class="run idle" id="fGrid" stroke="var(--grid)" d="M100.2 237.6 L126.2 216.9"/>
         <path class="run idle" id="fEv" stroke="var(--ev)" d="M239.8 237.6 L213.8 216.9"/>
-        <g class="node" id="nSun" data-more="sol" role="button" tabindex="0" aria-label="Solceller" aria-haspopup="dialog"><circle class="ring" cx="72" cy="104" r="30" stroke="var(--sun)"/><g transform="translate(60 92)" fill="none" stroke="var(--sun)" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></g>
-        <g class="node" id="nBatt" data-more="batt" role="button" tabindex="0" aria-label="Husbatteri" aria-haspopup="dialog"><circle class="soct" cx="268" cy="104" r="36"/><circle class="socr" id="rBatt" cx="268" cy="104" r="36" stroke="var(--batt)" stroke-dasharray="0 999" transform="rotate(-90 268 104)"/><circle class="ring" cx="268" cy="104" r="30" stroke="var(--batt)"/><g transform="translate(256 92)" fill="none" stroke="var(--batt)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></g></g>
-        <g class="node" id="nGrid" data-more="fas" role="button" tabindex="0" aria-label="Elnätet och faser" aria-haspopup="dialog"><circle class="ring" cx="72" cy="260" r="30" stroke="var(--grid)"/><g transform="translate(60 248)" fill="none" stroke="var(--grid)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M8 21l4-18 4 18M6 8h12M8 13h8"/></g></g>
-        <g class="node" id="nEv" data-more="ev" role="button" tabindex="0" aria-label="Laddbox och bil" aria-haspopup="dialog"><circle class="soct" cx="268" cy="260" r="36"/><circle class="socr" id="rEv" cx="268" cy="260" r="36" stroke="var(--ev)" stroke-dasharray="0 999" transform="rotate(-90 268 260)"/><circle class="ring" cx="268" cy="260" r="30" stroke="var(--ev)"/><g transform="translate(256 248)" fill="none" stroke="var(--ev)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16h16v-4l-2.2-5H6.2L4 12z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/></g></g>
+        <g class="node" id="nSun" style="--nc:var(--sun)" data-more="sol" role="button" tabindex="0" aria-label="Solceller" aria-haspopup="dialog"><circle class="ring" cx="72" cy="104" r="30"/><g class="ic" transform="translate(57.6 89.6) scale(1.2)"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g><text class="lbl" x="72" y="42" text-anchor="middle">SOL</text><text class="val num" id="vSun" x="72" y="63" text-anchor="middle">–</text><text class="nst" id="sSun" x="72" y="156" text-anchor="middle"></text></g>
+        <g class="node" id="nBatt" style="--nc:var(--batt)" data-more="batt" role="button" tabindex="0" aria-label="Husbatteri" aria-haspopup="dialog"><circle class="soct" cx="268" cy="104" r="36"/><circle class="socr" id="rBatt" cx="268" cy="104" r="36" stroke="var(--batt)" stroke-dasharray="0 999" transform="rotate(-90 268 104)"/><circle class="ring" cx="268" cy="104" r="30"/><g class="ic" transform="translate(253.6 89.6) scale(1.2)"><rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2"/></g><text class="lbl" id="lBatt" x="268" y="42" text-anchor="middle">BATTERI</text><text class="val num" id="vBatt" x="268" y="63" text-anchor="middle">–</text><text class="nst" id="vBattSt" x="268" y="156" text-anchor="middle"></text></g>
+        <g class="node" id="nGrid" style="--nc:var(--grid)" data-more="fas" role="button" tabindex="0" aria-label="Elnätet och faser" aria-haspopup="dialog"><circle class="ring" cx="72" cy="260" r="30"/><g class="ic" transform="translate(57.6 245.6) scale(1.2)"><path d="M12 3v18M8 21l4-18 4 18M6 8h12M8 13h8"/></g><text class="lbl" x="72" y="318" text-anchor="middle">NÄT</text><text class="val num" id="vGrid" x="72" y="339" text-anchor="middle">–</text><text class="nst" id="sGrid" x="72" y="214" text-anchor="middle"></text></g>
+        <g class="node" id="nEv" style="--nc:var(--ev)" data-more="ev" role="button" tabindex="0" aria-label="Laddbox och bil" aria-haspopup="dialog"><circle class="soct" cx="268" cy="260" r="36"/><circle class="socr" id="rEv" cx="268" cy="260" r="36" stroke="var(--ev)" stroke-dasharray="0 999" transform="rotate(-90 268 260)"/><circle class="ring" cx="268" cy="260" r="30"/><g class="ic" transform="translate(253.6 245.6) scale(1.2)"><path d="M4 16h16v-4l-2.2-5H6.2L4 12z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/></g><text class="lbl" id="lEv" x="268" y="318" text-anchor="middle">LADDBOX</text><text class="val num" id="vEv" x="268" y="339" text-anchor="middle">–</text><text class="nst" id="sEv" x="268" y="214" text-anchor="middle"></text></g>
         <circle class="hring" cx="170" cy="182" r="50"/>
-        <g transform="translate(158 140)" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></g>
-        <text class="lbl" x="72" y="48" text-anchor="middle">SOL</text><text class="val num" id="vSun" x="72" y="68" text-anchor="middle">–</text>
-        <text class="lbl" x="268" y="48" text-anchor="middle">BATTERI</text><text class="val num" id="vBatt" x="268" y="68" text-anchor="middle">–</text><text class="sub" id="vBattSt" x="268" y="158" text-anchor="middle"></text>
-        <text class="lbl" x="72" y="320" text-anchor="middle">NÄT</text><text class="val num" id="vGrid" x="72" y="341" text-anchor="middle">–</text>
-        <text class="lbl" x="268" y="320" text-anchor="middle">LADDBOX</text><text class="val num" id="vEv" x="268" y="341" text-anchor="middle">–</text>
-        <text class="hval num" id="vHome" x="170" y="194" text-anchor="middle">–</text><text class="hlbl" x="170" y="212" text-anchor="middle">HUSET</text>
+        <g transform="translate(158 144)" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11 12 4l8.5 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></g>
+        <text class="hval num" id="vHome" x="170" y="192" text-anchor="middle">–</text><text class="hlbl" x="170" y="209" text-anchor="middle">HUSET</text>
       </svg>
       <div class="balert" id="battAlertMain" data-more="batt" role="button" tabindex="0" hidden><b></b><span></span></div>
       <div class="fsay" id="flowSay" hidden></div>
-      <div class="fsrc" id="flowSrc" hidden><div class="fl">Elen kommer från</div><div class="fbar" id="flowBar"></div><div class="fleg" id="flowLeg"></div></div>
+      <div class="fsrc" id="flowSrc" hidden><div class="fl">Huset får el från</div><div class="fbar" id="flowBar"></div><div class="fleg" id="flowLeg"></div></div>
     </div>
 
     <div class="h2">Elpris</div>
@@ -609,8 +611,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.14"></script>
-<script src="homey.js?v=2026-11-14.14"></script>
+<script src="config.js?v=2026-11-14.15"></script>
+<script src="homey.js?v=2026-11-14.15"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1128,11 +1130,20 @@ body.noscroll{overflow:hidden}
   }
 
   /* ---------- energy ---------- */
+  // Linje mellan nod och hus (överlämningen, Kortet Just nu): grå baslinje alltid; över 50 W en animerad prickad linje i nodens färg.
+  // Linjerna är ritade från noden mot huset, så towardHome = framåt (sol, köp, urladdning) och annars bakåt (försäljning, laddning, bil).
+  // Tjocklek 4 + 0,5 per kW (max 5 kW); högre effekt ger snabbare animation.
   function setFlow(id, w, towardHome) {
-    const el = $(id);
-    el.classList.toggle('idle', !(Math.abs(w) > 15));
+    const el = $(id), kw = Math.abs(Number(w) || 0) / 1000;
+    el.classList.toggle('idle', !(kw * 1000 > 50));
     el.classList.toggle('rev', !towardHome);
-    el.style.animationDuration = (Math.max(0.45, 1.6 - Math.min(Math.abs(w), 6000) / 5000)) + 's';
+    el.style.strokeWidth = (4 + Math.min(kw, 5) * 0.5).toFixed(2);
+    el.style.animationDuration = Math.max(0.4, 1.5 - kw * 0.18).toFixed(2) + 's';
+  }
+  // Nod i flödesdiagrammet: aktiv (> 50 W) = nodens färg på ram, ikon och status, annars grå. Statustexten står inåt mot huset.
+  function flowNode(id, on, sid, text) {
+    const n = $(id); if (n) n.classList.toggle('on', !!on);
+    const t = sid && $(sid); if (t) t.textContent = text || '';
   }
   // Batteri-grafik: fylld efter nivå, färg efter nivå, valfritt streck vid laddmål och blixt när det laddar.
   const batColor = (p) => p < 10 ? 'var(--danger)' : p < 20 ? 'var(--orange)' : p < 30 ? 'var(--warn)' : 'var(--batt)';
@@ -1510,10 +1521,16 @@ body.noscroll{overflow:hidden}
     const b = batt ? -(Number(val(batt, 'measure_power')) || 0) : 0;   // + = batteriet levererar till huset
     const e = ev ? Math.max(0, Number(val(ev, 'measure_power')) || 0) : 0;
     const home = Math.max(0, g + s + b - e);
+    // Flödesdiagrammet: namn + värde utåt, status inåt. Rubrikerna BATTERI · nivå och bilens namn · nivå (annars LADDBOX).
     $('vSun').textContent = sun ? W(s) : '–';
-    $('vGrid').textContent = grid ? (g < 0 ? 'Säljer ' : 'Köper ') + W(Math.abs(g)) : '–';
-    $('vBatt').textContent = batt ? (has(batt, 'measure_battery') ? f0.format(val(batt, 'measure_battery')) + ' % · ' : '') + W(Math.abs(b)) : '–';
-    $('vEv').textContent = ev ? (e > 15 ? W(e) : 'Vilar') : '–';
+    $('vGrid').textContent = grid ? W(Math.abs(g)) : '–';
+    $('vBatt').textContent = batt ? W(Math.abs(b)) : '–';
+    $('vEv').textContent = ev ? W(e) : '–';
+    $('lBatt').textContent = 'BATTERI' + (batt && has(batt, 'measure_battery') ? ' · ' + f0.format(val(batt, 'measure_battery')) + ' %' : '');
+    $('lEv').textContent = car && has(car, 'measure_battery') ? (String(car.name || 'Bil').split('/')[0].trim() || 'Bil').toUpperCase() + ' · ' + f0.format(val(car, 'measure_battery')) + ' %' : 'LADDBOX';
+    flowNode('nSun', !!sun && s > 50, 'sSun', !sun ? '' : s > 50 ? 'Producerar' : 'Ingen sol');
+    flowNode('nGrid', !!grid && Math.abs(g) > 50, 'sGrid', !grid ? '' : g > 50 ? 'Köper' : g < -50 ? 'Säljer' : 'Balans');
+    flowNode('nEv', !!ev && e > 50, 'sEv', !ev ? '' : e > 50 ? 'Laddar' : 'Vilar');
     $('vHome').textContent = grid || sun ? W(home) : '–';
     // Förbrukning = allt som förbrukas: huset + laddboxen (= nät + sol + batteri), sedan 2026-11-12.4. Hus-värdet i energiflödet är fortfarande utan laddbox.
     // Sedan 2026-11-12.6 visar rutan Pulse rakt av (elmätarens measure_power, + = köp, − = försäljning), i watt som Pulse-appen ("11 470 W")
@@ -1570,9 +1587,11 @@ body.noscroll{overflow:hidden}
     if (am && al) { am.hidden = al.hidden; am.firstElementChild.textContent = al.firstElementChild.textContent; am.lastElementChild.textContent = al.lastElementChild.textContent; }
     const bst = $('vBattSt');
     if (bst) {
-      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bFault ? 'Står still – fel' : bState;
-      bst.textContent = st; bst.setAttribute('class', 'sub' + (bStale || bFault ? ' bad' : /laddar/i.test(st) && !/ur/i.test(st) ? ' chg' : ''));
+      // Status i diagrammet: Laddar ur / Laddar / Viloläge (gräns 50 W); fel och utebliven kontakt i rött
+      const st = !batt ? '' : bStale ? (bSeen ? 'Senaste data ' + hhmm(bSeen) : 'Otillgänglig') : bFault ? 'Står still – fel' : b > 50 ? 'Laddar ur' : b < -50 ? 'Laddar' : 'Viloläge';
+      bst.textContent = st; bst.setAttribute('class', 'nst' + (bStale || bFault ? ' bad' : ''));
     }
+    flowNode('nBatt', !!batt && !bStale && Math.abs(b) > 50, null);
     kv($('batt'), batt ? [
       ['Kontakt', batt.available === false ? 'Otillgänglig i Homey' : bSeen ? (bStale ? 'Ingen data ' : 'OK, data ') + ago(bSeen) : '–', bStale ? 'bad' : 'okc'],
       ['Batteri', bState, bFault ? 'bad' : ''],
@@ -1643,17 +1662,17 @@ body.noscroll{overflow:hidden}
   function flowSummary(ok, g, s, b, e) {
     const say = $('flowSay'), src = $('flowSrc'); if (!say || !src) return;
     say.hidden = !ok; src.hidden = !ok; if (!ok) return;
-    const S2 = [['Sol', s, 'var(--sun)'], ['Batteri', Math.max(0, b), 'var(--batt)'], ['Nät', Math.max(0, g), 'var(--grid)']].filter((x) => x[1] > 15);
+    const S2 = [['Sol', s, 'var(--sun)'], ['Batteri', Math.max(0, b), 'var(--batt)'], ['Nät', Math.max(0, g), 'var(--grid)']].filter((x) => x[1] > 50);
     const tot = S2.reduce((a, x) => a + x[1], 0) || 1;
     const out = [];
-    if (g < -15) out.push('säljer ' + W(-g) + ' till nätet');
-    if (b < -15) out.push('laddar batteriet med ' + W(-b));
-    if (e > 15) out.push('laddar bilen med ' + W(e));
+    if (g < -50) out.push('säljer ' + W(-g) + ' till nätet');
+    if (b < -50) out.push('laddar batteriet med ' + W(-b));
+    if (e > 50) out.push('laddar bilen med ' + W(e));
     const main = S2.slice().sort((x, y) => y[1] - x[1])[0];
-    const lead = !main ? 'Huset drar ingen el just nu' : main[0] === 'Sol' ? 'Solen driver huset' : main[0] === 'Batteri' ? 'Batteriet driver huset' : 'Huset köper el från nätet';
+    const lead = !main ? 'Huset drar ingen el' : main[0] === 'Sol' ? 'Solen driver huset' : main[0] === 'Batteri' ? 'Batteriet driver huset' : 'Huset köper el från nätet';
     say.textContent = lead + (out.length ? ' och ' + out.join(' och ') : '') + '.';
     const bar = $('flowBar'), leg = $('flowLeg'); bar.replaceChildren(); leg.replaceChildren();
-    src.hidden = !S2.length;
+    if (!S2.length) leg.append(mk('span', '', 'Ingen förbrukning'));
     S2.forEach(([n, v, c]) => {
       const i = mk('i'); i.style.flex = String(v); i.style.background = c; bar.append(i);
       const l = mk('span'), k = mk('i'); k.style.background = c; l.append(k, document.createTextNode(n + ' ' + f0.format(Math.round(v / tot * 100)) + ' %')); leg.append(l);
@@ -1670,7 +1689,7 @@ body.noscroll{overflow:hidden}
     const ph = ['L1', 'L2', 'L3'].filter((L) => grid && has(grid, 'measure_current.' + L)).map((L) => f1.format(val(grid, 'measure_current.' + L)));
     set('mFas', ph.length ? ph.join(' · ') + ' A' : ''); row('fas').hidden = !ph.length;
     // Husbatteri och Laddbox & bil (blad sedan ny design 2026-11): samma texter som i flödet och kortet
-    set('mBatt', [$('vBatt').textContent, $('vBattSt').textContent].filter((x) => x && x !== '–').join(' · '));
+    set('mBatt', [($('lBatt').textContent.split(' · ')[1] || ''), $('vBatt').textContent, $('vBattSt').textContent].filter((x) => x && x !== '–').join(' · '));
     const sst = $('solSt'), solBad = !!sst && !$('solBox').hidden && sst.classList.contains('bad');
     set('mEv', $('evSt').textContent + (solBad ? ' · fel i solladdningen' : ''));
     const A = jsonVar('AI Förbrukning');
