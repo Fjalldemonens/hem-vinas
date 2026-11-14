@@ -6,7 +6,7 @@
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#0a0f17">
-<meta name="app-version" content="2026-11-14.11">
+<meta name="app-version" content="2026-11-14.12">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -333,15 +333,15 @@ body.noscroll{overflow:hidden}
 .batwrap{padding:16px 16px 2px}
 /* Batteri-grafik i glas-stil (2026-11-14.6): liggande glaskropp med metallkapsel, blank fyllning som går rött → orange → gult → grönt längs batteriet (fyllningens slut får färgen för nivån), vit siffra med mörk kontur */
 .bat{display:flex;align-items:center;max-width:300px}
-.bat-b{position:relative;flex:1;height:64px;border-radius:14px;padding:6px 16px;background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 42%,rgba(0,0,0,.06) 58%,rgba(255,255,255,.12) 100%);border:1.5px solid rgba(140,150,165,.55);box-shadow:inset 0 1px 1px rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.18);overflow:hidden}
-.bat-b::before,.bat-b::after{content:'';position:absolute;top:0;bottom:0;width:11px;background:linear-gradient(180deg,#f4f6f9 0%,#aab3be 30%,#6e7884 52%,#c9d0d8 78%,#eef1f5 100%);z-index:2}
+.bat-b{position:relative;flex:1;height:64px;border-radius:14px;padding:6px 16px;background:linear-gradient(180deg,rgba(255,255,255,.22) 0%,rgba(255,255,255,.06) 42%,rgba(0,0,0,.06) 58%,rgba(255,255,255,.12) 100%),color-mix(in srgb,var(--fg) 6%,transparent);border:1.5px solid color-mix(in srgb,#3a4048 55%,transparent);box-shadow:inset 0 1px 1px rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.18);overflow:hidden}
+.bat-b::before,.bat-b::after{content:'';position:absolute;top:0;bottom:0;width:11px;background:linear-gradient(180deg,#9aa3ad 0%,#5b636d 22%,#2b3036 50%,#454c55 72%,#8a929c 100%);z-index:2}
 .bat-b::before{left:0}
 .bat-b::after{right:0}
 .bat-b i{position:relative;display:block;height:100%;min-width:8px;border-radius:7px;background:linear-gradient(90deg,#e23a2c 0,#f0861b 10%,#f3cb34 20%,#a8d83e 30%,#4fb52c 100%);background-size:var(--bs,100%) 100%;background-repeat:no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);transition:width .4s;overflow:hidden}
 .bat-b i::after{content:'';position:absolute;left:0;right:0;top:0;height:48%;border-radius:7px 7px 40% 40%/7px 7px 10px 10px;background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(255,255,255,.12))}
-.bat-b s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.45);z-index:3}
-.bat-b span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--f-body);font-size:1.65rem;font-weight:800;color:#fff;z-index:3;text-shadow:0 0 1px #1b2a12,1px 1px 0 #1b2a12,-1px -1px 0 #1b2a12,1px -1px 0 #1b2a12,-1px 1px 0 #1b2a12,0 2px 4px rgba(0,0,0,.45)}
-.bat-n{width:9px;height:28px;border-radius:0 7px 7px 0;background:linear-gradient(180deg,#f4f6f9 0%,#aab3be 30%,#6e7884 52%,#c9d0d8 78%,#eef1f5 100%);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.bat-b s{position:absolute;top:3px;bottom:3px;width:3px;margin-left:-1.5px;border-radius:2px;background:var(--fg);box-shadow:0 0 0 1.5px var(--card);z-index:3}
+.bat-b span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;font-family:var(--f-body);font-size:1.65rem;font-weight:800;color:var(--fg);z-index:3;text-shadow:0 0 2px var(--card),0 0 4px var(--card),0 0 8px var(--card)}
+.bat-n{width:9px;height:28px;border-radius:0 7px 7px 0;background:linear-gradient(180deg,#9aa3ad 0%,#5b636d 22%,#2b3036 50%,#454c55 72%,#8a929c 100%);box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .carsub{font-size:.8rem;color:var(--muted)}
 #ev:empty{display:none}
 .solbox{padding:0 16px 14px;display:flex;flex-direction:column;gap:6px}
@@ -523,8 +523,8 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wx" id="wx" role="dialog" aria-modal="true" aria-labelledby="wxTitle" hidden><div class="wxsheet"><div class="wxtop"><div><div class="eyebrow">Väder</div><div class="wxtitle" id="wxTitle">Vinäs, Mora</div></div><button class="wxx" id="wxClose" type="button" aria-label="Stäng prognosen">✕</button></div><div id="wxBody"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
-<script src="config.js?v=2026-11-14.11"></script>
-<script src="homey.js?v=2026-11-14.11"></script>
+<script src="config.js?v=2026-11-14.12"></script>
+<script src="homey.js?v=2026-11-14.12"></script>
 <script>
 (() => {
   const S = 'Homey';
