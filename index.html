@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.18">
+<meta name="app-version" content="2026-11-14.19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -322,9 +322,9 @@ body.noscroll{overflow:hidden}
 .pchart{width:100%;height:auto;display:block}
 .pchart .gl{stroke:var(--sub);stroke-width:1}
 .pchart .ax{font-size:10px;fill:var(--muted);font-family:var(--f-body)}
-.pchart .ln{fill:none;stroke-width:2.4;stroke-linejoin:round}
-.pchart .area{stroke:none;opacity:.32}
-.pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.3}
+.pchart .ln{fill:none;stroke-width:2.2;stroke-linejoin:round}
+.pchart .area{stroke:none;opacity:.2}
+.pchart .oth{fill:none;stroke:var(--faint);stroke-width:1.1;opacity:.8}
 .pchart .oarea{fill:var(--faint);opacity:.12;stroke:none}
 .pchart .nowh{opacity:.3}
 .pchart .nowr{fill:none;stroke:var(--fg);stroke-width:2.2}
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.18"></script>
-<script src="homey.js?v=2026-11-14.18"></script>
+<script src="config.js?v=2026-11-14.19"></script>
+<script src="homey.js?v=2026-11-14.19"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1464,22 +1464,20 @@ body.noscroll{overflow:hidden}
     svg.setAttribute('aria-label', (kind === 'imp' ? 'Importpris' : 'Exportpris') + ' per kvart, ' + f2.format(mn) + ' till ' + f2.format(mx) + ' kr per kWh');
     const mkEl = (n, a, parent) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); (parent || svg).append(e); return e; };
     const el = (n, a) => mkEl(n, a);
-    // Gradienter: linjens färg följer priset (lodrätt), ytan under tonas ut nedåt
+    // Lugnare graf (överlämningen): en färg per serie – orange för köp, grön för sälj – med mjuk yta som tonas ut nedåt
+    const cc = kind === 'imp' ? 'var(--price)' : 'var(--green)';
     const id = 'pc' + (++pcId), defs = el('defs', {});
-    const g = mkEl('linearGradient', { id: id + 'g', gradientUnits: 'userSpaceOnUse', x1: 0, x2: 0, y1: y(mx), y2: y(mn) }, defs);
-    for (let i = 0; i <= 10; i++) mkEl('stop', { offset: (i * 10) + '%', 'stop-color': priceColor(mx - (mx - mn) * i / 10, mn, mx, kind) }, g);
     const fg = mkEl('linearGradient', { id: id + 'f', gradientUnits: 'userSpaceOnUse', x1: 0, x2: 0, y1: y(mx), y2: y(lo) }, defs);
     mkEl('stop', { offset: '0%', 'stop-color': '#fff', 'stop-opacity': '1' }, fg); mkEl('stop', { offset: '100%', 'stop-color': '#fff', 'stop-opacity': '0' }, fg);
     const mask = mkEl('mask', { id: id + 'm' }, defs); mkEl('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#' + id + 'f)' }, mask);
     const ticks = []; const stepv = hi > 3 ? 1 : 0.5; for (let v = Math.ceil(lo / stepv) * stepv; v <= hi; v += stepv) ticks.push(v);
     ticks.forEach((v) => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gl' }); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }); t.textContent = f1.format(v); });
     [0, 6, 12, 18, 24].forEach((hh) => { const t = el('text', { x: x(arr.length * hh / 24), y: H - 6, 'text-anchor': hh === 0 ? 'start' : hh === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(hh).padStart(2, '0'); });
-    el('path', { d: step(other) + ' V' + y(lo) + ' H' + x(0) + ' Z', class: 'oarea' });
     el('path', { d: step(other), class: 'oth' });
-    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', fill: 'url(#' + id + 'g)', mask: 'url(#' + id + 'm)', class: 'area' });
-    el('path', { d: step(arr), stroke: 'url(#' + id + 'g)', class: 'ln' });
+    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', fill: cc, mask: 'url(#' + id + 'm)', class: 'area' });
+    el('path', { d: step(arr), stroke: cc, class: 'ln' });
     if (nowIdx >= 0 && nowIdx < arr.length) {
-      const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = priceColor(arr[nowIdx], mn, mx, kind);
+      const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = cc;
       const ng = mkEl('g', { class: 'nowg' }); const el = (n, a) => mkEl(n, a, ng);
       el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' });
       el('circle', { cx, cy, r: 14, fill: col, class: 'nowh' });
@@ -1501,7 +1499,7 @@ body.noscroll{overflow:hidden}
     const show = (i) => {
       i = Math.min(arr.length - 1, Math.max(0, i));
       if (i === cur) return; cur = i;
-      const cx = x(i + 0.5), cy = y(arr[i]), col = priceColor(arr[i], mn, mx, kind);
+      const cx = x(i + 0.5), cy = y(arr[i]), col = cc;
       sLine.setAttribute('x1', cx); sLine.setAttribute('x2', cx);
       [sHalo, sRing, sDot].forEach((c) => { c.setAttribute('cx', cx); c.setAttribute('cy', cy); });
       sHalo.setAttribute('fill', col); sDot.setAttribute('fill', col);
@@ -1566,7 +1564,7 @@ body.noscroll{overflow:hidden}
       if (tag) top.append(mk('span', 'tag ' + tag[1], tag[0]));
       const cols = mk('div', 'pcols');
       const c1 = mk('div', 'pcol'), big = mk('div', 'big num');
-      big.style.color = priceColor(v, mn, mx, priceKind);
+      big.style.color = priceKind === 'imp' ? 'var(--price)' : 'var(--green-ink)';
       big.append(document.createTextNode(f2.format(v)), mk('small', '', ' kr/kWh'));
       c1.append(mk('div', 'plbl', priceKind === 'imp' ? 'Köp' : 'Sälj'), big);
       const c2 = mk('div', 'pcol pcol2'), b2 = mk('div', 'big2 num');
