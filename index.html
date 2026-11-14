@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.16">
+<meta name="app-version" content="2026-11-14.17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -544,9 +544,10 @@ body.noscroll{overflow:hidden}
 .tdy .th b{font-size:28px;font-weight:700;letter-spacing:-.01em}
 .tdy .th b.inc{color:var(--green-ink)}
 .tdy .m3{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
-.tdy .mc{background:var(--sub);border-radius:12px;padding:10px;min-width:0}
-.tdy .mc small{display:block;font-size:12px;color:var(--muted)}
-.tdy .mc b{display:block;font-size:15px;font-weight:700;overflow-wrap:break-word}
+.tdy .mc{background:var(--sub);border-radius:12px;padding:10px 8px 10px 10px;min-width:0}
+.tdy .mc small{display:block;font-size:12px;color:var(--muted);white-space:nowrap}
+.tdy .mc b{display:block;font-size:16px;font-weight:700;white-space:nowrap}
+.tdy .mc b i{font-style:normal;font-size:12px;font-weight:600;color:var(--muted);margin-left:2px}
 .tdy .fromn{font-size:12px;color:var(--muted)}
 .tag .cd{width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;flex:none}
 #lightStatus{align-items:center;gap:6px}
@@ -667,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.16"></script>
-<script src="homey.js?v=2026-11-14.16"></script>
+<script src="config.js?v=2026-11-14.17"></script>
+<script src="homey.js?v=2026-11-14.17"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1712,12 +1713,12 @@ body.noscroll{overflow:hidden}
       th.append(mk('span', '', cost < 0 ? 'Intäkt hittills' : 'Kostnad hittills'), bb); td.append(th);
     }
     const cards = [];
-    if (kIn !== null && Number.isFinite(kIn)) cards.push([G ? 'Köpt' : 'Förbrukat', f1.format(kIn) + '\u00a0kWh']);
-    if (kOut !== null) cards.push(['Sålt', f1.format(kOut) + '\u00a0kWh', 'sol + batteri']);
-    if (sun && has(sun, 'meter_power')) cards.push(['Sol', f1.format(val(sun, 'meter_power')) + '\u00a0kWh']);
+    if (kIn !== null && Number.isFinite(kIn)) cards.push([G ? 'Köpt' : 'Förbrukat', f1.format(kIn)]);
+    if (kOut !== null) cards.push(['Sålt', f1.format(kOut), 'sol + batteri']);
+    if (sun && has(sun, 'meter_power')) cards.push(['Sol', f1.format(val(sun, 'meter_power'))]);
     if (cards.length) {
       const m3 = mk('div', 'm3'); m3.style.setProperty('--n', cards.length);
-      cards.forEach(([l, v, sub]) => { const c = mk('div', 'mc'); c.append(mk('small', '', l), mk('b', '', v)); if (sub) c.append(mk('small', '', sub)); m3.append(c); });
+      cards.forEach(([l, v, sub]) => { const c = mk('div', 'mc'); const bv = mk('b', '', v); bv.append(mk('i', '', 'kWh')); c.append(mk('small', '', l), bv); if (sub) c.append(mk('small', '', sub)); m3.append(c); });
       td.append(m3);
     }
     const fr = G && [fromTxt(G.imp), fromTxt(G.exp)].find(Boolean); if (fr) td.append(mk('div', 'fromn', 'Räknat ' + fr));
