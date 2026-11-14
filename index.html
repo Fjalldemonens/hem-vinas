@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.17">
+<meta name="app-version" content="2026-11-14.18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.17"></script>
-<script src="homey.js?v=2026-11-14.17"></script>
+<script src="config.js?v=2026-11-14.18"></script>
+<script src="homey.js?v=2026-11-14.18"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1966,7 +1966,7 @@ body.noscroll{overflow:hidden}
   /* ---------- städschema (test): variabeln AI Städschema, körs av flödet AI 13 ---------- */
   const DAYS = [[1, 'Mån'], [2, 'Tis'], [3, 'Ons'], [4, 'Tor'], [5, 'Fre'], [6, 'Lör'], [0, 'Sön']];
   const DAYL = { 0: 'söndag', 1: 'måndag', 2: 'tisdag', 3: 'onsdag', 4: 'torsdag', 5: 'fredag', 6: 'lördag' };
-  const schedOpen = {}, setOpen = {}; let draft = null, schedBusy = false;
+  const schedOpen = {}, setOpen = {}, pickOpen = {}; let draft = null, schedBusy = false;
   function schedAll() { try { return JSON.parse(varVal('AI Städschema') || '{}') || {}; } catch (e) { return {}; } }
   function nextRun(devId) {
     const list = (schedAll()[devId] || []).filter((e) => e.on && e.time && (e.days || []).length);
@@ -2111,9 +2111,8 @@ body.noscroll{overflow:hidden}
     if (docked && settable(d, 'mop_dry')) S.push(actBtn(d, val(d, 'mop_dry') ? 'Stoppa torkning' : 'Torka moppen', '', { mop_dry: !val(d, 'mop_dry') }, 'Klart'));
     if (docked && settable(d, 'empty_dustbin')) S.push(actBtn(d, 'Töm påse', '', { empty_dustbin: true }, 'Stationen tömmer'));
     if (S.length) { const qs = mk('div', 'quick3'); S.forEach((x) => qs.append(x)); hero.append(qs); }
+    // Rumsvalet ligger bakom en rad (ett tryck på ett rum startar städningen direkt, så det ska inte gå att råka trycka på)
     const cr = choice(d, 'clean_room_pick', 'Städa rum', 'Städar');
-    if (cr.length) { const hd = mk('div', 'sech'); hd.append(mk('div', 'h2', 'Städa rum'), mk('span', 'sh', 'Tryck på ett rum')); cr[0] = hd; }
-    wrap.append(...cr);
     if (last) wrap.append(...last);
     const lst = mk('div', 'card');
     const lrow = (label, sub, onClick) => {
@@ -2121,6 +2120,7 @@ body.noscroll{overflow:hidden}
       const ch = mk('span', 'chev', '›'); ch.setAttribute('aria-hidden', 'true');
       b.append(mk('span', 'ln2', label), mk('span', 'ls', sub || ''), ch); b.addEventListener('click', onClick); return b;
     };
+    if (cr.length) lst.append(lrow('Städa rum', 'Välj rum', () => { pickOpen[d.id] = true; renderRobot(); }));
     lst.append(lrow('Schema', nx ? 'Nästa ' + nx.label : '', () => { schedOpen[d.id] = true; renderRobot(); }));
     const lsv = has(d, 'mop_route') && capTitle(d, 'mop_route', val(d, 'mop_route')) ? sv(capTitle(d, 'mop_route', val(d, 'mop_route'))) : has(d, 'clean_mode') ? sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))) : '';
     lst.append(lrow('Läge och mopprutt', lsv, () => { setOpen[d.id] = true; renderRobot(); }));
@@ -2130,6 +2130,10 @@ body.noscroll{overflow:hidden}
       const body = sheetOpen('sched' + d.id, 'Schema · ' + nm, () => { schedOpen[d.id] = false; if (draft && draft.dev === d.id) draft = null; });
       body.replaceChildren(...schedPanel(d));
     } else if (SH.key === 'sched' + d.id) sheetClose(false);
+    if (pickOpen[d.id] && cr.length) {
+      const body = sheetOpen('pick' + d.id, 'Städa rum · ' + nm, () => { pickOpen[d.id] = false; });
+      body.replaceChildren(mk('div', 'fine', 'Ett tryck på ett rum startar städningen direkt.'), cr[1]);
+    } else if (SH.key === 'pick' + d.id) sheetClose(false);
     if (setOpen[d.id]) {
       const body = sheetOpen('set' + d.id, 'Läge och mopprutt · ' + nm, () => { setOpen[d.id] = false; });
       const parts = [...choice(d, 'clean_mode', 'Städläge'), ...choice(d, 'suction_power', 'Sugkraft'), ...choice(d, 'scrub_intensity', 'Moppning'), ...choice(d, 'mop_route', 'Mopprutt')];
