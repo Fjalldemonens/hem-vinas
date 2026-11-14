@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.19">
+<meta name="app-version" content="2026-11-14.20">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.19"></script>
-<script src="homey.js?v=2026-11-14.19"></script>
+<script src="config.js?v=2026-11-14.20"></script>
+<script src="homey.js?v=2026-11-14.20"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -684,6 +684,7 @@ body.noscroll{overflow:hidden}
   const W = (w) => w == null || isNaN(w) ? '–' : Math.abs(w) >= 1000 ? f2.format(w / 1000) + ' kW' : f0.format(w) + ' W';
   const EXCLUDE = /värmefläkt/i;
   const OUTSIDE = /utomhus/i;
+  const LUX_DAG = 400, LUX_NATT = 3;   // gränser för Dag/Natt på utegivaren (lux), se renderTemp
 
   const api = window.HomeyClient;
   let devices = [], moods = [], vars = [];
@@ -1103,9 +1104,17 @@ body.noscroll{overflow:hidden}
       if (Number.isFinite(tn)) { go.style.setProperty('--gt', tn >= 0 ? 'var(--warm)' : 'var(--cold)'); go.style.setProperty('--ga', Math.round(8 + Math.min(Math.abs(tn), 25) / 25 * 16) + '%'); }
       const meta = $('outMeta'); meta.replaceChildren();
       // En etikett: Dagsljus/Skumt + lux (samma data som förut), under den Garage-givaren (Strålkastare) som flyttats hit från rumsrutorna.
-      const sk = varVal('AI Skumt ute'), lux = has(out, 'measure_luminance') ? f0.format(val(out, 'measure_luminance')) + ' lux' : null;
-      const lbl = sk !== undefined ? (sk ? 'Skumt' : 'Dagsljus') : null;
-      if (lbl || lux) meta.append(mk('span', 'tag num', [lbl, lux].filter(Boolean).join(' · ').replace(/ /g, '\u00a0').replace(/\u00a0·\u00a0/g, ' · ')));
+      // Ljusläge efter vedertagna nivåer (lux): dag ≥ 400 (ungefär solens upp-/nedgång), natt < 3 (under slutet av civil skymning, ca 3,4 lux),
+      // däremellan skymning på kvällen och gryning på morgonen (solen på väg upp/ner räknas lokalt). Variabeln AI Skumt ute är bara reserv om lux saknas.
+      const sk = varVal('AI Skumt ute'), lxv = has(out, 'measure_luminance') ? Number(val(out, 'measure_luminance')) : null;
+      const lux = lxv !== null && Number.isFinite(lxv) ? f0.format(lxv) + ' lux' : null;
+      let lbl = null, dark = false;
+      if (lux) {
+        if (lxv >= LUX_DAG) lbl = 'Dag';
+        else if (lxv < LUX_NATT) { lbl = 'Natt'; dark = true; }
+        else { lbl = sunAlt(Date.now() + 600000, WX.lat, WX.lon) > sunAlt(Date.now(), WX.lat, WX.lon) ? 'Gryning' : 'Skymning'; dark = true; }
+      } else if (sk !== undefined) { lbl = sk ? 'Skumt' : 'Dagsljus'; dark = !!sk; }
+      if (lbl || lux) meta.append(mk('span', 'tag num' + (dark ? '' : ' plain'), [lbl, lux].filter(Boolean).join(' · ').replace(/ /g, '\u00a0').replace(/\u00a0·\u00a0/g, ' · ')));
       T.filter((x) => x.id !== out.id && /strålkastare/i.test(x.name) && Number.isFinite(Number(val(x, 'measure_temperature')))).forEach((x) => {
         const z = roomOf(x.zone || ''), lab = z && !OUTSIDE.test(z) ? z : String(x.name).trim();
         meta.append(mk('div', 'gar num', nb(lab + ' ' + f1.format(val(x, 'measure_temperature')) + '°')));
