@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.29">
+<meta name="app-version" content="2026-11-14.30">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -673,8 +673,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.29"></script>
-<script src="homey.js?v=2026-11-14.29"></script>
+<script src="config.js?v=2026-11-14.30"></script>
+<script src="homey.js?v=2026-11-14.30"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1024,8 +1024,15 @@ body.noscroll{overflow:hidden}
     const bucket = wet.filter((x) => /värmepump/i.test(x.zone || '')).concat(wet).find((x) => val(x, 'alarm_water') === true);
     if (bucket) {
       const ch = mk('div', 'hpchips');
-      const c = mk('span', 'chip alarm', '💧 Töm hinken'); c.title = String(bucket.name).trim() + ' larmar'; ch.append(c); box.append(ch);
-    }
+      // Larmar längre än 3 h (2026-11-15.30): troligen hänger sig givaren (hände 2026-11-15, batteribyte släppte larmet) → gul varning i stället för pulserande röd
+      let since = (meta(bucket, 'alarm_water') || {}).at || 0;
+      try { const k = 'wetSince:' + bucket.id; if (!localStorage.getItem(k)) localStorage.setItem(k, String(Date.now())); const fs = Number(localStorage.getItem(k)); if (fs && (!since || fs < since)) since = fs; } catch (e) {}
+      const stale = since > 0 && Date.now() - since > 3 * 3600e3;
+      const sd = new Date(since), td = new Date(), sameDay = sd.toDateString() === td.toDateString();
+      const sTxt = (sameDay ? '' : (sd.getDate() + '/' + (sd.getMonth() + 1) + ' ')) + sd.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+      const c = stale ? mk('span', 'chip warn', '💧 Larmar sedan ' + sTxt.replace(/ /g, '\u00a0') + ' · kolla givaren') : mk('span', 'chip alarm', '💧 Töm hinken');
+      c.title = String(bucket.name).trim() + ' larmar'; ch.append(c); box.append(ch);
+    } else { try { wet.forEach((x) => localStorage.removeItem('wetSince:' + x.id)); } catch (e) {} }
     const g = mk('div', 'kv num');
     const T = (c) => has(d, c) ? f0.format(val(d, c)) + '°' : null;
     const KNOWN = ['target_temperature', 'measure_temperature', 'measure_temperature.supply', 'measure_temperature.return', 'measure_temperature.brine_in', 'measure_temperature.brine_out', 'measure_temperature.hotwater', 'thermia_status', 'thermia_opmode', 'hotwater_status', 'hotwater_boost'];
