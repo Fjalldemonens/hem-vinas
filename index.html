@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.27">
+<meta name="app-version" content="2026-11-14.28">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -528,7 +528,8 @@ body.noscroll{overflow:hidden}
 .hero .wxsub{font-size:15px;font-weight:600;color:var(--fg);margin-top:2px}
 .hero .big.ic{display:flex;align-items:center;min-height:60px}
 .robo .socbar{margin:2px 0 0}
-.robo .meta .tag{white-space:normal}
+.robo .meta{justify-content:center}
+.robo .meta .tag{flex:0 1 auto;min-width:0;max-width:100%;white-space:normal;text-align:center;justify-content:center;text-wrap:balance;overflow-wrap:anywhere}
 .lrow .ls{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lj3{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px;padding:14px 16px}
 .lj3 > div{min-width:0}
@@ -671,8 +672,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.27"></script>
-<script src="homey.js?v=2026-11-14.27"></script>
+<script src="config.js?v=2026-11-14.28"></script>
+<script src="homey.js?v=2026-11-14.28"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1929,7 +1930,7 @@ body.noscroll{overflow:hidden}
     const m = mk('div', 'meta');
     // Batterinivån står redan i robotväljaren; här bara en varning när den är låg
     if (has(d, 'measure_battery') && val(d, 'measure_battery') < 20) m.append(mk('span', 'tag price', 'Batteri ' + f0.format(val(d, 'measure_battery')) + ' %'));
-    (extra || []).forEach((t) => t && m.append(mk('span', 'tag plain', t)));
+    (extra || []).forEach((t) => t && m.append(mk('span', 'tag plain', nb(t))));
     if (m.childElementCount) hero.append(m);
     // Stapeln (batterinivå – städförlopp finns inte som data) visas bara medan roboten städar eller är pausad
     if (showBar && has(d, 'measure_battery')) { const b = mk('div', 'socbar'); const i = mk('i'); i.style.width = Math.max(1, Math.min(100, val(d, 'measure_battery'))) + '%'; b.append(i); hero.append(b); }
