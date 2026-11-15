@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.26">
+<meta name="app-version" content="2026-11-14.27">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -671,8 +671,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.26"></script>
-<script src="homey.js?v=2026-11-14.26"></script>
+<script src="config.js?v=2026-11-14.27"></script>
+<script src="homey.js?v=2026-11-14.27"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2117,7 +2117,9 @@ body.noscroll{overflow:hidden}
     const docked = val(d, 'dock') === true || (charging && !cleaning);
     const [st, cls] = paused ? ['Pausad', ''] : cleaning ? ['Städar', 'run'] : docked ? [charging && val(d, 'measure_battery') < 100 ? 'Laddar' : 'I laddstationen', ''] : ['Står på golvet', ''];
     const nx = nextRun(d.id);
-    const hero = roboHero(d, st, cls, [has(d, 'clean_mode') && sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))), nx && 'Nästa: ' + nx.label], cleaning || paused);
+    // Taggen visar nästa schemalagda städning med dess läge (2026-11-14.27). Förut visades robotens inställda läge just nu (rester från senaste jobbet), vilket vilseledde.
+    const nxMode = nx ? (nx.e.mode != null ? sv(capTitle(d, 'clean_mode', nx.e.mode)) : has(d, 'clean_mode') ? sv(capTitle(d, 'clean_mode', val(d, 'clean_mode'))) : '') : '';
+    const hero = roboHero(d, st, cls, [nx && ['Nästa: ' + nx.label, nxMode].filter(Boolean).join(' · ')], cleaning || paused);
     wrap.append(hero);
     const al = alarmChips(d); if (al) wrap.append(al);
     const last = lastJob(d);
