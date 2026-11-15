@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.23">
+<meta name="app-version" content="2026-11-14.24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -525,6 +525,8 @@ body.noscroll{overflow:hidden}
 .zsheet .zr .zl{font-weight:700;font-size:16px}
 .hero .meta .gar{font-size:13px;color:var(--muted);font-weight:600;text-align:right}
 .hero .meta .tag{max-width:100%}
+.hero .wxsub{font-size:15px;font-weight:600;color:var(--fg);margin-top:2px}
+.hero .big.ic{display:flex;align-items:center;min-height:60px}
 .robo .socbar{margin:2px 0 0}
 .robo .meta .tag{white-space:normal}
 .lrow .ls{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -594,6 +596,7 @@ body.noscroll{overflow:hidden}
   <div class="banner" id="banner" hidden></div>
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
+    <div class="card hero" id="lightHero" hidden></div>
     <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
     <div class="chips" id="lightStatus"></div>
     <div class="sech"><div class="h2">Tänt nu <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
@@ -668,8 +671,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.23"></script>
-<script src="homey.js?v=2026-11-14.23"></script>
+<script src="config.js?v=2026-11-14.24"></script>
+<script src="homey.js?v=2026-11-14.24"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -869,17 +872,40 @@ body.noscroll{overflow:hidden}
   }
   // Ny design 2026-11: "Tänt nu" överst, rummen som rutor och ett blad per rum med alla dess lampor.
   let roomOpen = null;   // 'våning|rum' för rummet vars blad är öppet
+  // Ljusrutan överst på fliken Ljus (2026-11-14.24): SMHI-symbol för just nu + ljusläge efter lux (Dag/Skymning/Gryning/Natt) + lux.
+  // Gränser: dag ≥ LUX_DAG (400), natt < LUX_NATT (3), däremellan skymning på kvällen / gryning på morgonen (solen på väg ner/upp räknas lokalt).
+  // Utan lux används AI Skumt ute som reserv (Skumt/Dagsljus).
+  function renderLightHero() {
+    const el = $('lightHero'); if (!el) return;
+    const T = devices.filter((d) => has(d, 'measure_temperature') && !ENERGY_TYPES.test(d.type));
+    const outs = T.filter((d) => OUTSIDE.test(d.zone) && d.type === 'sensor');
+    const out = outs.find((d) => has(d, 'measure_luminance') && /temp/i.test(d.name)) || outs[0];
+    const lxv = out && has(out, 'measure_luminance') ? Number(val(out, 'measure_luminance')) : null, sk = varVal('AI Skumt ute');
+    let lbl = null, dark = false;
+    if (lxv !== null && Number.isFinite(lxv)) {
+      if (lxv >= LUX_DAG) lbl = 'Dag';
+      else if (lxv < LUX_NATT) { lbl = 'Natt'; dark = true; }
+      else { lbl = sunAlt(Date.now() + 600000, WX.lat, WX.lon) > sunAlt(Date.now(), WX.lat, WX.lon) ? 'Gryning' : 'Skymning'; dark = true; }
+    } else if (sk !== undefined) { lbl = sk ? 'Skumt' : 'Dagsljus'; dark = !!sk; }
+    const nowH = new Date(), nowKey = nowH.toLocaleDateString('sv-SE') + 'T' + String(nowH.getHours()).padStart(2, '0');
+    let h = null; try { h = wxData ? wxData.flatMap((d) => d.hours).find((x) => x.t.slice(0, 13) === nowKey) || null : null; } catch (e) {}   // wxData deklareras längre ner
+    el.hidden = !(lbl || h);
+    if (el.hidden) return;
+    const l = mk('div'); l.append(mk('div', 'eyebrow', 'Ljus ute'));
+    const big = mk('div', 'big ic'); if (h) big.append(wxIcon(h.code, h.day, 60)); else big.textContent = '–'; l.append(big);
+    if (h && wxText(h.code)) l.append(mk('div', 'wxsub', wxText(h.code)));
+    const meta = mk('div', 'meta');
+    if (lbl) meta.append(mk('span', 'tag num' + (dark ? '' : ' plain'), lbl));
+    if (lxv !== null && Number.isFinite(lxv)) meta.append(mk('div', 'gar num', nb(f0.format(lxv) + ' lux')));
+    el.replaceChildren(l, meta);
+  }
   function renderLights() {
+    renderLightHero();
     const L = lights(), onCount = L.filter((d) => val(d, 'onoff') === true).length;
     $('gLights').textContent = L.length ? onCount + ' av ' + L.length : '–'; fitGl($('gLights'));
     $('glLights').classList.toggle('lit', onCount > 0);
     const st = $('lightStatus'); st.replaceChildren();
-    // Innebelysningen styrs av AI Skumt inne (< 120 lux), utebelysningen av AI Skumt ute (< 40 lux). Däremellan: skymning.
-    const sk = varVal('AI Skumt ute'), ski = varVal('AI Skumt inne');
-    if (sk !== undefined || ski !== undefined) {
-      const txt = sk ? 'Mörkt ute' : ski ? 'Skumt inne' : 'Ljust ute';
-      const c = mk('span', 'tag' + (sk || ski ? '' : ' plain')); c.append(mk('span', 'cd'), document.createTextNode(txt)); st.append(c);
-    }
+    // Ljusläget ute (Dag/Skymning/Gryning/Natt) står i rutan överst (renderLightHero). Chippet Mörkt ute/Skumt inne/Ljust ute är borttaget 2026-11-14.24.
     const wd = varVal('AI Arbetsdag idag');
     if (wd !== undefined) st.append(mk('span', 'tag plain', wd ? 'Arbetsdag' : 'Ledig dag'));
     const lm = varVal('AI Ledig dag imorgon');
@@ -1103,18 +1129,7 @@ body.noscroll{overflow:hidden}
       go.classList.toggle('temp', Number.isFinite(tn));
       if (Number.isFinite(tn)) { go.style.setProperty('--gt', tn >= 0 ? 'var(--warm)' : 'var(--cold)'); go.style.setProperty('--ga', Math.round(8 + Math.min(Math.abs(tn), 25) / 25 * 16) + '%'); }
       const meta = $('outMeta'); meta.replaceChildren();
-      // En etikett: Dagsljus/Skumt + lux (samma data som förut), under den Garage-givaren (Strålkastare) som flyttats hit från rumsrutorna.
-      // Ljusläge efter vedertagna nivåer (lux): dag ≥ 400 (ungefär solens upp-/nedgång), natt < 3 (under slutet av civil skymning, ca 3,4 lux),
-      // däremellan skymning på kvällen och gryning på morgonen (solen på väg upp/ner räknas lokalt). Variabeln AI Skumt ute är bara reserv om lux saknas.
-      const sk = varVal('AI Skumt ute'), lxv = has(out, 'measure_luminance') ? Number(val(out, 'measure_luminance')) : null;
-      const lux = lxv !== null && Number.isFinite(lxv) ? f0.format(lxv) + ' lux' : null;
-      let lbl = null, dark = false;
-      if (lux) {
-        if (lxv >= LUX_DAG) lbl = 'Dag';
-        else if (lxv < LUX_NATT) { lbl = 'Natt'; dark = true; }
-        else { lbl = sunAlt(Date.now() + 600000, WX.lat, WX.lon) > sunAlt(Date.now(), WX.lat, WX.lon) ? 'Gryning' : 'Skymning'; dark = true; }
-      } else if (sk !== undefined) { lbl = sk ? 'Skumt' : 'Dagsljus'; dark = !!sk; }
-      if (lbl || lux) meta.append(mk('span', 'tag num' + (dark ? '' : ' plain'), [lbl, lux].filter(Boolean).join(' · ').replace(/ /g, '\u00a0').replace(/\u00a0·\u00a0/g, ' · ')));
+      // Ljusläge (Dag/Skymning/Gryning/Natt + lux) visas sedan 2026-11-14.24 på fliken Ljus (renderLightHero), inte här.
       T.filter((x) => x.id !== out.id && /strålkastare/i.test(x.name) && Number.isFinite(Number(val(x, 'measure_temperature')))).forEach((x) => {
         const z = roomOf(x.zone || ''), lab = z && !OUTSIDE.test(z) ? z : String(x.name).trim();
         meta.append(mk('div', 'gar num', nb(lab + ' ' + f1.format(val(x, 'measure_temperature')) + '°')));
@@ -2389,6 +2404,7 @@ body.noscroll{overflow:hidden}
   }
   function wxClose() { $('wx').hidden = true; document.body.classList.remove('noscroll'); $('wxBtn').focus(); }
   function wxBtnUpdate() {
+    renderLightHero();
     const b = $('wxBtn'); if (!b) return;
     const lbl = b.querySelector('.wxbl');
     if (wxData && wxData[0]) { const d = wxData[0]; b.querySelector('.wxbi').replaceChildren(wxIcon(d.code, true, 26)); lbl.replaceChildren(mk('b', 'num', wxT(d.max) + ' / ' + wxT(d.min)), document.createTextNode(' · ' + wxText(d.code))); }
