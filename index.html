@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.25">
+<meta name="app-version" content="2026-11-14.26">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -671,8 +671,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.25"></script>
-<script src="homey.js?v=2026-11-14.25"></script>
+<script src="config.js?v=2026-11-14.26"></script>
+<script src="homey.js?v=2026-11-14.26"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -891,7 +891,7 @@ body.noscroll{overflow:hidden}
     let h = null; try { if (wxData) { const now = Date.now(); let best = Infinity; wxData.flatMap((d) => d.hours).forEach((x) => { const df = Math.abs(new Date(x.t).getTime() - now); if (df < best) { best = df; h = x; } }); if (best > 3 * 3600e3) h = null; } } catch (e) {}   // wxData deklareras längre ner
     el.hidden = !(lbl || h);
     if (el.hidden) return;
-    const l = mk('div'); l.append(mk('div', 'eyebrow', 'Ljus ute'));
+    const l = mk('div'); l.append(mk('div', 'eyebrow', 'Just nu'));
     const big = mk('div', 'big ic'); if (h) big.append(wxIcon(h.code, h.day, 60)); else big.textContent = '–'; l.append(big);
     if (h && wxText(h.code)) l.append(mk('div', 'wxsub', wxText(h.code)));
     const meta = mk('div', 'meta');
