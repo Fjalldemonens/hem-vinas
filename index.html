@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.22">
+<meta name="app-version" content="2026-11-14.23">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -668,8 +668,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.22"></script>
-<script src="homey.js?v=2026-11-14.22"></script>
+<script src="config.js?v=2026-11-14.23"></script>
+<script src="homey.js?v=2026-11-14.23"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1807,9 +1807,15 @@ body.noscroll{overflow:hidden}
       batGfx($('carBat'), pc, tg, evState === 'plugged_in_charging');
       $('carSub').textContent = tg == null ? '' : pc >= tg ? 'Laddmålet nått' : f0.format(tg - pc) + ' % kvar till laddmålet';
     }
+    // Kostnad (2026-11-15.23): flödet AI 18 · Laddkostnad skriver AI Laddkostnad = laddboxens kWh × köppris per kvart (uppskattning).
+    let LK = null; try { LK = JSON.parse(varVal('AI Laddkostnad') || '') || null; } catch (e) {}
+    const krTxt = (x) => (x && x.kr != null ? ' · ' + f0.format(x.kr) + ' kr' : '');
+    const lkLast = LK && LK.last && has(ev, 'meter_power.lastCharge') && Math.abs(LK.last.kwh - Number(val(ev, 'meter_power.lastCharge'))) < 1.5 ? LK.last : null;
     kv($('ev'), ev ? [
-      has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
-      has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh'],
+      LK && LK.cur && ['Pågående laddning', f1.format(LK.cur.kwh) + ' kWh' + krTxt(LK.cur)],
+      has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh' + krTxt(lkLast)],
+      LK && LK.month && LK.month.kwh > 0 && ['Denna månad', f0.format(LK.month.kwh) + ' kWh' + krTxt(LK.month)],
+      has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh' + (LK && LK.prevMonth && !LK.prevMonth.from ? krTxt(LK.prevMonth) : '')],
     ] : []);
     // Solladdning: knappen sätter AI Solladdning, flödet AI 15 gör jobbet och skriver AI Solladdning status.
     const solBox = $('solBox'), solOn = varVal('AI Solladdning');
