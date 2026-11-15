@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.24">
+<meta name="app-version" content="2026-11-14.25">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -671,8 +671,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.24"></script>
-<script src="homey.js?v=2026-11-14.24"></script>
+<script src="config.js?v=2026-11-14.25"></script>
+<script src="homey.js?v=2026-11-14.25"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -887,8 +887,8 @@ body.noscroll{overflow:hidden}
       else if (lxv < LUX_NATT) { lbl = 'Natt'; dark = true; }
       else { lbl = sunAlt(Date.now() + 600000, WX.lat, WX.lon) > sunAlt(Date.now(), WX.lat, WX.lon) ? 'Gryning' : 'Skymning'; dark = true; }
     } else if (sk !== undefined) { lbl = sk ? 'Skumt' : 'Dagsljus'; dark = !!sk; }
-    const nowH = new Date(), nowKey = nowH.toLocaleDateString('sv-SE') + 'T' + String(nowH.getHours()).padStart(2, '0');
-    let h = null; try { h = wxData ? wxData.flatMap((d) => d.hours).find((x) => x.t.slice(0, 13) === nowKey) || null : null; } catch (e) {}   // wxData deklareras längre ner
+    // SMHI-serien börjar ofta vid nästa hela timme, så välj den timme som ligger närmast nu (samma som raden "Nu" i prognosbladet).
+    let h = null; try { if (wxData) { const now = Date.now(); let best = Infinity; wxData.flatMap((d) => d.hours).forEach((x) => { const df = Math.abs(new Date(x.t).getTime() - now); if (df < best) { best = df; h = x; } }); if (best > 3 * 3600e3) h = null; } } catch (e) {}   // wxData deklareras längre ner
     el.hidden = !(lbl || h);
     if (el.hidden) return;
     const l = mk('div'); l.append(mk('div', 'eyebrow', 'Ljus ute'));
