@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.30">
+<meta name="app-version" content="2026-11-14.31">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -375,7 +375,7 @@ body.noscroll{overflow:hidden}
 .fine{font-size:13px;color:var(--muted);margin:0 2px}
 .btn.on{border-color:var(--accent);color:var(--accent-text)}
 /* Husbatteri → Historik (bladet) */
-#battHist{padding:0 16px 16px}
+#battHist{margin-top:14px;padding:0 16px 16px}
 #battHist:empty{display:none}
 #battHist>.btn{width:100%}
 .bh-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 6px;flex-wrap:wrap}
@@ -655,7 +655,7 @@ body.noscroll{overflow:hidden}
       <div class="card" id="mvMan"><div class="mblock" id="monBlock"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
       <div class="card" id="mvSol"><div class="kv num" id="solar"></div></div>
       <div class="card" id="mvFas"><div class="phases num" id="phases"></div></div>
-      <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div class="blog num" id="battLog" hidden></div><div id="battHist"></div></div>
+      <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div id="battHist"></div><div class="blog num" id="battLog" hidden></div></div>
       <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div id="carBat"></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
       <div id="mvApp"><div class="card" id="apps"><div class="empty">Hämtar förbrukning…</div></div></div>
     </div>
@@ -673,8 +673,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.30"></script>
-<script src="homey.js?v=2026-11-14.30"></script>
+<script src="config.js?v=2026-11-14.31"></script>
+<script src="homey.js?v=2026-11-14.31"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1358,18 +1358,13 @@ body.noscroll{overflow:hidden}
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'nyss' : m < 60 ? 'för ' + m + ' min sedan' : m < 1440 ? 'för ' + f1.format(m / 60) + ' h sedan' : 'för ' + Math.round(m / 1440) + ' dygn sedan'; };
   /* ---------- elpris: Homey Energys priser via variabeln AI Elpriser (flödet AI 12) ---------- */
   let priceDay = 0, priceKind = 'imp';
-  let bhOpen = false, bhDay = 0, bhScrub = false;   // Husbatteri → Historik
+  let bhDay = 0, bhScrub = false;   // Husbatteri → graf (laddnivå + effekt)
   function renderBattHist() {
     let box = $('battHist'); if (!box || bhScrub) return;   // ritas inte om mitt i ett drag (som elpriset)
     box.replaceChildren();
     const H = jsonVar('AI Batterihistorik'), days = (H && Array.isArray(H.days)) ? H.days : [];
-    if (!days.length) { if (SH.key === 'bh') sheetClose(false); return; }
-    // Historiken öppnas som blad (ny design 2026-11); knappen ligger kvar i batterikortet
-    const tb = mk('button', 'btn', 'Historik'); tb.type = 'button'; tb.setAttribute('aria-haspopup', 'dialog');
-    tb.addEventListener('click', () => { bhOpen = true; renderBattHist(); }); box.append(tb);
-    if (!bhOpen) { if (SH.key === 'bh') sheetClose(false); return; }
-    box = sheetOpen('bh', 'Husbatteri · historik', (why) => { bhOpen = false; if (why !== 'tab') openMore('batt'); });   // stängs historiken visas batteribladet igen
-    box.replaceChildren();
+    if (!days.length) return;
+    // Grafen ligger direkt i Husbatteri-bladet (2026-11-16, användaren saknade den efter nya designen); ingen separat Historik-knapp längre
     if (bhDay >= days.length) bhDay = 0;
     const D = days[bhDay], iv = Number(H.iv) || 5, v = D.v || [], pw = Array.isArray(D.p) ? D.p : [], n = v.length || 1440 / iv;
     const ok = (y) => y !== null && y !== undefined && Number.isFinite(Number(y));
