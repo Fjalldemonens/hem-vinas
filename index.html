@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.31">
+<meta name="app-version" content="2026-11-14.32">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -643,16 +643,16 @@ body.noscroll{overflow:hidden}
 
     <div class="h2">Idag</div>
     <div class="card"><div class="tdy num" id="today"></div></div>
+    <div class="h2" id="monTitle" hidden>Månad</div>
+    <div class="card" id="monCard" hidden><div class="tdy num" id="monBody"></div></div>
     <div class="card" id="moreList">
       <button class="lrow" type="button" data-more="batt" aria-haspopup="dialog"><span class="ln2">Husbatteri</span><span class="ls num" id="mBatt"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="ev" aria-haspopup="dialog"><span class="ln2">Laddbox &amp; bil</span><span class="ls num" id="mEv"></span><span class="chev" aria-hidden="true">›</span></button>
-      <button class="lrow" type="button" data-more="man" aria-haspopup="dialog"><span class="ln2">Månad</span><span class="ls num" id="mMan"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="sol" aria-haspopup="dialog"><span class="ln2">Solceller</span><span class="ls num" id="mSol"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="fas" aria-haspopup="dialog"><span class="ln2">Faser</span><span class="ls num" id="mFas"></span><span class="chev" aria-hidden="true">›</span></button>
       <button class="lrow" type="button" data-more="app" aria-haspopup="dialog"><span class="ln2">Vitvaror</span><span class="ls num" id="mApp"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
     <div id="moreHome">
-      <div class="card" id="mvMan"><div class="mblock" id="monBlock"></div><div class="appnote">Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.</div></div>
       <div class="card" id="mvSol"><div class="kv num" id="solar"></div></div>
       <div class="card" id="mvFas"><div class="phases num" id="phases"></div></div>
       <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div id="battHist"></div><div class="blog num" id="battLog" hidden></div></div>
@@ -673,8 +673,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.31"></script>
-<script src="homey.js?v=2026-11-14.31"></script>
+<script src="config.js?v=2026-11-14.32"></script>
+<script src="homey.js?v=2026-11-14.32"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1674,21 +1674,31 @@ body.noscroll{overflow:hidden}
     el.append(mk('div', 'appnote', 'Kostnad = förbrukning × köppriset för varje kvart (inkl. påslag enligt Homey Energy). Räknas av flödet AI 14 i Homey, uppdaterad ' + hhmm(A.u) + '.'));
   }
 
-  // Månadsblock i Idag-rutan: aktuell månad synlig, föregående månad bakom en knapp
+  // Månadsrutan (2026-11-16.32): egen ruta under Idag i samma form – kostnad hittills, minikort Köpt/Sålt, föregående månad bakom en knapp
   let pmOpen = false;
   function renderMonths(cur, prev) {
-    const box = $('monBlock'); if (!box) return; box.replaceChildren(); box.hidden = !cur && !prev;
+    const box = $('monBody'), card = $('monCard'), ttl = $('monTitle'); if (!box) return; box.replaceChildren();
+    const has2 = !!cur || !!(prev && prev.m); card.hidden = ttl.hidden = !has2; if (!has2) return;
     const name = (m) => { const n = MON[Number(String(m).slice(5, 7)) - 1] || m; return n.charAt(0).toUpperCase() + n.slice(1); };
-    const net = (x) => { const n = x.ikr - x.ekr; return [n < 0 ? 'Intäkt netto' : 'Kostnad netto', f0.format(Math.abs(n)) + ' kr', n < 0 ? 'okc' : '']; };
-    const rows = (x) => [['Köpt', f0.format(x.ik) + ' kWh · ' + f0.format(x.ikr) + ' kr'], ['Sålt', f0.format(x.ek) + ' kWh · ' + f0.format(x.ekr) + ' kr'], net(x)];
-    const block = (x, label) => { const hd = mk('div', 'mhead'); hd.append(mk('span', '', name(x.m)), mk('span', '', label)); const k = mk('div', 'kv num'); kv(k, rows(x)); return [hd, k]; };
-    if (cur) box.append(...block(cur, 'hittills'));
-    if (prev && prev.m) {
-      const btn = mk('button', 'mtoggle', (pmOpen ? 'Dölj ' : 'Visa ') + name(prev.m).toLowerCase()); btn.type = 'button'; btn.setAttribute('aria-expanded', pmOpen ? 'true' : 'false');
-      btn.addEventListener('click', () => { pmOpen = !pmOpen; renderMonths(cur, prev); });
-      if (pmOpen) box.append(...block(prev, 'hela månaden'));
-      box.append(btn);
+    ttl.textContent = name((cur || prev).m);
+    if (cur) {
+      const c = cur.ikr - cur.ekr, th = mk('div', 'th'), bb = mk('b', c < 0 ? 'inc' : '', f0.format(Math.abs(c)) + '\u00a0kr');
+      th.append(mk('span', '', c < 0 ? 'Intäkt hittills' : 'Kostnad hittills'), bb); box.append(th);
+      const m3 = mk('div', 'm3'); m3.style.setProperty('--n', 2);
+      [['Köpt', cur.ik, cur.ikr], ['Sålt', cur.ek, cur.ekr]].forEach(([l, k, kr]) => { const d = mk('div', 'mc'), bv = mk('b', '', f0.format(k)); bv.append(mk('i', '', 'kWh')); d.append(mk('small', '', l), bv, mk('small', '', f0.format(kr) + '\u00a0kr')); m3.append(d); });
+      box.append(m3);
     }
+    if (prev && prev.m) {
+      const btn = mk('button', 'mtoggle', (pmOpen ? 'Dölj ' : 'Visa ') + name(prev.m).toLowerCase()); btn.type = 'button'; btn.setAttribute('aria-expanded', pmOpen ? 'true' : 'false'); btn.style.margin = '0'; btn.style.width = '100%';
+      btn.addEventListener('click', () => { pmOpen = !pmOpen; renderMonths(cur, prev); });
+      box.append(btn);
+      if (pmOpen) {
+        const n = prev.ikr - prev.ekr, k = mk('div', 'kv num');
+        kv(k, [['Köpt', f0.format(prev.ik) + ' kWh · ' + f0.format(prev.ikr) + ' kr'], ['Sålt', f0.format(prev.ek) + ' kWh · ' + f0.format(prev.ekr) + ' kr'], [n < 0 ? 'Intäkt netto' : 'Kostnad netto', f0.format(Math.abs(n)) + ' kr', n < 0 ? 'okc' : '']]);
+        box.append(k);
+      }
+    }
+    box.append(mk('div', 'fromn', 'Köpt räknas med köppriset per kvart (spot, Tibbers påslag, nätavgift och energiskatt inkl. moms), sålt med spotpriset per kvart + Ellevios produktionsersättning.'));
   }
 
   function renderEnergy() {
@@ -1880,9 +1890,6 @@ body.noscroll{overflow:hidden}
   function renderMore(GM, sun, grid) {
     const set = (id, t) => { const el = $(id); if (el) el.textContent = t || ''; };
     const row = (k) => document.querySelector('#moreList [data-more="' + k + '"]');
-    { const ml = row('man') && row('man').querySelector('.ln2'); if (ml) ml.textContent = GM ? monName(GM.m) : 'Månad'; }
-    if (GM) { const n = GM.imp.kr - GM.exp.kr; set('mMan', (n < 0 ? 'Intäkt ' : 'Kostnad ') + f0.format(Math.abs(n)) + ' kr'); } else set('mMan', '');
-    row('man').hidden = !!$('monBlock').hidden;
     set('mSol', !sun ? '' : has(sun, 'meter_power.YEAR') ? f0.format(val(sun, 'meter_power.YEAR')) + ' kWh i år' : W(Math.max(0, Number(val(sun, 'measure_power')) || 0)));
     row('sol').hidden = !sun;
     const ph = ['L1', 'L2', 'L3'].filter((L) => grid && has(grid, 'measure_current.' + L)).map((L) => f1.format(val(grid, 'measure_current.' + L)));
@@ -1894,7 +1901,7 @@ body.noscroll{overflow:hidden}
     const A = jsonVar('AI Förbrukning');
     if (A && A.u) { const run = [['disk', 'Diskmaskin'], ['tvatt', 'Tvättmaskin']].filter(([k]) => A[k] && A[k].run).map(([k, n]) => A[k].n || n); set('mApp', run.length ? run.join(', ') + ' pågår' : ''); } else set('mApp', '');
   }
-  const MORE = { batt: ['Husbatteri', 'battCard'], ev: ['Laddbox och bil', 'evCard'], man: ['Månad', 'mvMan'], sol: ['Solceller', 'mvSol'], fas: ['Faser', 'mvFas'], app: ['Vitvaror', 'mvApp'] };
+  const MORE = { batt: ['Husbatteri', 'battCard'], ev: ['Laddbox och bil', 'evCard'], sol: ['Solceller', 'mvSol'], fas: ['Faser', 'mvFas'], app: ['Vitvaror', 'mvApp'] };
   function openMore(k) { const m = MORE[k]; if (m) sheetNode('more-' + k, m[0], $(m[1])); }
   document.querySelectorAll('[data-more]').forEach((b) => {
     const go = () => openMore(b.dataset.more);
