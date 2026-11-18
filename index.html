@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.34">
+<meta name="app-version" content="2026-11-14.35">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -162,7 +162,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .bulb svg{width:20px;height:20px}
 .lamp.on .bulb{color:var(--lc,var(--warm));background:var(--amber-soft)}
 .ln{min-width:0}
-.ln .name{font-weight:700;font-size:16px;overflow-wrap:anywhere}
+.ln .name{font-weight:700;font-size:16px;overflow-wrap:break-word;word-break:normal;hyphens:manual;-webkit-hyphens:manual;text-wrap:balance}
 .ln .st{font-size:13px;color:var(--muted)}
 .dimrow{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
 .dimrow .v{text-align:right}
@@ -673,8 +673,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.34"></script>
-<script src="homey.js?v=2026-11-14.34"></script>
+<script src="config.js?v=2026-11-14.35"></script>
+<script src="homey.js?v=2026-11-14.35"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -861,7 +861,7 @@ body.noscroll{overflow:hidden}
     row.style.setProperty('--lc', lampColor(d));
     const b = mk('div', 'bulb'); b.append(bulbSvg());
     const ln = mk('div', 'ln');
-    ln.append(mk('div', 'name', String(d.name).trim()), mk('div', 'st', on ? (dimmable ? 'På · ' + pct(val(d, 'dim')) + ' %' : 'På') : 'Av'));
+    ln.append(mk('div', 'name', String(d.name).trim().replace(/ (\S{1,3})$/, '\u00a0$1')), mk('div', 'st', on ? (dimmable ? 'På · ' + pct(val(d, 'dim')) + ' %' : 'På') : 'Av'));
     row.append(b, ln, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
     if (dimmable && on) {
       const r = mk('div', 'dimrow'); const v = mk('span', 'v num', pct(val(d, 'dim')) + ' %');
