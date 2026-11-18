@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.44">
+<meta name="app-version" content="2026-11-14.45">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -176,6 +176,8 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .lamp{grid-template-columns:32px minmax(0,1fr) auto;gap:10px;padding:8px 12px}
 .lamp .bulb{width:32px;height:32px}.lamp .bulb svg{width:17px;height:17px}
 .dtrack{position:relative;display:block;width:100%;min-height:40px;border:0;border-radius:10px;background:var(--sub);padding:0;font:inherit;text-align:left;overflow:hidden;cursor:pointer;color:var(--fg)}
+.dtrack.dim{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:ew-resize}
+.dtrack.dim:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 .dtrack.plain{cursor:default;background:none}
 .dtrack .f{position:absolute;left:0;top:0;bottom:0;display:block}
 .dtrack .tx{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px;min-height:40px;position:relative;font-size:15px;font-weight:700}
@@ -699,8 +701,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.44"></script>
-<script src="homey.js?v=2026-11-14.44"></script>
+<script src="config.js?v=2026-11-14.45"></script>
+<script src="homey.js?v=2026-11-14.45"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -883,8 +885,7 @@ body.noscroll{overflow:hidden}
   const lights = () => devices.filter((d) => d.type === 'light' && has(d, 'onoff') && !EXCLUDE.test(d.name));
   // Lamprad (2026-11-14.36, förslag A3): ikon, spår med namn + % där en gul stapel visar ljusstyrkan (blek vid svagt ljus, mättad nära 100 %), brytare.
   // Texten ritas två gånger: normal färg på hela spåret och mörk text klippt till staplen, så den syns oavsett var staplen slutar (även i mörkt läge).
-  // Reglaget ligger under raden och fälls ut när man trycker på spåret (dimOpen).
-  const dimOpen = new Set();
+  // Ljusstyrkan ställs in direkt på spåret (dimBar).
   let dimDrag = false, dimT = null;   // fingret är på ett reglage: ritar inte om listan (annars byts reglaget ut mitt i draget)
   const DSTOPS = [[0, [252, 242, 205]], [20, [250, 237, 190]], [40, [248, 229, 165]], [60, [245, 218, 126]], [80, [243, 208, 96]], [100, [237, 186, 42]]];
   function dimColor(p) {
@@ -950,10 +951,27 @@ body.noscroll{overflow:hidden}
     w.append(prev, pal, mk('div', 'cl', 'Nyans'), hr, mk('div', 'cl', 'Mättnad'), sr);
     body.replaceChildren(w); paint();
   }
+  // Ljusstyrka direkt på staplen (2026-11-14.45): dra (eller tryck) på spåret för att sätta procenten, inget reglage under raden.
+  // Vågrätt drag ändrar ljusstyrkan, lodrätt drag scrollar sidan (touch-action:pan-y). Skickas var 250:e ms under draget och en sista gång vid släpp.
+  function dimBar(tr, d, b, p0) {
+    let cur = p0, down = false;
+    const arm = () => { dimDrag = true; clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 4000); };   // säkerhetsventil om släpp-händelsen uteblir
+    const send = () => setCaps({ [d.id]: { dim: cur / 100, onoff: true } }, 'Dimringen');
+    const apply = (v) => { cur = Math.max(1, Math.min(100, Math.round(v))); setTrack(tr, cur, d); setBulb(b, cur, d); tr.setAttribute('aria-valuenow', String(cur)); tr.setAttribute('aria-valuetext', cur + ' procent'); };
+    const fromX = (x) => { const r = tr.getBoundingClientRect(); return ((x - r.left) / r.width) * 100; };
+    const end = () => { if (!down) return; down = false; clearTimeout(thr[d.id] && thr[d.id].timer); send(); clearTimeout(dimT); setTimeout(() => { dimDrag = false; }, 300); };
+    tr.addEventListener('pointerdown', (e) => { down = true; arm(); try { tr.setPointerCapture(e.pointerId); } catch (x) {} apply(fromX(e.clientX)); throttled(d.id, send, 250); });
+    tr.addEventListener('pointermove', (e) => { if (!down) return; arm(); apply(fromX(e.clientX)); throttled(d.id, send, 250); });
+    tr.addEventListener('pointerup', end);
+    tr.addEventListener('pointercancel', () => { if (!down) return; down = false; clearTimeout(thr[d.id] && thr[d.id].timer); clearTimeout(dimT); apply(p0); dimDrag = false; renderLights(); });   // sidan scrollades: ångra
+    tr.addEventListener('keydown', (e) => {
+      const st = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -5 : 0;
+      if (!st) return; e.preventDefault(); arm(); apply(cur + st); throttled(d.id, send, 250); clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 600);
+    });
+  }
   function lampRow(d) {
     const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
-    const open = dimmable && on && dimOpen.has(d.id);
-    const row = mk('div', 'lamp' + (on ? ' on' : '') + (open ? ' open' : ''));
+    const row = mk('div', 'lamp' + (on ? ' on' : ''));
     row.style.setProperty('--lc', lampColor(d));
     const b = mk('div', 'bulb'); b.append(bulbSvg());
     if (has(d, 'light_hue') && has(d, 'light_saturation')) {
@@ -965,29 +983,18 @@ body.noscroll{overflow:hidden}
     let tr;
     if (dimmable && on) {
       const p = pct(val(d, 'dim'));
-      tr = mk('button', 'dtrack'); tr.type = 'button'; tr.setAttribute('aria-expanded', open ? 'true' : 'false'); tr.setAttribute('aria-label', d.name + ', ' + p + ' procent. Tryck för reglage');
+      tr = mk('div', 'dtrack dim'); tr.tabIndex = 0; tr.setAttribute('role', 'slider'); tr.setAttribute('aria-label', 'Ljusstyrka ' + d.name);
+      tr.setAttribute('aria-valuemin', '1'); tr.setAttribute('aria-valuemax', '100'); tr.setAttribute('aria-valuenow', String(p)); tr.setAttribute('aria-valuetext', p + ' procent');
       const t1 = mk('span', 'tx'), t2 = mk('span', 'tx on'); t2.setAttribute('aria-hidden', 'true');
       [t1, t2].forEach((t) => t.append(mk('span', 'tn', name), mk('span', 'tp num', p + ' %')));
       tr.append(mk('i', 'f'), t1, t2); setTrack(tr, p, d);
-      tr.addEventListener('click', () => { if (dimOpen.has(d.id)) dimOpen.delete(d.id); else dimOpen.add(d.id); renderLights(); });
+      dimBar(tr, d, b, p);
     } else {
       tr = mk('div', 'dtrack plain' + (on ? '' : ' offl'));
       const t = mk('span', 'tx'); t.append(mk('span', 'tn', name), mk('span', 'tp num', on ? 'På' : 'Av')); tr.append(t);
     }
     if (on) setBulb(b, dimmable ? pct(val(d, 'dim')) : 100, d);
     row.append(b, tr, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
-    if (open) {
-      const r = mk('div', 'dimrow');
-      const s = mk('input'); s.type = 'range'; s.min = 1; s.max = 100; s.value = pct(val(d, 'dim')) || 1; s.id = 'dim-' + d.id; s.setAttribute('aria-label', 'Ljusstyrka ' + d.name);
-      s.style.setProperty('--p', s.value + '%');
-      const send = () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen');
-      const arm = () => { dimDrag = true; clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 4000); };   // säkerhetsventil om släpp-händelsen uteblir
-      const end = () => { clearTimeout(thr[d.id] && thr[d.id].timer); send(); clearTimeout(dimT); setTimeout(() => { dimDrag = false; }, 300); };
-      s.addEventListener('pointerdown', arm); s.addEventListener('touchstart', arm, { passive: true });
-      s.addEventListener('input', () => { arm(); setTrack(tr, Number(s.value), d); setBulb(b, Number(s.value), d); s.style.setProperty('--p', s.value + '%'); throttled(d.id, send, 250); });
-      s.addEventListener('change', end);
-      r.append(s); row.append(r);
-    }
     return row;
   }
   // Ny design 2026-11: "Tänt nu" överst, rummen som rutor och ett blad per rum med alla dess lampor.
