@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.39">
+<meta name="app-version" content="2026-11-14.40">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -687,8 +687,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.39"></script>
-<script src="homey.js?v=2026-11-14.39"></script>
+<script src="config.js?v=2026-11-14.40"></script>
+<script src="homey.js?v=2026-11-14.40"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -880,14 +880,27 @@ body.noscroll{overflow:hidden}
     for (let i = 1; i < DSTOPS.length; i++) if (p <= DSTOPS[i][0]) { const a = DSTOPS[i - 1], b = DSTOPS[i], t = (p - a[0]) / (b[0] - a[0]); return 'rgb(' + a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t)).join(',') + ')'; }
     return 'rgb(237,186,42)';
   }
-  function setTrack(tr, p) {
-    const f = tr.querySelector('.f'), t2 = tr.querySelector('.tx.on');
-    f.style.width = p + '%'; f.style.background = dimColor(p);
+  // Färglampor (2026-11-14.40, t.ex. Hue lightstrip): staplen och symbolen får färgen lampan lyser med (light_mode color, light_hue/light_saturation),
+  // blek vid svagt ljus och full färg nära 100 %. Texten blir vit på mörka färger (blå, lila) så den alltid syns. Övriga lampor behåller gult.
+  const hslRgb = (h, s, l) => { const a = s * Math.min(l, 1 - l), f = (n) => { const k = (n + h * 12) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); }; return [f(0), f(8), f(4)].map((v) => Math.round(v * 255)); };
+  const lum = (c) => { const q = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * q[0] + 0.7152 * q[1] + 0.0722 * q[2]; };
+  function lampTone(d, p) {
+    p = Math.max(0, Math.min(100, p));
+    let rgb;
+    if (d && val(d, 'light_mode') === 'color' && val(d, 'light_hue') != null) {
+      const h = Number(val(d, 'light_hue')), sat = Math.max(0.35, Math.min(1, Number(val(d, 'light_saturation') ?? 1)));
+      rgb = mixRgb(hslRgb(h, 0.6, 0.92), hslRgb(h, sat, 0.55), p / 100);
+    } else { const m = dimColor(p).match(/\d+/g).map(Number); rgb = m; }
+    return { bg: 'rgb(' + rgb.join(',') + ')', fg: lum(rgb) < 0.28 ? '#fff' : '#412402', icon: lum(rgb) < 0.28 ? '#fff' : '#633806' };
+  }
+  function setTrack(tr, p, d) {
+    const f = tr.querySelector('.f'), t2 = tr.querySelector('.tx.on'), tn = lampTone(d, p);
+    f.style.width = p + '%'; f.style.background = tn.bg; t2.style.color = tn.fg;
     t2.style.clipPath = 'inset(0 ' + (100 - p) + '% 0 0)';
     tr.querySelectorAll('.tp').forEach((e) => { e.textContent = p + ' %'; });
   }
   // Lampsymbolen får samma färg som staplen (följer ljusstyrkan); lampor utan dimning lyser som vid 100 % när de är på.
-  function setBulb(b, p) { b.style.background = dimColor(p); b.style.color = '#633806'; }
+  function setBulb(b, p, d) { const tn = lampTone(d, p); b.style.background = tn.bg; b.style.color = tn.icon; }
   function lampRow(d) {
     const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
     const open = dimmable && on && dimOpen.has(d.id);
@@ -901,13 +914,13 @@ body.noscroll{overflow:hidden}
       tr = mk('button', 'dtrack'); tr.type = 'button'; tr.setAttribute('aria-expanded', open ? 'true' : 'false'); tr.setAttribute('aria-label', d.name + ', ' + p + ' procent. Tryck för reglage');
       const t1 = mk('span', 'tx'), t2 = mk('span', 'tx on'); t2.setAttribute('aria-hidden', 'true');
       [t1, t2].forEach((t) => t.append(mk('span', 'tn', name), mk('span', 'tp num', p + ' %')));
-      tr.append(mk('i', 'f'), t1, t2); setTrack(tr, p);
+      tr.append(mk('i', 'f'), t1, t2); setTrack(tr, p, d);
       tr.addEventListener('click', () => { if (dimOpen.has(d.id)) dimOpen.delete(d.id); else dimOpen.add(d.id); renderLights(); });
     } else {
       tr = mk('div', 'dtrack plain' + (on ? '' : ' offl'));
       const t = mk('span', 'tx'); t.append(mk('span', 'tn', name), mk('span', 'tp num', on ? 'På' : 'Av')); tr.append(t);
     }
-    if (on) setBulb(b, dimmable ? pct(val(d, 'dim')) : 100);
+    if (on) setBulb(b, dimmable ? pct(val(d, 'dim')) : 100, d);
     row.append(b, tr, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
     if (open) {
       const r = mk('div', 'dimrow');
@@ -917,7 +930,7 @@ body.noscroll{overflow:hidden}
       const arm = () => { dimDrag = true; clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 4000); };   // säkerhetsventil om släpp-händelsen uteblir
       const end = () => { clearTimeout(thr[d.id] && thr[d.id].timer); send(); clearTimeout(dimT); setTimeout(() => { dimDrag = false; }, 300); };
       s.addEventListener('pointerdown', arm); s.addEventListener('touchstart', arm, { passive: true });
-      s.addEventListener('input', () => { arm(); setTrack(tr, Number(s.value)); setBulb(b, Number(s.value)); s.style.setProperty('--p', s.value + '%'); throttled(d.id, send, 250); });
+      s.addEventListener('input', () => { arm(); setTrack(tr, Number(s.value), d); setBulb(b, Number(s.value), d); s.style.setProperty('--p', s.value + '%'); throttled(d.id, send, 250); });
       s.addEventListener('change', end);
       r.append(s); row.append(r);
     }
