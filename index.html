@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.43">
+<meta name="app-version" content="2026-11-14.44">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -165,6 +165,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .csheet .cprev{height:64px;border-radius:16px;border:1px solid var(--line);margin-bottom:14px}
 .csheet .cpal{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:0 0 16px}
 .csheet .cpal button{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);padding:0;cursor:pointer}
+.csheet .cpal button.wht{font:700 11px/1 inherit;font-family:inherit;color:#5a4a2a}
 .csheet .cpal button[aria-pressed=true]{border-color:var(--text);box-shadow:0 0 0 2px var(--card)}
 .csheet .cl{font-size:13px;font-weight:600;color:var(--sub-t,var(--faint-t));margin:6px 0 2px}
 .csheet input.hue::-webkit-slider-runnable-track{background:linear-gradient(90deg,hsl(0 100% 55%),hsl(60 100% 50%),hsl(120 100% 45%),hsl(180 100% 45%),hsl(240 100% 60%),hsl(300 100% 55%),hsl(360 100% 55%))}
@@ -698,8 +699,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.43"></script>
-<script src="homey.js?v=2026-11-14.43"></script>
+<script src="config.js?v=2026-11-14.44"></script>
+<script src="homey.js?v=2026-11-14.44"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -912,7 +913,7 @@ body.noscroll{overflow:hidden}
   }
   // Lampsymbolen får samma färg som staplen (följer ljusstyrkan); lampor utan dimning lyser som vid 100 % när de är på.
   function setBulb(b, p, d) { const tn = lampTone(d, p); b.style.background = tn.bg; b.style.color = tn.icon; }
-  // Färgval (2026-11-14.43): tryck på lampsymbolen på en färglampa (light_hue + light_saturation, t.ex. Hue lightstrip) öppnar ett blad med färgrutor, nyans och mättnad.
+  // Färgval (2026-11-14.44): tryck på lampsymbolen på en färglampa (light_hue + light_saturation, t.ex. Hue lightstrip) öppnar ett blad med färgrutor, nyans och mättnad.
   // Skickar light_mode color + hue/saturation (0–1) och tänder lampan; vita toner (light_temperature) bara om lampan har den.
   const COL_PRESETS = [['Röd', 0], ['Orange', 0.07], ['Gul', 0.14], ['Grön', 0.33], ['Turkos', 0.5], ['Blå', 0.62], ['Lila', 0.76], ['Rosa', 0.88]];
   const hslCss = (h, s) => 'hsl(' + Math.round(h * 360) + ' ' + Math.round(s * 100) + '% ' + Math.round((0.5 + 0.4 * (1 - s)) * 100) + '%)';
@@ -937,8 +938,8 @@ body.noscroll{overflow:hidden}
       const b = mk('button'); b.type = 'button'; b.dataset.h = hv; b.style.background = hslCss(hv, 1); b.setAttribute('aria-label', n);
       b.addEventListener('click', () => { h = hv; s = 1; paint(); send(); }); pal.append(b); btns.push(b);
     });
-    [['Varm vit', 0.85, '#ff9f3a'], ['Kall vit', 0.2, '#4f9bff']].forEach(([n, t, edge]) => {
-      const b = mk('button'); b.type = 'button'; b.style.background = tempRgb(t); b.style.borderColor = edge; b.setAttribute('aria-label', n); b.title = n;
+    [['Varm vit', 0.85, '#ff9f3a', '#fff0d4', 'Varm'], ['Kall vit', 0.2, '#4f9bff', '#eaf3ff', 'Kall']].forEach(([n, t, edge, bg, lbl]) => {
+      const b = mk('button', 'wht', lbl); b.type = 'button'; b.style.background = bg; b.style.borderColor = edge; b.setAttribute('aria-label', n); b.title = n;
       b.addEventListener('click', () => { paint(tempRgb(t)); setCaps({ [id]: { onoff: true, light_mode: 'temperature', light_temperature: t } }, 'Färgen'); }); pal.append(b); btns.push(b);
     });
     [[hr, () => { h = hr.value / 100; }], [sr, () => { s = sr.value / 100; }]].forEach(([r, f]) => {
