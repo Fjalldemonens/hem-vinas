@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.35">
+<meta name="app-version" content="2026-11-14.36">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -161,10 +161,24 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .bulb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--sub);color:var(--faint-t);transition:background .3s}
 .bulb svg{width:20px;height:20px}
 .lamp.on .bulb{color:var(--lc,var(--warm));background:var(--amber-soft)}
+.lamp{grid-template-columns:32px minmax(0,1fr) auto;gap:10px;padding:8px 12px}
+.lamp .bulb{width:32px;height:32px}.lamp .bulb svg{width:17px;height:17px}
+.dtrack{position:relative;display:block;width:100%;min-height:40px;border:0;border-radius:10px;background:var(--sub);padding:0;font:inherit;text-align:left;overflow:hidden;cursor:pointer;color:var(--fg)}
+.dtrack.plain{cursor:default;background:none}
+.dtrack .f{position:absolute;left:0;top:0;bottom:0;display:block;transition:width .25s}
+.dtrack .tx{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px;min-height:40px;position:relative;font-size:15px;font-weight:700}
+.dtrack .tx.on{position:absolute;left:0;right:0;top:0;bottom:0;color:#412402}
+.dtrack .tn{min-width:0;overflow-wrap:break-word;hyphens:manual;-webkit-hyphens:manual;text-wrap:balance}
+.dtrack .tp{font-weight:600;font-size:13px;white-space:nowrap}
+.dtrack.plain .tx{padding:0 2px}
+.dtrack.offl .tn{color:var(--muted)}
+.lgh{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 2px;font-size:14px;font-weight:700}
+.lgh+.lamp{border-top:0}
+.lgo{background:none;border:0;font:inherit;font-size:13px;font-weight:600;color:var(--price);padding:8px 0 8px 12px;min-height:36px;cursor:pointer}
 .ln{min-width:0}
 .ln .name{font-weight:700;font-size:16px;overflow-wrap:break-word;word-break:normal;hyphens:manual;-webkit-hyphens:manual;text-wrap:balance}
 .ln .st{font-size:13px;color:var(--muted)}
-.dimrow{grid-column:2/4;display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+.dimrow{grid-column:2/4;display:block;padding:2px 0 2px}
 .dimrow .v{text-align:right}
 #rooms{gap:10px}
 .tgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -673,8 +687,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.35"></script>
-<script src="homey.js?v=2026-11-14.35"></script>
+<script src="config.js?v=2026-11-14.36"></script>
+<script src="homey.js?v=2026-11-14.36"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -855,20 +869,48 @@ body.noscroll{overflow:hidden}
 
   /* ---------- lighting ---------- */
   const lights = () => devices.filter((d) => d.type === 'light' && has(d, 'onoff') && !EXCLUDE.test(d.name));
+  // Lamprad (2026-11-14.36, förslag A3): ikon, spår med namn + % där en gul stapel visar ljusstyrkan (blek vid svagt ljus, mättad nära 100 %), brytare.
+  // Texten ritas två gånger: normal färg på hela spåret och mörk text klippt till staplen, så den syns oavsett var staplen slutar (även i mörkt läge).
+  // Reglaget ligger under raden och fälls ut när man trycker på spåret (dimOpen).
+  const dimOpen = new Set();
+  const DSTOPS = [[0, [252, 242, 205]], [20, [250, 237, 190]], [40, [248, 229, 165]], [60, [245, 218, 126]], [80, [243, 208, 96]], [100, [237, 186, 42]]];
+  function dimColor(p) {
+    p = Math.max(0, Math.min(100, p));
+    for (let i = 1; i < DSTOPS.length; i++) if (p <= DSTOPS[i][0]) { const a = DSTOPS[i - 1], b = DSTOPS[i], t = (p - a[0]) / (b[0] - a[0]); return 'rgb(' + a[1].map((v, k) => Math.round(v + (b[1][k] - v) * t)).join(',') + ')'; }
+    return 'rgb(237,186,42)';
+  }
+  function setTrack(tr, p) {
+    const f = tr.querySelector('.f'), t2 = tr.querySelector('.tx.on');
+    f.style.width = p + '%'; f.style.background = dimColor(p);
+    t2.style.clipPath = 'inset(0 ' + (100 - p) + '% 0 0)';
+    tr.querySelectorAll('.tp').forEach((e) => { e.textContent = p + ' %'; });
+  }
   function lampRow(d) {
     const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
-    const row = mk('div', 'lamp' + (on ? ' on' : ''));
+    const open = dimmable && on && dimOpen.has(d.id);
+    const row = mk('div', 'lamp' + (on ? ' on' : '') + (open ? ' open' : ''));
     row.style.setProperty('--lc', lampColor(d));
     const b = mk('div', 'bulb'); b.append(bulbSvg());
-    const ln = mk('div', 'ln');
-    ln.append(mk('div', 'name', String(d.name).trim().replace(/ (\S{1,3})$/, '\u00a0$1')), mk('div', 'st', on ? (dimmable ? 'På · ' + pct(val(d, 'dim')) + ' %' : 'På') : 'Av'));
-    row.append(b, ln, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
+    const name = String(d.name).trim().replace(/ (\S{1,3})$/, '\u00a0$1');
+    let tr;
     if (dimmable && on) {
-      const r = mk('div', 'dimrow'); const v = mk('span', 'v num', pct(val(d, 'dim')) + ' %');
+      const p = pct(val(d, 'dim'));
+      tr = mk('button', 'dtrack'); tr.type = 'button'; tr.setAttribute('aria-expanded', open ? 'true' : 'false'); tr.setAttribute('aria-label', d.name + ', ' + p + ' procent. Tryck för reglage');
+      const t1 = mk('span', 'tx'), t2 = mk('span', 'tx on'); t2.setAttribute('aria-hidden', 'true');
+      [t1, t2].forEach((t) => t.append(mk('span', 'tn', name), mk('span', 'tp num', p + ' %')));
+      tr.append(mk('i', 'f'), t1, t2); setTrack(tr, p);
+      tr.addEventListener('click', () => { if (dimOpen.has(d.id)) dimOpen.delete(d.id); else dimOpen.add(d.id); renderLights(); });
+    } else {
+      tr = mk('div', 'dtrack plain' + (on ? '' : ' offl'));
+      const t = mk('span', 'tx'); t.append(mk('span', 'tn', name), mk('span', 'tp num', on ? 'På' : 'Av')); tr.append(t);
+    }
+    row.append(b, tr, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
+    if (open) {
+      const r = mk('div', 'dimrow');
       const s = mk('input'); s.type = 'range'; s.min = 1; s.max = 100; s.value = pct(val(d, 'dim')) || 1; s.id = 'dim-' + d.id; s.setAttribute('aria-label', 'Ljusstyrka ' + d.name);
       s.style.setProperty('--p', s.value + '%');
-      s.addEventListener('input', () => { v.textContent = s.value + ' %'; s.style.setProperty('--p', s.value + '%'); throttled(d.id, () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen')); });
-      r.append(s, v); row.append(r);
+      s.addEventListener('input', () => { setTrack(tr, Number(s.value)); s.style.setProperty('--p', s.value + '%'); throttled(d.id, () => setCaps({ [d.id]: { dim: s.value / 100, onoff: true } }, 'Dimringen')); });
+      r.append(s); row.append(r);
     }
     return row;
   }
@@ -923,7 +965,21 @@ body.noscroll{overflow:hidden}
       const lit = L.filter((d) => val(d, 'onoff') === true).sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || roomOf(a.zone).localeCompare(roomOf(b.zone), 'sv') || String(a.name).localeCompare(String(b.name), 'sv'));
       $('litN').textContent = L.length ? String(lit.length) : '';
       const ll = $('litList');
-      if (lit.length) ll.replaceChildren(...lit.map((d) => { const row = lampRow(d), s2 = row.querySelector('.st'); if (s2) s2.textContent += ' · ' + roomOf(d.zone); return row; }));
+      if (lit.length) {
+        const nodes = []; let last = null;
+        lit.forEach((d) => {
+          const key = floorOf(d.zone) + '|' + roomOf(d.zone);
+          if (key !== last) {
+            last = key;
+            const grp = lit.filter((x) => floorOf(x.zone) + '|' + roomOf(x.zone) === key);
+            const h = mk('div', 'lgh'), ob = mk('button', 'lgo', 'Släck rum'); ob.type = 'button'; ob.setAttribute('aria-label', 'Släck alla lampor i ' + roomOf(d.zone));
+            ob.addEventListener('click', () => setCaps(Object.fromEntries(grp.map((x) => [x.id, { onoff: false }])), 'Släckningen'));
+            h.append(mk('span', '', roomOf(d.zone)), ob); nodes.push(h);
+          }
+          nodes.push(lampRow(d));
+        });
+        ll.replaceChildren(...nodes);
+      }
       else ll.replaceChildren(mk('div', 'empty', !devices.length ? 'Hämtar lampor…' : L.length ? 'Allt är släckt.' : 'Inga lampor hittades i Homey.'));
       // Rum som rutor, grupperade per våning
       const frag = document.createDocumentFragment();
