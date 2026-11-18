@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.38">
+<meta name="app-version" content="2026-11-14.39">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -174,6 +174,7 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .dtrack.offl .tn{color:var(--muted)}
 .lgh{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 2px;font-size:14px;font-weight:700}
 .lgh+.lamp{border-top:0}
+.lgo.tand{color:var(--ok)}
 .lgo{background:none;border:0;font:inherit;font-size:13px;font-weight:600;color:var(--price);padding:8px 0 8px 12px;min-height:36px;cursor:pointer}
 .ln{min-width:0}
 .ln .name{font-weight:700;font-size:16px;overflow-wrap:break-word;word-break:normal;hyphens:manual;-webkit-hyphens:manual;text-wrap:balance}
@@ -615,10 +616,9 @@ body.noscroll{overflow:hidden}
     <div class="card hero" id="lightHero" hidden></div>
     <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
     <div class="chips" id="lightStatus"></div>
-    <div class="sech"><div class="h2">Tänt nu <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
-    <div class="card" id="litList"><div class="empty">Hämtar lampor…</div></div>
-    <div class="sech"><div class="h2">Rum</div><button class="tbtn warnb" id="offAll" type="button">Släck allt</button></div>
-    <div class="panel" id="rooms"><div class="skel"></div><div class="skel"></div></div>
+    <div class="sech"><div class="h2">Lampor <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
+    <div class="panel" id="litList"><div class="empty">Hämtar lampor…</div></div>
+    <div class="sech" style="justify-content:flex-end"><button class="tbtn warnb" id="offAll" type="button">Släck allt</button></div>
   </section>
 
   <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
@@ -687,8 +687,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.38"></script>
-<script src="homey.js?v=2026-11-14.38"></script>
+<script src="config.js?v=2026-11-14.39"></script>
+<script src="homey.js?v=2026-11-14.39"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -924,7 +924,6 @@ body.noscroll{overflow:hidden}
     return row;
   }
   // Ny design 2026-11: "Tänt nu" överst, rummen som rutor och ett blad per rum med alla dess lampor.
-  let roomOpen = null;   // 'våning|rum' för rummet vars blad är öppet
   // Ljusrutan överst på fliken Ljus (2026-11-14.24): SMHI-symbol för just nu + ljusläge efter lux (Dag/Skymning/Gryning/Natt) + lux.
   // Gränser: dag ≥ LUX_DAG (400), natt < LUX_NATT (3), däremellan skymning på kvällen / gryning på morgonen (solen på väg ner/upp räknas lokalt).
   // Utan lux används AI Skumt ute som reserv (Skumt/Dagsljus).
@@ -967,59 +966,31 @@ body.noscroll{overflow:hidden}
 
     const floors = {};
     L.forEach((d) => { const f = floorOf(d.zone), r = roomOf(d.zone); ((floors[f] = floors[f] || {})[r] = floors[f][r] || []).push(d); });
-    const roomToggle = (ds, r) => { const lit = ds.filter((d) => val(d, 'onoff') === true).length; return sw(lit > 0, (lit ? 'Släck ' : 'Tänd ') + r, () => setCaps(Object.fromEntries(ds.map((d) => [d.id, { onoff: !lit }])), lit ? 'Släckningen' : 'Tändningen')); };
     const focusId = document.activeElement && document.activeElement.id;
     if (!dimDrag && !(focusId && focusId.startsWith('dim'))) {   // inte mitt i ett dimmerdrag (dim- i listan, dims- i rumsbladet)
-      // Tänt nu
-      const lit = L.filter((d) => val(d, 'onoff') === true).sort((a, b) => floorOrder(floorOf(a.zone)) - floorOrder(floorOf(b.zone)) || roomOf(a.zone).localeCompare(roomOf(b.zone), 'sv') || String(a.name).localeCompare(String(b.name), 'sv'));
-      $('litN').textContent = L.length ? String(lit.length) : '';
+      // Alla lampor grupperade per våning och rum (2026-11-14.39). Släckta lampor blir kvar i listan (gråa, Av) så att de kan tändas igen.
+      // Rum-rutorna och rumsbladet är borta – listan täcker alla rum.
+      const isOn = (d) => val(d, 'onoff') === true, nLit = L.filter(isOn).length;
+      $('litN').textContent = L.length ? nLit + ' av ' + L.length + ' tända' : '';
       const ll = $('litList');
-      if (lit.length) {
-        const nodes = []; let last = null;
-        lit.forEach((d) => {
-          const key = floorOf(d.zone) + '|' + roomOf(d.zone);
-          if (key !== last) {
-            last = key;
-            const grp = lit.filter((x) => floorOf(x.zone) + '|' + roomOf(x.zone) === key);
-            const h = mk('div', 'lgh'), ob = mk('button', 'lgo', 'Släck rum'); ob.type = 'button'; ob.setAttribute('aria-label', 'Släck alla lampor i ' + roomOf(d.zone));
-            ob.addEventListener('click', () => setCaps(Object.fromEntries(grp.map((x) => [x.id, { onoff: false }])), 'Släckningen'));
-            h.append(mk('span', '', roomOf(d.zone)), ob); nodes.push(h);
-          }
-          nodes.push(lampRow(d));
+      if (!L.length) ll.replaceChildren(mk('div', 'empty', !devices.length ? 'Hämtar lampor…' : 'Inga lampor hittades i Homey.'));
+      else {
+        const frag = document.createDocumentFragment();
+        Object.keys(floors).sort((x, y) => floorOrder(x) - floorOrder(y) || x.localeCompare(y, 'sv')).forEach((f) => {
+          frag.append(mk('div', 'flr', f));
+          const card = mk('div', 'card');
+          Object.keys(floors[f]).sort((x, y) => x.localeCompare(y, 'sv')).forEach((r) => {
+            const ds = floors[f][r].sort((x, y) => String(x.name).localeCompare(String(y.name), 'sv')), litDs = ds.filter(isOn);
+            const h = mk('div', 'lgh'), ob = mk('button', 'lgo' + (litDs.length ? '' : ' tand'), litDs.length ? 'Släck rum' : 'Tänd rum'); ob.type = 'button';
+            ob.setAttribute('aria-label', (litDs.length ? 'Släck alla lampor i ' : 'Tänd alla lampor i ') + r);
+            ob.addEventListener('click', () => setCaps(Object.fromEntries((litDs.length ? litDs : ds).map((x) => [x.id, { onoff: !litDs.length }])), litDs.length ? 'Släckningen' : 'Tändningen'));
+            h.append(mk('span', '', r), ob); card.append(h);
+            ds.forEach((d) => card.append(lampRow(d)));
+          });
+          frag.append(card);
         });
-        ll.replaceChildren(...nodes);
+        ll.replaceChildren(frag);
       }
-      else ll.replaceChildren(mk('div', 'empty', !devices.length ? 'Hämtar lampor…' : L.length ? 'Allt är släckt.' : 'Inga lampor hittades i Homey.'));
-      // Rum som rutor, grupperade per våning
-      const frag = document.createDocumentFragment();
-      Object.keys(floors).sort((a, b) => floorOrder(a) - floorOrder(b) || a.localeCompare(b, 'sv')).forEach((f) => {
-        frag.append(mk('div', 'flr', f));
-        const grid = mk('div', 'tgrid');
-        Object.keys(floors[f]).sort((a, b) => a.localeCompare(b, 'sv')).forEach((r) => {
-          const ds = floors[f][r].sort((a, b) => String(a.name).localeCompare(String(b.name), 'sv'));
-          const n = ds.filter((d) => val(d, 'onoff') === true).length;
-          const t = mk('div', 'tile' + (n ? ' lit' : '')); t.setAttribute('role', 'group'); t.setAttribute('aria-label', f + ', ' + r);
-          const ob = mk('button', 'open', r); ob.type = 'button'; ob.setAttribute('aria-haspopup', 'dialog'); ob.title = 'Visa lamporna i ' + r;
-          ob.addEventListener('click', () => { roomOpen = f + '|' + r; renderLights(); });
-          const ts = mk('div', 'ts'); ts.append(mk('span', '', n ? n + ' av ' + ds.length + ' på' : 'Släckt'), roomToggle(ds, r));
-          t.append(ob, ts); grid.append(t);
-        });
-        frag.append(grid);
-      });
-      $('rooms').replaceChildren(frag);
-      if (!L.length && devices.length) $('rooms').replaceChildren(mk('p', 'empty', 'Inga lampor hittades i Homey.'));
-      // Rumsbladet
-      const parts = roomOpen ? roomOpen.split('|') : null, rds = parts && floors[parts[0]] && floors[parts[0]][parts[1]];
-      if (rds) {
-        const n = rds.filter((d) => val(d, 'onoff') === true).length;
-        const body = sheetOpen('room', parts[1], () => { roomOpen = null; });
-        const head = mk('div', 'card'), h = mk('div', 'rh'), tt = mk('div', 't'); h.style.borderBottom = '0';
-        tt.append(mk('div', 'n', 'Hela rummet'), mk('div', 'c', n ? n + ' av ' + rds.length + ' tända' : 'Alla släckta'));
-        h.append(tt, roomToggle(rds, parts[1])); head.append(h);
-        const list = mk('div', 'card');
-        rds.forEach((d) => { const row = lampRow(d), r2 = row.querySelector('input[type=range]'); if (r2) r2.id = 'dims-' + d.id; list.append(row); });
-        body.replaceChildren(head, list);
-      } else { roomOpen = null; if (SH.key === 'room') sheetClose(false); }
     }
     $('offInside').disabled = !L.some((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone));
     $('offAll').disabled = !onCount;
