@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.37">
+<meta name="app-version" content="2026-11-14.38">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -687,8 +687,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.37"></script>
-<script src="homey.js?v=2026-11-14.37"></script>
+<script src="config.js?v=2026-11-14.38"></script>
+<script src="homey.js?v=2026-11-14.38"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -886,6 +886,8 @@ body.noscroll{overflow:hidden}
     t2.style.clipPath = 'inset(0 ' + (100 - p) + '% 0 0)';
     tr.querySelectorAll('.tp').forEach((e) => { e.textContent = p + ' %'; });
   }
+  // Lampsymbolen får samma färg som staplen (följer ljusstyrkan); lampor utan dimning lyser som vid 100 % när de är på.
+  function setBulb(b, p) { b.style.background = dimColor(p); b.style.color = '#633806'; }
   function lampRow(d) {
     const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
     const open = dimmable && on && dimOpen.has(d.id);
@@ -905,6 +907,7 @@ body.noscroll{overflow:hidden}
       tr = mk('div', 'dtrack plain' + (on ? '' : ' offl'));
       const t = mk('span', 'tx'); t.append(mk('span', 'tn', name), mk('span', 'tp num', on ? 'På' : 'Av')); tr.append(t);
     }
+    if (on) setBulb(b, dimmable ? pct(val(d, 'dim')) : 100);
     row.append(b, tr, sw(on, (on ? 'Släck ' : 'Tänd ') + d.name, () => setCaps({ [d.id]: { onoff: !on } }, on ? 'Släckningen' : 'Tändningen')));
     if (open) {
       const r = mk('div', 'dimrow');
@@ -914,7 +917,7 @@ body.noscroll{overflow:hidden}
       const arm = () => { dimDrag = true; clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 4000); };   // säkerhetsventil om släpp-händelsen uteblir
       const end = () => { clearTimeout(thr[d.id] && thr[d.id].timer); send(); clearTimeout(dimT); setTimeout(() => { dimDrag = false; }, 300); };
       s.addEventListener('pointerdown', arm); s.addEventListener('touchstart', arm, { passive: true });
-      s.addEventListener('input', () => { arm(); setTrack(tr, Number(s.value)); s.style.setProperty('--p', s.value + '%'); throttled(d.id, send, 250); });
+      s.addEventListener('input', () => { arm(); setTrack(tr, Number(s.value)); setBulb(b, Number(s.value)); s.style.setProperty('--p', s.value + '%'); throttled(d.id, send, 250); });
       s.addEventListener('change', end);
       r.append(s); row.append(r);
     }
