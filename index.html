@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.40">
+<meta name="app-version" content="2026-11-14.41">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -160,6 +160,17 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .lamp:last-child{border-bottom:0}
 .bulb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--sub);color:var(--faint-t);transition:background .3s}
 .bulb svg{width:20px;height:20px}
+.bulb.pick{cursor:pointer;box-shadow:0 0 0 2px var(--line)}
+.bulb.pick:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
+.csheet .cprev{height:64px;border-radius:16px;border:1px solid var(--line);margin-bottom:14px}
+.csheet .cpal{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:0 0 16px}
+.csheet .cpal button{aspect-ratio:1;border-radius:50%;border:2px solid var(--line);padding:0;cursor:pointer}
+.csheet .cpal button[aria-pressed=true]{border-color:var(--text);box-shadow:0 0 0 2px var(--card)}
+.csheet .cl{font-size:13px;font-weight:600;color:var(--sub-t,var(--faint-t));margin:6px 0 2px}
+.csheet input.hue::-webkit-slider-runnable-track{background:linear-gradient(90deg,hsl(0 100% 55%),hsl(60 100% 50%),hsl(120 100% 45%),hsl(180 100% 45%),hsl(240 100% 60%),hsl(300 100% 55%),hsl(360 100% 55%))}
+.csheet input.hue::-moz-range-track{background:linear-gradient(90deg,hsl(0 100% 55%),hsl(60 100% 50%),hsl(120 100% 45%),hsl(180 100% 45%),hsl(240 100% 60%),hsl(300 100% 55%),hsl(360 100% 55%))}
+.csheet input.satr::-webkit-slider-runnable-track{background:linear-gradient(90deg,#fff,var(--sc,#f00));border:1px solid var(--line)}
+.csheet input.satr::-moz-range-track{background:linear-gradient(90deg,#fff,var(--sc,#f00));border:1px solid var(--line)}
 .lamp.on .bulb{color:var(--lc,var(--warm));background:var(--amber-soft)}
 .lamp{grid-template-columns:32px minmax(0,1fr) auto;gap:10px;padding:8px 12px}
 .lamp .bulb{width:32px;height:32px}.lamp .bulb svg{width:17px;height:17px}
@@ -687,8 +698,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.40"></script>
-<script src="homey.js?v=2026-11-14.40"></script>
+<script src="config.js?v=2026-11-14.41"></script>
+<script src="homey.js?v=2026-11-14.41"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -901,12 +912,54 @@ body.noscroll{overflow:hidden}
   }
   // Lampsymbolen får samma färg som staplen (följer ljusstyrkan); lampor utan dimning lyser som vid 100 % när de är på.
   function setBulb(b, p, d) { const tn = lampTone(d, p); b.style.background = tn.bg; b.style.color = tn.icon; }
+  // Färgval (2026-11-14.41): tryck på lampsymbolen på en färglampa (light_hue + light_saturation, t.ex. Hue lightstrip) öppnar ett blad med färgrutor, nyans och mättnad.
+  // Skickar light_mode color + hue/saturation (0–1) och tänder lampan; vita toner (light_temperature) bara om lampan har den.
+  const COL_PRESETS = [['Röd', 0], ['Orange', 0.07], ['Gul', 0.14], ['Grön', 0.33], ['Turkos', 0.5], ['Blå', 0.62], ['Lila', 0.76], ['Rosa', 0.88]];
+  const hslCss = (h, s) => 'hsl(' + Math.round(h * 360) + ' ' + Math.round(s * 100) + '% ' + Math.round((0.5 + 0.4 * (1 - s)) * 100) + '%)';
+  function colorSheet(id) {
+    const d0 = devices.find((x) => x.id === id); if (!d0) return;
+    const body = sheetOpen('col' + id, d0.name, null);
+    let h = Number(val(d0, 'light_hue') ?? 0.08), s = Number(val(d0, 'light_saturation') ?? 1);
+    const w = mk('div', 'csheet'), prev = mk('div', 'cprev'), pal = mk('div', 'cpal');
+    const hr = mk('input', 'hue'), sr = mk('input', 'satr');
+    [hr, sr].forEach((r) => { r.type = 'range'; r.min = 0; r.max = 100; });
+    hr.setAttribute('aria-label', 'Nyans'); sr.setAttribute('aria-label', 'Mättnad');
+    const btns = [];
+    const paint = (tmpCss) => {
+      prev.style.background = tmpCss || hslCss(h, s); sr.style.setProperty('--sc', hslCss(h, 1));
+      hr.value = Math.round(h * 100); sr.value = Math.round(s * 100);
+      btns.forEach((b) => b.setAttribute('aria-pressed', !tmpCss && b.dataset.h !== undefined && Math.abs(Number(b.dataset.h) - h) < 0.02 && s > 0.9 ? 'true' : 'false'));
+    };
+    const send = () => setCaps({ [id]: { onoff: true, light_mode: 'color', light_hue: h, light_saturation: s } }, 'Färgen');
+    const arm = () => { dimDrag = true; clearTimeout(dimT); dimT = setTimeout(() => { dimDrag = false; }, 4000); };
+    const rel = () => { clearTimeout(thr['col' + id] && thr['col' + id].timer); send(); clearTimeout(dimT); setTimeout(() => { dimDrag = false; }, 300); };
+    COL_PRESETS.forEach(([n, hv]) => {
+      const b = mk('button'); b.type = 'button'; b.dataset.h = hv; b.style.background = hslCss(hv, 1); b.setAttribute('aria-label', n);
+      b.addEventListener('click', () => { h = hv; s = 1; paint(); send(); }); pal.append(b); btns.push(b);
+    });
+    if (has(d0, 'light_temperature')) [['Varm vit', 0.85], ['Kall vit', 0.2]].forEach(([n, t]) => {
+      const b = mk('button'); b.type = 'button'; b.style.background = tempRgb(t); b.setAttribute('aria-label', n); b.title = n;
+      b.addEventListener('click', () => { paint(tempRgb(t)); setCaps({ [id]: { onoff: true, light_mode: 'temperature', light_temperature: t } }, 'Färgen'); }); pal.append(b); btns.push(b);
+    });
+    [[hr, () => { h = hr.value / 100; }], [sr, () => { s = sr.value / 100; }]].forEach(([r, f]) => {
+      r.addEventListener('pointerdown', arm); r.addEventListener('touchstart', arm, { passive: true });
+      r.addEventListener('input', () => { arm(); f(); paint(); throttled('col' + id, send, 300); });
+      r.addEventListener('change', rel);
+    });
+    w.append(prev, pal, mk('div', 'cl', 'Nyans'), hr, mk('div', 'cl', 'Mättnad'), sr);
+    body.replaceChildren(w); paint();
+  }
   function lampRow(d) {
     const on = val(d, 'onoff') === true, dimmable = has(d, 'dim');
     const open = dimmable && on && dimOpen.has(d.id);
     const row = mk('div', 'lamp' + (on ? ' on' : '') + (open ? ' open' : ''));
     row.style.setProperty('--lc', lampColor(d));
     const b = mk('div', 'bulb'); b.append(bulbSvg());
+    if (has(d, 'light_hue') && has(d, 'light_saturation')) {
+      b.classList.add('pick'); b.setAttribute('role', 'button'); b.tabIndex = 0; b.setAttribute('aria-label', 'Välj färg för ' + d.name);
+      b.addEventListener('click', () => colorSheet(d.id));
+      b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); colorSheet(d.id); } });
+    }
     const name = String(d.name).trim().replace(/ (\S{1,3})$/, '\u00a0$1');
     let tr;
     if (dimmable && on) {
