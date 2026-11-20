@@ -33,6 +33,31 @@ for (const [devId, list] of Object.entries(S)) {
     putQ(devId, q);
   }
 }
+// 1b. Kontroll efter start: Roborocks rumsstädning (SmartPlan) kan skriva över läge/sugkraft/rutt efter att vi ställt in dem
+//     (2026-11-20: Saros 10R körde damm+mopp/smart fast schemat sa bara moppning). Nästa körning (20 s – 10 min efter start)
+//     läser av igen, sätter om det som ändrats och loggar vad roboten gjorde. Max 3 kontroller per start.
+const CAPN = { clean_mode: 'läge', suction_power: 'sugkraft', scrub_intensity: 'vattenflöde', mop_route: 'rutt' };
+for (const devId of Object.keys(S)) {
+  let ck = null; try { ck = JSON.parse(global.get('stadchk_' + devId) || 'null'); } catch (e) {}
+  if (!ck || Date.now() - ck.at < 20000) continue;
+  if (Date.now() - ck.at > 10 * 60000 || ck.n >= 3) { global.set('stadchk_' + devId, ''); continue; }
+  try {
+    const d = await Homey.devices.getDevice({ id: devId });
+    const c = d.capabilitiesObj || {};
+    const diffs = [];
+    for (const [cap, want] of Object.entries(ck.want)) {
+      if (c[cap] && String(c[cap].value) !== String(want)) {
+        diffs.push(CAPN[cap] + ' ' + c[cap].value + ' → ' + want);
+        await Homey.devices.setCapabilityValue({ deviceId: devId, capabilityId: cap, value: want });
+        await pause(2000, devId);
+      }
+    }
+    if (diffs.length) note(d.name.trim() + ': roboten ändrade ' + diffs.join(', ') + ' efter start, satte om');
+    else if (ck.n === 0) note(d.name.trim() + ': inställningarna höll efter start');
+    ck.n++;
+    global.set('stadchk_' + devId, diffs.length ? JSON.stringify(ck) : '');
+  } catch (err) { note('Kontroll efter start: FEL ' + (err && err.message)); global.set('stadchk_' + devId, ''); }
+}
 // 2. Starta nästa jobb när roboten är ledig. Roborock-appen uppdaterar status ungefär var 5:e minut,
 //    därför minst 15 min mellan två starter så ett pågående jobb aldrig avbryts av gammal status.
 let started = 0;
@@ -42,7 +67,10 @@ for (const devId of Object.keys(S)) {
   const d = await Homey.devices.getDevice({ id: devId });
   const c = d.capabilitiesObj || {};
   const val = (k) => (c[k] ? c[k].value : null);
-  const busy = val('is_cleaning') === true || val('dock') === false;
+  // dock kan stå på false fast roboten laddar i stationen (Saros 10R 2026-11-12) – laddning räknas som i stationen
+  const cs = String(val('battery_charging_state') || '');
+  const charging = /charg/i.test(cs) && !/dis/i.test(cs);
+  const busy = val('is_cleaning') === true || (val('dock') === false && !charging);
   const last = Number(global.get('stadlast_' + devId) || 0);
   if (busy || Date.now() - last < 15 * 60000) { putQ(devId, q); continue; }
   const s = q.shift(); putQ(devId, q);
@@ -60,6 +88,8 @@ for (const devId of Object.keys(S)) {
       await Homey.flow.runFlowCardAction({ id: 'homey:device:' + devId + ':clean_all', args: {} });
       note(d.name.trim() + ': startade hela hemmet' + (q.length ? ', ' + q.length + ' i kö' : ''));
     }
+    const want = {}; for (const [cap, value] of [['clean_mode', s.mode], ['suction_power', s.suction], ['scrub_intensity', s.scrub], ['mop_route', s.route]]) if (value != null && c[cap]) want[cap] = value;
+    if (Object.keys(want).length) global.set('stadchk_' + devId, JSON.stringify({ at: Date.now(), want, n: 0 }));
     started++;
   } catch (err) { note(d.name.trim() + ': FEL ' + (err && err.message)); }
 }
