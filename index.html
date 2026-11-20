@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.45">
+<meta name="app-version" content="2026-11-14.46">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -701,8 +701,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.45"></script>
-<script src="homey.js?v=2026-11-14.45"></script>
+<script src="config.js?v=2026-11-14.46"></script>
+<script src="homey.js?v=2026-11-14.46"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1949,10 +1949,13 @@ body.noscroll{overflow:hidden}
     // Kostnad (2026-11-15.23): flödet AI 18 · Laddkostnad skriver AI Laddkostnad = laddboxens kWh × köppris per kvart (uppskattning).
     let LK = null; try { LK = JSON.parse(varVal('AI Laddkostnad') || '') || null; } catch (e) {}
     const krTxt = (x) => (x && x.kr != null ? ' · ' + f0.format(x.kr) + ' kr' : '');
-    const lkLast = LK && LK.last && has(ev, 'meter_power.lastCharge') && Math.abs(LK.last.kwh - Number(val(ev, 'meter_power.lastCharge'))) < 1.5 ? LK.last : null;
+    // Sedan 2026-11-14.46 är ett pass hela laddningen från första Laddar tills laddmålet är nått eller kabeln dragits ur bilen (smartladdningens stopp ingår), så kr visas alltid för senaste laddningen.
+    const lkLast = LK && LK.last && LK.last.kwh > 0 ? LK.last : null;
+    const pctRange = (x) => (x && x.from != null && x.to != null ? f0.format(x.from) + ' → ' + f0.format(x.to) + ' %' : '');
     kv($('ev'), ev ? [
-      LK && LK.cur && ['Pågående laddning', f1.format(LK.cur.kwh) + ' kWh' + krTxt(LK.cur)],
-      has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh' + krTxt(lkLast)],
+      LK && LK.cur && ['Pågående laddning', f1.format(LK.cur.kwh) + ' kWh' + krTxt(LK.cur) + (LK.cur.pause ? ' · väntar' : '')],
+      lkLast ? ['Senaste laddning', f1.format(lkLast.kwh) + ' kWh' + krTxt(lkLast)] : has(ev, 'meter_power.lastCharge') && ['Senaste laddning', f1.format(val(ev, 'meter_power.lastCharge')) + ' kWh'],
+      lkLast && pctRange(lkLast) && ['Laddnivå', pctRange(lkLast)],
       LK && LK.month && LK.month.kwh > 0 && ['Denna månad', f0.format(LK.month.kwh) + ' kWh' + krTxt(LK.month)],
       has(ev, 'measure_charge.last_month') && ['Förra månaden', f0.format(val(ev, 'measure_charge.last_month')) + ' kWh' + (LK && LK.prevMonth && !LK.prevMonth.from ? krTxt(LK.prevMonth) : '')],
     ] : []);
