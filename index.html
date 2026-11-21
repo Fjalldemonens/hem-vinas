@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.29">
+<meta name="app-version" content="2026-11-21.30">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -805,6 +805,16 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 .seg svg{width:21px;height:21px}
 .app{padding-bottom:calc(74px + env(safe-area-inset-bottom,0px))}
 .toast{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+/* 2026-11-21.30: Ljus och Städ i två kolumner på datorn som Klimat/Energi – huset till vänster, lampor/robotar till höger.
+   .lcol/.rcol är bara omslag (display:contents i mobilen, så mobilen är oförändrad). */
+.lcol,.rcol{display:contents}
+@media (min-width:800px){
+  #p-belysning:not([hidden]),#p-stad:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:start}
+  #p-belysning .lcol,#p-belysning .rcol{display:flex;flex-direction:column;gap:12px;min-width:0}
+  #p-belysning .lcol,#p-stad > .stadhus{position:sticky;top:12px}
+  #p-stad > #robots{max-width:none}
+  #p-temperatur > #sensors{margin-top:40px}
+}
 </style>
 </head>
 <body>
@@ -847,15 +857,18 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
   <div class="banner" id="banner" hidden></div>
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
+    <div class="lcol">
     <div class="card hmini hmL" id="hmL"><div class="halo"></div>
       <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
       <div class="hp l"><div class="k">Tänt</div><div class="v num" id="hmLit">–</div></div><div class="hp r"><div class="wxr"><span class="ic" id="hmLic"></span><div><div class="k" id="hmLwx"></div><div class="v num" id="hmLph">–</div></div></div><div class="s num" id="hmLlux"></div></div></div>
     <div class="card hero" id="lightHero" hidden style="display:none"></div>
     <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
     <div class="chips" id="lightStatus"></div>
+    </div><div class="rcol">
     <div class="sech"><div class="h2">Lampor <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
     <div class="panel" id="litList"><div class="empty">Hämtar lampor…</div></div>
     <div class="sech" style="justify-content:flex-end"><button class="tbtn warnb" id="offAll" type="button">Släck allt</button></div>
+    </div>
   </section>
 
   <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
@@ -955,8 +968,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.29"></script>
-<script src="homey.js?v=2026-11-21.29"></script>
+<script src="config.js?v=2026-11-21.30"></script>
+<script src="homey.js?v=2026-11-21.30"></script>
 <script>
 (() => {
   const S = 'Homey';
