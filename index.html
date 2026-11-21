@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.1">
+<meta name="app-version" content="2026-11-21.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -643,6 +643,12 @@ div.house .lw.on{opacity:1}
 .fcd .mm{width:54px;text-align:right;color:var(--grid);font-size:.78rem;font-weight:700} .fcd b{width:76px;text-align:right}
 .fcmore{width:100%;margin-top:2px;padding:11px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--accent-text);font:inherit;font-weight:700;cursor:pointer}
 .fcsrc{font-size:.68rem;color:var(--faint-t);text-align:right;margin-top:6px}
+
+/* Ljus (2026-11-21.2): huskort i stället för Just nu-rutan; lightHero renderas som förut men är dold */
+.hmL .hp .v.lit{color:var(--sun)}
+.hmL .wxr{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.hmL .wxr .ic{display:grid;place-items:center}
+.hmL .hp .s{font-size:.68rem;font-weight:600;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -685,7 +691,10 @@ div.house .lw.on{opacity:1}
   <div class="banner" id="banner" hidden></div>
 
   <section class="panel" id="p-belysning" role="tabpanel" aria-labelledby="t-belysning">
-    <div class="card hero" id="lightHero" hidden></div>
+    <div class="card hmini hmL" id="hmL"><div class="halo"></div>
+      <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
+      <div class="hp l"><div class="k">Tänt</div><div class="v num" id="hmLit">–</div></div><div class="hp r"><div class="wxr"><span class="ic" id="hmLic"></span><div><div class="k" id="hmLwx"></div><div class="v num" id="hmLph">–</div></div></div><div class="s num" id="hmLlux"></div></div></div>
+    <div class="card hero" id="lightHero" hidden style="display:none"></div>
     <div id="scenesWrap" hidden><div class="chips" id="scenes"></div></div>
     <div class="chips" id="lightStatus"></div>
     <div class="sech"><div class="h2">Lampor <span class="num" id="litN"></span></div><button class="tbtn warnb" id="offInside" type="button">Släck allt inne</button></div>
@@ -788,8 +797,8 @@ div.house .lw.on{opacity:1}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.1"></script>
-<script src="homey.js?v=2026-11-21.1"></script>
+<script src="config.js?v=2026-11-21.2"></script>
+<script src="homey.js?v=2026-11-21.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2673,6 +2682,7 @@ div.house .lw.on{opacity:1}
   $('fcMore').addEventListener('click', wxOpen);
   function wxBtnUpdate() {
     renderFc();
+    setTimeout(() => { try { renderLightHero(); heroSync(); } catch (e) {} }, 0);   // ny prognos → vädret i Ljus-husets ruta
     renderLightHero();
     const b = $('wxBtn'); if (!b) return;
     const lbl = b.querySelector('.wxbl');
@@ -2706,6 +2716,13 @@ div.house .lw.on{opacity:1}
     const lux = luxDev ? Number(val(luxDev, 'measure_luminance')) : NaN;
     const night = Number.isFinite(lux) ? lux < LUX_DAG : sunAlt(Date.now(), WX.lat, WX.lon) < -0.83;
     document.querySelectorAll('.hv2, .hmini').forEach((e) => e.classList.toggle('is-night', night));
+    if ($('hmL')) {
+      const g = $('gLights').textContent.trim(), on = /^[1-9]/.test(g);
+      $('hmLit').textContent = g || '–'; $('hmLit').classList.toggle('lit', on);
+      const lh = $('lightHero'), svg = lh.querySelector('.big svg'), tag = lh.querySelector('.tag'), lx = lh.querySelector('.gar'), sub = lh.querySelector('.wxsub');
+      $('hmLic').replaceChildren(...(svg ? [(() => { const c = svg.cloneNode(true); c.setAttribute('width', 24); c.setAttribute('height', 24); return c; })()] : []));
+      $('hmLwx').textContent = sub ? sub.textContent : 'Ute'; $('hmLph').textContent = tag ? tag.textContent : '–'; $('hmLlux').textContent = lx ? lx.textContent : '';
+    }
     const it = indoorTemp(); if ($('hmIn')) $('hmIn').textContent = it && Number.isFinite(it.v) ? f1.format(it.v) + '°' : '–';
     if ($('hmOut')) { $('hmOut').textContent = t('gOut') || '–'; $('hmOut').style.color = getComputedStyle($('gOut')).color; }
   }
