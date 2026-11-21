@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.13">
+<meta name="app-version" content="2026-11-21.14">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -599,7 +599,7 @@ div.house .lw{position:absolute;left:0;top:0;opacity:0;transition:opacity .9s ea
 div.house .lw.on{opacity:1}
 .hv2 svg.arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .hvar{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 6;animation:hvdash 1.2s linear infinite}
-.hvar.rev{animation-direction:reverse} .hvar.idle{animation:none;stroke-dasharray:none;opacity:.25}
+.hvar.rev{animation-direction:reverse} .hv2 .hvar.idle{display:inline;animation:none;opacity:.45;stroke:var(--faint-t)}   /* vilande: stilla streckad grå linje utan pil (2026-11-21.14) */
 @media (prefers-reduced-motion:reduce){.hvar{animation:none}}
 .hvc2{position:absolute;width:31%;box-sizing:border-box;padding:10px 6px 9px;border-radius:18px;text-align:center;font:inherit;color:var(--fg);
   background:var(--card);border:1px solid var(--line);box-shadow:0 6px 18px var(--shadow);cursor:pointer}
@@ -854,8 +854,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.13"></script>
-<script src="homey.js?v=2026-11-21.13"></script>
+<script src="config.js?v=2026-11-21.14"></script>
+<script src="homey.js?v=2026-11-21.14"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2889,7 +2889,7 @@ div.house img.fl.on{opacity:.55}
       if (t('lBatt')) $('hlBatt').textContent = t('lBatt').replace(/^BATTERI/i, 'Batteri');
       if (t('lEv')) $('hlEv').textContent = t('lEv').replace(/^([A-ZÅÄÖ0-9 ]+)/, (m) => m.charAt(0) + m.slice(1).toLowerCase()).replace(/^Ex(\d)/, 'EX$1');
       $('hvHome').textContent = t('vHome') || '–';
-      [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'), mk_ = 'url(#hvm' + n + ')'; d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); d.setAttribute('marker-end', rev ? 'none' : mk_); d.setAttribute('marker-start', rev ? mk_ : 'none'); });   // pilen pekar åt det håll strömmen går
+      [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'), mk_ = 'url(#hvm' + n + ')'; d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); const idle = s.classList.contains('idle'); d.setAttribute('marker-end', idle || rev ? 'none' : mk_); d.setAttribute('marker-start', !idle && rev ? mk_ : 'none'); });   // pilen pekar åt det håll strömmen går
     }
     const L = lights().filter((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone || ''));
     const lo = L.some((d) => /^Bottenvåning/i.test(floorOf(d.zone || ''))), hi = L.some((d) => /^Övervåning/i.test(floorOf(d.zone || '')));
