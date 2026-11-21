@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.16">
+<meta name="app-version" content="2026-11-21.17">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -734,6 +734,13 @@ div.house img.fl.on{opacity:.55}
 .solv .big{position:absolute;right:12px;top:10px;font-size:1.9rem;font-weight:800;color:#fff;text-shadow:0 0 12px #000,0 0 3px #000}
 .solv.on .big{color:#FFD45C}
 @media (prefers-reduced-motion:reduce){.solv .sheen{animation:none}}
+
+/* Solpanelerna på husets tak lyser efter produktionen (2026-11-21.17), mask img/tak-mask.png */
+div.house .tak,div.house .taks{position:absolute;inset:0;pointer-events:none;-webkit-mask:url(img/tak-mask.png) center/100% 100% no-repeat;mask:url(img/tak-mask.png) center/100% 100% no-repeat;mix-blend-mode:screen;transition:opacity .8s}
+div.house .tak{background:radial-gradient(90% 120% at 70% 0%,#FFD24A,#FF9F0A 60%,#D96400);opacity:var(--se,0)}
+div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.6) 50%,transparent 62%) 0 0/300% 100%;opacity:0;animation:solSheen 3.2s linear infinite}
+.sun-on div.house .taks{opacity:calc(.3 + var(--se,0) * .6)}
+@media (prefers-reduced-motion:reduce){div.house .taks{animation:none}}
 </style>
 </head>
 <body>
@@ -882,8 +889,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.16"></script>
-<script src="homey.js?v=2026-11-21.16"></script>
+<script src="config.js?v=2026-11-21.17"></script>
+<script src="homey.js?v=2026-11-21.17"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2947,6 +2954,8 @@ div.house img.fl.on{opacity:.55}
       if (sv && Number.isFinite(sp2)) {
         const e = Math.sqrt(Math.max(0, Math.min(1, sp2 / SUN_MAX_W))), on = sp2 > 20;
         sv.style.setProperty('--e', on ? (0.14 + 0.56 * e).toFixed(3) : 0); sv.classList.toggle('on', on);
+        document.querySelectorAll('div.house').forEach((hs) => { if (!hs.querySelector('.tak')) { const t = document.createElement('div'); t.className = 'tak'; const s = document.createElement('div'); s.className = 'taks'; hs.append(t, s); } });
+        document.documentElement.style.setProperty('--se', on ? (0.18 + 0.6 * e).toFixed(3) : 0); document.documentElement.classList.toggle('sun-on', on);
         $('solBig').textContent = W(sp2);
         const key = (night && !on) ? 'moon' : 'sun' + Math.round(e * 40), sk = sv.querySelector('.sky');
         if (sk.dataset.k !== key) { sk.innerHTML = sunIconSvg(sp2, night); sk.dataset.k = key; }
