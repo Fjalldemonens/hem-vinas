@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.5">
+<meta name="app-version" content="2026-11-21.6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -713,7 +713,7 @@ div.house img.fl.on{opacity:.55}
     <button class="live" id="live" type="button" aria-label="Uppdatera nu"><span class="dot"></span><span id="liveTxt">Ansluter</span><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></button>
   </header>
 
-  <div class="glance">
+  <div class="glance" hidden style="display:none">   <!-- dold 2026-11-21.6: uppgifterna finns i respektive flik; värdena räknas fortfarande (huskorten läser gLights/gOut) -->
     <button class="gl" id="glLights" type="button" data-v="belysning" aria-label="Visa Ljus"><div class="k">Tänt</div><div class="v num" id="gLights">–</div></button>
     <button class="gl" id="glOut" type="button" data-v="temperatur" aria-label="Visa Klimat"><div class="k">Ute</div><div class="v num" id="gOut">–</div></button>
     <button class="gl" id="glLoad" type="button" data-v="energi" aria-label="Visa Energi"><div class="k">Förbrukning</div><div class="v num" id="gLoad">–</div></button>
@@ -837,8 +837,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.5"></script>
-<script src="homey.js?v=2026-11-21.5"></script>
+<script src="config.js?v=2026-11-21.6"></script>
+<script src="homey.js?v=2026-11-21.6"></script>
 <script>
 (() => {
   const S = 'Homey';
