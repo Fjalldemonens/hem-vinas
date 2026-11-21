@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.14">
+<meta name="app-version" content="2026-11-21.15">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -706,6 +706,20 @@ div.house img.fl.on{opacity:.55}
 #hcSun.off .ic{opacity:1}   /* månen och den svaga solen ska synas fullt (2026-11-21.10) */
 
 .hv2 .hvc2 .ic{stroke:none;stroke-width:0}   /* .flow .ic (gamla flödesbilden) gav ikonerna en grå kontur (2026-11-21.10) */
+
+/* Bladens batteri/bil-grafik (2026-11-21.15) */
+#soc .bat,#carBat .bat{display:none}
+.sgx{display:flex;align-items:center;justify-content:center;gap:16px;padding:4px 0 6px}
+.sgx-t{font-size:2.3rem;font-weight:800;letter-spacing:-.02em;white-space:nowrap}
+.sgx-b .ic{width:64px;height:84px} .sgx-b .ic svg{width:100%;height:100%}
+.sgx-c{flex-direction:column;gap:6px}
+.sgx-c .ic{position:relative;width:100%;aspect-ratio:900/571;border-radius:14px;overflow:hidden;background:#000}
+.sgx-c .ic img,.sgx-c .ic canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sgx-c .ic canvas{mix-blend-mode:screen}
+.sgx-c .ic.chg canvas{animation:cellPulse 1.8s ease-in-out infinite}
+.sgx-c .ic .bolt{position:absolute;right:8px;top:6px;font-size:1rem;filter:drop-shadow(0 0 4px rgba(255,220,80,.9));display:none}
+.sgx-c .ic.chg .bolt{display:block}
+.sgx-c{position:relative} .sgx-c .sgx-t{position:absolute;left:12px;top:10px;font-size:1.7rem;text-shadow:0 0 10px #000,0 0 3px #000}
 </style>
 </head>
 <body>
@@ -854,8 +868,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.14"></script>
-<script src="homey.js?v=2026-11-21.14"></script>
+<script src="config.js?v=2026-11-21.15"></script>
+<script src="homey.js?v=2026-11-21.15"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1605,6 +1619,17 @@ div.house img.fl.on{opacity:.55}
     b.append(mk('span', 'num', (charging ? '⚡ ' : '') + f0.format(p) + ' %'));
     w.setAttribute('role', 'img'); w.setAttribute('aria-label', 'Laddnivå ' + f0.format(p) + ' %' + (target != null ? ', laddmål ' + f0.format(target) + ' %' : '') + (charging ? ', laddar' : ''));
     w.append(b, mk('div', 'bat-n')); el.append(w);
+    try { sheetGfx(el, p, target, charging); } catch (e) {}
+  }
+  // Bladen Husbatteri och Laddbox och bil (2026-11-21.15): samma grafik som i husvyn – glasbatteriet resp. röntgenbilen med tända celler – med stor % ovanpå. Stapeln göms.
+  function sheetGfx(el, p, target, charging) {
+    if (el.id !== 'soc' && el.id !== 'carBat') return;
+    const dk = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
+    const col = battLevelColor(p, dk), g = mk('div', 'sgx ' + (el.id === 'soc' ? 'sgx-b' : 'sgx-c'));
+    if (el.id === 'soc') { const ic = mk('div', 'ic'); ic.innerHTML = battIconSvg(p, col, charging, dk); g.append(ic); }
+    else { const ic = mk('div', 'ic' + (charging ? ' chg' : '')); ic.innerHTML = '<img src="img/bil.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>'; g.append(ic); drawCarCells(ic.querySelector('canvas'), p, col); }
+    const t = mk('div', 'sgx-t num'); t.style.color = col; t.textContent = (charging ? '⚡ ' : '') + f0.format(p) + ' %'; g.append(t);
+    el.prepend(g);
   }
   // Batterityp vid lågt batteri (2026-11-14.8): drivrutinens uppgift i Homey, annars känd modell. SNZB-02P = CR2477 (SONOFF:s produktsida, Zigbee2MQTT).
   const BATT_MODELS = { 'SNZB-02P': 'CR2477', 'lumi.flood.agl02': 'CR2032' };   // lumi.flood.agl02 = Aqara Water Leak Sensor T1
