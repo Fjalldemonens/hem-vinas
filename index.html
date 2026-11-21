@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.25">
+<meta name="app-version" content="2026-11-21.26">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -666,10 +666,10 @@ div.house .ol.porch{background:
   radial-gradient(ellipse 3.5% 10% at 82.6% 76%,rgba(255,200,130,.8),transparent 75%),
   radial-gradient(ellipse 8% 4% at 82% 95%,rgba(255,190,110,.6),transparent 72%)}
 div.house .ol.flood{background:
-  radial-gradient(ellipse 62% 16% at 50% 99%,rgba(236,242,255,.85),transparent 72%),
-  radial-gradient(ellipse 48% 55% at 52% 62%,rgba(205,220,255,.22),transparent 72%)}
-div.house img.fl{position:absolute;left:0;top:0;opacity:0;transition:opacity 1s ease;filter:saturate(.75) brightness(.92) hue-rotate(-6deg)}
-div.house img.fl.on{opacity:.55}
+  radial-gradient(ellipse 70% 19% at 50% 99%,rgba(242,246,255,.95),transparent 74%),
+  radial-gradient(ellipse 55% 62% at 52% 60%,rgba(215,228,255,.32),transparent 74%)}
+div.house img.fl{position:absolute;left:0;top:0;opacity:0;transition:opacity 1s ease;filter:saturate(.8) brightness(1.02) hue-rotate(-6deg)}
+div.house img.fl.on{opacity:.75}   /* 2026-11-21.26: ljusare strålkastare (förut .55 och brightness .92) */
 
 /* 2026-11-21.5: Energi-husvyn som rutnät – korten ovanför och under, huset stort och centrerat mellan dem, pilarna ritas efter korten (hvArrows) */
 .hv2{aspect-ratio:auto;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"tl tr" "hs hs" "pl pl" "bl br";column-gap:10px;row-gap:0;margin:4px 0 2px}
@@ -942,8 +942,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.25"></script>
-<script src="homey.js?v=2026-11-21.25"></script>
+<script src="config.js?v=2026-11-21.26"></script>
+<script src="homey.js?v=2026-11-21.26"></script>
 <script>
 (() => {
   const S = 'Homey';
