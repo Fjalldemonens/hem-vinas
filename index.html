@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.15">
+<meta name="app-version" content="2026-11-21.16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -720,6 +720,20 @@ div.house img.fl.on{opacity:.55}
 .sgx-c .ic .bolt{position:absolute;right:8px;top:6px;font-size:1rem;filter:drop-shadow(0 0 4px rgba(255,220,80,.9));display:none}
 .sgx-c .ic.chg .bolt{display:block}
 .sgx-c{position:relative} .sgx-c .sgx-t{position:absolute;left:12px;top:10px;font-size:1.7rem;text-shadow:0 0 10px #000,0 0 3px #000}
+
+/* Solceller-bladet (2026-11-21.16): Groks tak med paneler; panelerna lyser solgult efter effekten (mask img/sol-mask.png), ljus sveper över när de producerar, måne/sol i hörnet */
+.solv{position:relative;aspect-ratio:1100/532;border-radius:14px;overflow:hidden;background:#000;margin:4px 0 10px}
+.solv img{position:absolute;inset:0;width:100%;height:100%;display:block}
+.solv .glow,.solv .sheen{position:absolute;inset:0;-webkit-mask:url(img/sol-mask.png) center/100% 100% no-repeat;mask:url(img/sol-mask.png) center/100% 100% no-repeat;mix-blend-mode:screen;transition:opacity .8s}
+.solv .glow{background:radial-gradient(120% 140% at 15% 0%,#FFD24A,#FF9F0A 55%,#D96400);opacity:var(--e,0)}
+.solv .sheen{background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%) 0 0/300% 100%;opacity:0;animation:solSheen 3.2s linear infinite}
+.solv.on .sheen{opacity:calc(.35 + var(--e,0) * .5)}
+@keyframes solSheen{from{background-position:100% 0}to{background-position:-50% 0}}
+.solv .sky{position:absolute;left:4%;top:7%;width:15%;aspect-ratio:1}
+.solv .sky svg{width:100%;height:100%;overflow:visible}
+.solv .big{position:absolute;right:12px;top:10px;font-size:1.9rem;font-weight:800;color:#fff;text-shadow:0 0 12px #000,0 0 3px #000}
+.solv.on .big{color:#FFD45C}
+@media (prefers-reduced-motion:reduce){.solv .sheen{animation:none}}
 </style>
 </head>
 <body>
@@ -848,7 +862,7 @@ div.house img.fl.on{opacity:.55}
       <button class="lrow" type="button" data-more="app" aria-haspopup="dialog"><span class="ln2">Vitvaror</span><span class="ls num" id="mApp"></span><span class="chev" aria-hidden="true">›</span></button>
     </div>
     <div id="moreHome">
-      <div class="card" id="mvSol"><div class="kv num" id="solar"></div></div>
+      <div class="card" id="mvSol"><div class="solv" id="solV" aria-hidden="true"><img src="img/sol.webp" alt=""><div class="glow"></div><div class="sheen"></div><div class="sky"></div><div class="big num" id="solBig">–</div></div><div class="kv num" id="solar"></div></div>
       <div class="card" id="mvFas"><div class="phases num" id="phases"></div></div>
       <div class="card" id="battCard"><div class="balert" id="battAlert" hidden><b></b><span></span></div><div class="batwrap" id="soc" hidden></div><div class="kv num" id="batt"></div><div id="battHist"></div><div class="blog num" id="battLog" hidden></div></div>
       <div class="card" id="evCard"><div class="evhero"><div class="evst"><b id="evSt">–</b><span class="num" id="evPw"></span></div><div class="car" id="carRow" hidden><div class="carl"><span id="carName"></span><span class="num" id="carPct"></span></div><div id="carBat"></div><div class="carsub num" id="carSub"></div></div></div><div class="kv num" id="ev"></div><div class="solbox" id="solBox" hidden><button type="button" class="btn" id="solBtn">Laddning sol</button><div class="solst num" id="solSt"></div></div></div>
@@ -868,8 +882,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.15"></script>
-<script src="homey.js?v=2026-11-21.15"></script>
+<script src="config.js?v=2026-11-21.16"></script>
+<script src="homey.js?v=2026-11-21.16"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2929,6 +2943,14 @@ div.house img.fl.on{opacity:.55}
       const sp = sd ? Number(val(sd, 'measure_power')) : NaN;
       if (ic && Number.isFinite(sp)) { const key = (night && !(sp > 20)) ? 'moon' : 'sun' + Math.round(Math.sqrt(Math.max(0, sp) / SUN_MAX_W) * 40);
         if (ic.dataset.k !== key) { ic.innerHTML = sunIconSvg(sp, night); ic.dataset.k = key; } } }
+    { const sv = $('solV'), sd2 = devices.find((d) => d.type === 'solarpanel' && has(d, 'measure_power')), sp2 = sd2 ? Number(val(sd2, 'measure_power')) : NaN;
+      if (sv && Number.isFinite(sp2)) {
+        const e = Math.sqrt(Math.max(0, Math.min(1, sp2 / SUN_MAX_W))), on = sp2 > 20;
+        sv.style.setProperty('--e', on ? (0.14 + 0.56 * e).toFixed(3) : 0); sv.classList.toggle('on', on);
+        $('solBig').textContent = W(sp2);
+        const key = (night && !on) ? 'moon' : 'sun' + Math.round(e * 40), sk = sv.querySelector('.sky');
+        if (sk.dataset.k !== key) { sk.innerHTML = sunIconSvg(sp2, night); sk.dataset.k = key; }
+      } }
     // Utebelysning i kvällsbilden: lampor i Utomhus (utom strålkastare) = varmt sken, strålkastare = kallvitt ljus över huset
     const outL = lights().filter((d) => val(d, 'onoff') === true && OUTSIDE.test(d.zone || ''));
     const flood = outL.some((d) => /strålkast/i.test((d.zone || '') + ' ' + d.name)), porch = outL.some((d) => !/strålkast/i.test((d.zone || '') + ' ' + d.name));
