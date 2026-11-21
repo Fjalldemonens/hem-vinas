@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.18">
+<meta name="app-version" content="2026-11-21.19">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -840,16 +840,16 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
         <div class="halo"></div><div class="nightbg"></div>
         <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
         <svg class="arrows" viewBox="0 0 340 390" aria-hidden="true">
-          <defs><marker id="hvmSun" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--sun)"/></marker><marker id="hvmGrid" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--gridc,var(--grid))"/></marker><marker id="hvmBatt" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--battc,var(--batt))"/></marker><marker id="hvmEv" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ev)"/></marker></defs>
+          <defs><marker id="hvmSun" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--sun)"/></marker><marker id="hvmGrid" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--gridc,var(--grid))"/></marker><marker id="hvmBatt" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--battc,var(--batt))"/></marker><marker id="hvmEv" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--evc,var(--ev))"/></marker></defs>
           <path class="hvar" id="hfSun" stroke="var(--sun)" marker-end="url(#hvmSun)" d="M115 52 H124 Q132 52 132 60 V104"/>
           <path class="hvar" id="hfGrid" stroke="var(--gridc,var(--grid))" marker-end="url(#hvmGrid)" d="M225 52 H216 Q208 52 208 60 V104"/>
           <path class="hvar" id="hfBatt" stroke="var(--battc,var(--batt))" marker-end="url(#hvmBatt)" d="M58 271 V224 Q58 216 66 216 H106"/>
-          <path class="hvar" id="hfEv" stroke="var(--ev)" marker-end="url(#hvmEv)" d="M282 271 V224 Q282 216 274 216 H234"/>
+          <path class="hvar" id="hfEv" stroke="var(--evc,var(--ev))" marker-end="url(#hvmEv)" d="M282 271 V224 Q282 216 274 216 H234"/>
         </svg>
         <button class="hvc2 tl" type="button" data-more="sol" style="--c:var(--sun)" id="hcSun"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg></span><div class="k">Solceller</div><div class="v num" id="hvSun">–</div><div class="s" id="hsSun"></div></button>
         <button class="hvc2 tr" type="button" data-more="fas" style="--c:var(--gridc,var(--grid))" id="hcGrid"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 8 22M12 2l4 20M6 7h12M5 12h14M9.5 7l5 5M14.5 7l-5 5M8.8 12l6.2 6M15.2 12l-6.2 6M7.5 18h9"/></svg></span><div class="k">Elnät</div><div class="v num" id="hvGrid">–</div><div class="s" id="hsGrid"></div></button>
         <button class="hvc2 bl" type="button" data-more="batt" style="--c:var(--battc,var(--batt))" id="hcBatt"><span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="18" rx="2.5" fill="currentColor"/><rect x="9.5" y="2" width="5" height="3" rx="1" fill="currentColor"/><path d="M13 8l-3.5 5.2h3L11 18l3.6-5.4h-3z" fill="var(--card)"/></svg></span><div class="k"><span id="hlBatt">Batteri</span></div><div class="v num" id="hvBatt">–</div><div class="s" id="hsBatt"></div></button>
-        <button class="hvc2 br" type="button" data-more="ev" style="--c:var(--ev)" id="hcEv"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 11l1.7-4.3A2 2 0 0 1 8.6 5.4h6.8a2 2 0 0 1 1.9 1.3L19 11a2.5 2.5 0 0 1 2 2.4V17a1 1 0 0 1-1 1h-1v1.5a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V18H8.5v1.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V18H4a1 1 0 0 1-1-1v-3.6A2.5 2.5 0 0 1 5 11z" fill="currentColor"/><path d="M7 10.6l1.2-3.1h7.6l1.2 3.1z" fill="var(--card)" opacity=".85"/><circle cx="7" cy="14.2" r="1.3" fill="var(--card)"/><circle cx="17" cy="14.2" r="1.3" fill="var(--card)"/></svg></span><div class="k"><span id="hlEv">Elbil</span></div><div class="v num" id="hvEv">–</div><div class="s" id="hsEv"></div></button>
+        <button class="hvc2 br" type="button" data-more="ev" style="--c:var(--evc,var(--ev))" id="hcEv"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 11l1.7-4.3A2 2 0 0 1 8.6 5.4h6.8a2 2 0 0 1 1.9 1.3L19 11a2.5 2.5 0 0 1 2 2.4V17a1 1 0 0 1-1 1h-1v1.5a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V18H8.5v1.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V18H4a1 1 0 0 1-1-1v-3.6A2.5 2.5 0 0 1 5 11z" fill="currentColor"/><path d="M7 10.6l1.2-3.1h7.6l1.2 3.1z" fill="var(--card)" opacity=".85"/><circle cx="7" cy="14.2" r="1.3" fill="var(--card)"/><circle cx="17" cy="14.2" r="1.3" fill="var(--card)"/></svg></span><div class="k"><span id="hlEv">Elbil</span></div><div class="v num" id="hvEv">–</div><div class="s" id="hsEv"></div></button>
         <div class="hvhome2"><div class="k">— HEMMA —</div><div class="v num" id="hvHome">–</div></div>
       </div>
       <svg viewBox="0 0 340 352" role="img" aria-labelledby="flowT">
@@ -907,8 +907,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.18"></script>
-<script src="homey.js?v=2026-11-21.18"></script>
+<script src="config.js?v=2026-11-21.19"></script>
+<script src="homey.js?v=2026-11-21.19"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -3014,6 +3014,7 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
         const chg = /^Laddar(?! ur)/i.test(($('sEv') && $('sEv').textContent) || '') || /CHARGING/i.test(String(val(car, 'charging_system_status') || ''));
         if (Number.isFinite(pct)) {
           const col = battLevelColor(pct, dk), key = [Math.round(pct), tgt, col, chg].join('|');
+          $('hv').style.setProperty('--evc', col);   // linje, pil och statustext i bilens nivåfärg (2026-11-21.19)
           if (!ic.querySelector('canvas')) ic.innerHTML = '<img src="img/bil.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>';
           ic.classList.toggle('chg', chg);
           if (ic.dataset.k !== key) { drawCarCells(ic.querySelector('canvas'), pct, col); ic.dataset.k = key; }
