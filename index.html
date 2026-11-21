@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.20">
+<meta name="app-version" content="2026-11-21.21">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -813,9 +813,9 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 
   <nav class="seg" role="tablist" aria-label="Välj vy">
     <span class="pill" id="pill"></span>
-    <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ljus</span></button>
-    <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Klimat</span></button>
     <button role="tab" id="t-energi" aria-controls="p-energi" data-v="energi" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Energi</span></button>
+    <button role="tab" id="t-temperatur" aria-controls="p-temperatur" data-v="temperatur" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 14.8V4a2 2 0 0 0-4 0v10.8a4 4 0 1 0 4 0z"/></svg><span>Klimat</span></button>
+    <button role="tab" id="t-belysning" aria-controls="p-belysning" data-v="belysning" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Ljus</span></button>
     <button role="tab" id="t-stad" aria-controls="p-stad" data-v="stad" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="9" r="2.5"/><path d="M7 16h10"/></svg><span>Städ</span></button>
   </nav>
 
@@ -931,8 +931,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.20"></script>
-<script src="homey.js?v=2026-11-21.20"></script>
+<script src="config.js?v=2026-11-21.21"></script>
+<script src="homey.js?v=2026-11-21.21"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -989,7 +989,7 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && SH.key) sheetClose(true); });
 
   /* ---------- tabs (hash + remembered) ---------- */
-  const VIEWS = ['belysning', 'temperatur', 'energi', 'stad'];
+  const VIEWS = ['energi', 'temperatur', 'belysning', 'stad'];
   // Specens namn #ljus och #klimat fungerar som alias för samma flikar (ny design 2026-11)
   const ALIAS = { ljus: 'belysning', klimat: 'temperatur' };
   function show(v) {
