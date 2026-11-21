@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Hem Vinäs</title>
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
-<meta name="theme-color" content="#EEF1F6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E141C" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-14.46">
+<meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
+<meta name="app-version" content="2026-11-21.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -21,13 +21,13 @@
 /* Hem Vinäs – ny design (2026-11): ljust grundläge som följer telefonens mörka läge, en accentfärg (teal), Manrope, flikrad i nederkant och detaljer i blad.
    Alla färger ligger som variabler här överst. Variabelnamnen från förra designen (--fg, --card-2, --danger, --batt …) finns kvar eftersom JS-koden använder dem. */
 :root{
-  --bg:#EEF1F6; --bg-2:#E4E8EF; --card:#FFFFFF; --card-2:#EEF1F6; --sub:#EEF1F6; --line:#DCE2EA;
-  --fg:#121A26; --text:#121A26; --muted:#5B6472; --faint:#C9D1DC; --faint-t:#8A93A0;
-  --accent:#0B7A66; --accent-ink:#FFFFFF; --accent-soft:#E3F3EF; --accent-text:#0B5E4F;
-  --sun:#E39A1B; --grid:#2F63C4; --batt:#2E9E5B; --ev:#7C55C9; --home:#121A26;
-  --warm:#D9850A; --cold:#2F63C4; --danger:#C2392B; --warn:#A86307; --orange:#D9792B; --ok:#2E9E5B;
+  --bg:#F2F5F8; --bg-2:#EDF2F6; --card:#FFFFFF; --card-2:#F8FAFC; --sub:#EDF2F6; --line:#DCE4EA;
+  --fg:#142235; --text:#142235; --muted:#64748B; --faint:#C9D3DD; --faint-t:#8795A5;
+  --accent:#0B8A70; --accent-ink:#FFFFFF; --accent-soft:#E2F4EF; --accent-text:#0B5E4F;
+  --sun:#E9A900; --grid:#328FE0; --batt:#159B62; --ev:#8060D6; --home:#142235;
+  --warm:#D96D50; --cold:#328FE0; --danger:#D94B4B; --warn:#B98210; --orange:#D9792B; --ok:#168A5A;
   --price:#B4471F; --hot:#9A3D12; --hot-soft:#FFE7D6; --green-soft:#E2F4E9; --green-ink:#1E6B42;
-  --amber:#E8A33A; --amber-soft:#FFF6E5; --amber-ink:#8A5A0B; --sw-off:#D3D9E1; --knob:#FFFFFF;
+  --amber:#D99B18; --amber-soft:#FFF6E5; --amber-ink:#8A5A0B; --sw-off:#D3D9E1; --knob:#FFFFFF;
   --scrim:rgba(18,26,38,.45); --shadow:rgba(18,26,38,.10); --alarm-bg:#FDE3E0;
   --map:#000000; --map-t:#99AAAA;
   --cloud:#B9C4D3; --cloud-2:#8794A8; --snow:#9CC7F0;
@@ -36,23 +36,23 @@
   --r:20px; color-scheme:light;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0E141C; --bg-2:#1B242F; --card:#18212C; --card-2:#222D39; --sub:#222D39; --line:#2A3542;
-  --fg:#E8EDF3; --text:#E8EDF3; --muted:#A0AAB7; --faint:#3A4654; --faint-t:#7D8794;
-  --accent:#1FB596; --accent-ink:#04261F; --accent-soft:#123A33; --accent-text:#7FE3CB;
-  --sun:#F2B33D; --grid:#86ABF2; --batt:#4CC07E; --ev:#A98AE8; --home:#E8EDF3;
-  --warm:#FFBF5A; --cold:#86ABF2; --danger:#FF8A7A; --warn:#F2C878; --orange:#FF9A5A; --ok:#4CC07E;
+  --bg:#080F16; --bg-2:#101B25; --card:#101B25; --card-2:#152431; --sub:#152431; --line:#263B49;
+  --fg:#F3F7F8; --text:#F3F7F8; --muted:#9AABB5; --faint:#2C4050; --faint-t:#71838E;
+  --accent:#38C9A6; --accent-ink:#04261F; --accent-soft:#12332D; --accent-text:#7FE3CB;
+  --sun:#F5B94C; --grid:#69AEF4; --batt:#42C98A; --ev:#B69AFF; --home:#F3F7F8;
+  --warm:#F18B70; --cold:#6DB7EE; --danger:#FA7773; --warn:#F4C75E; --orange:#FF9A5A; --ok:#55D5A6;
   --price:#FF9A66; --hot:#FFB08A; --hot-soft:#3A2116; --green-soft:#173525; --green-ink:#8BE0AE;
-  --amber:#E8A33A; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#3A4654; --knob:#FFFFFF;
+  --amber:#F5B94C; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#2C4050; --knob:#FFFFFF;
   --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.35); --alarm-bg:#3A1A17;
   --cloud:#C7D2E0; --cloud-2:#8E9BB0; --snow:#E8F3FF; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0E141C; --bg-2:#1B242F; --card:#18212C; --card-2:#222D39; --sub:#222D39; --line:#2A3542;
-  --fg:#E8EDF3; --text:#E8EDF3; --muted:#A0AAB7; --faint:#3A4654; --faint-t:#7D8794;
-  --accent:#1FB596; --accent-ink:#04261F; --accent-soft:#123A33; --accent-text:#7FE3CB;
-  --sun:#F2B33D; --grid:#86ABF2; --batt:#4CC07E; --ev:#A98AE8; --home:#E8EDF3;
-  --warm:#FFBF5A; --cold:#86ABF2; --danger:#FF8A7A; --warn:#F2C878; --orange:#FF9A5A; --ok:#4CC07E;
+  --bg:#080F16; --bg-2:#101B25; --card:#101B25; --card-2:#152431; --sub:#152431; --line:#263B49;
+  --fg:#F3F7F8; --text:#F3F7F8; --muted:#9AABB5; --faint:#2C4050; --faint-t:#71838E;
+  --accent:#38C9A6; --accent-ink:#04261F; --accent-soft:#12332D; --accent-text:#7FE3CB;
+  --sun:#F5B94C; --grid:#69AEF4; --batt:#42C98A; --ev:#B69AFF; --home:#F3F7F8;
+  --warm:#F18B70; --cold:#6DB7EE; --danger:#FA7773; --warn:#F4C75E; --orange:#FF9A5A; --ok:#55D5A6;
   --price:#FF9A66; --hot:#FFB08A; --hot-soft:#3A2116; --green-soft:#173525; --green-ink:#8BE0AE;
-  --amber:#E8A33A; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#3A4654; --knob:#FFFFFF;
+  --amber:#F5B94C; --amber-soft:#2E2614; --amber-ink:#F2C878; --sw-off:#2C4050; --knob:#FFFFFF;
   --scrim:rgba(0,0,0,.6); --shadow:rgba(0,0,0,.35); --alarm-bg:#3A1A17;
   --cloud:#C7D2E0; --cloud-2:#8E9BB0; --snow:#E8F3FF; color-scheme:dark}
 html,body{background:var(--bg);color:var(--fg)}
@@ -585,6 +585,64 @@ body.noscroll{overflow:hidden}
 .tag .cd{width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;flex:none}
 #lightStatus{align-items:center;gap:6px}
 #lightStatus .lnote{flex:1 1 100%;font-size:13px;color:var(--muted)}
+
+/* ===== 2026-11-21: husbild i Energi (Just nu) och Klimat, prognoskort. Gamla flödesbilden ligger kvar dold – appens kod skriver i den och husvyn speglar värdena. ===== */
+.card.flow > svg{display:none}
+@keyframes hvdash{to{stroke-dashoffset:-22}}
+.hv2{position:relative;aspect-ratio:340/390;margin:6px 0 4px}
+.hv2 .halo{position:absolute;left:50%;top:36%;width:78%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--grid) 14%,transparent) 0 55%,transparent 72%)}
+.hv2 .house{position:absolute;left:-2%;width:104%;top:19%;filter:drop-shadow(0 6px 10px rgba(0,0,0,.12))}
+.house.night,.is-night .house.day{display:none} .is-night .house.night{display:block}
+div.house img{display:block;width:100%}
+div.house .lw{position:absolute;left:0;top:0;opacity:0;transition:opacity .9s ease}
+div.house .lw.on{opacity:1}
+.hv2 svg.arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hvar{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 6;animation:hvdash 1.2s linear infinite}
+.hvar.rev{animation-direction:reverse} .hvar.idle{animation:none;stroke-dasharray:none;opacity:.25}
+@media (prefers-reduced-motion:reduce){.hvar{animation:none}}
+.hvc2{position:absolute;width:31%;box-sizing:border-box;padding:10px 6px 9px;border-radius:18px;text-align:center;font:inherit;color:var(--fg);
+  background:var(--card);border:1px solid var(--line);box-shadow:0 6px 18px var(--shadow);cursor:pointer}
+.hvc2.tl{left:1%;top:1%} .hvc2.tr{right:1%;top:1%} .hvc2.bl{left:1%;bottom:0} .hvc2.br{right:1%;bottom:0}
+.hvc2 .ic{display:block;width:30px;height:30px;margin:0 auto 4px;color:var(--c)} .hvc2 .ic svg{width:100%;height:100%}
+.hvc2 .k{font-size:.8rem;font-weight:600;white-space:nowrap}
+.hvc2 .v{font-size:clamp(1.05rem,4.8vw,1.35rem);font-weight:800;white-space:nowrap;letter-spacing:-.01em}
+.hvc2 .s{font-size:.7rem;font-weight:600;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hvc2.off .s{color:var(--muted)} .hvc2.off .ic{opacity:.45}
+.hvhome2{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);min-width:34%;padding:9px 14px;border-radius:16px;text-align:center;
+  background:var(--card);border:1px solid var(--line);box-shadow:0 8px 22px var(--shadow)}
+.hvhome2 .k{font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.hvhome2 .v{font-size:clamp(1.3rem,6vw,1.75rem);font-weight:800;white-space:nowrap}
+@media (min-width:800px){.hv2{max-width:560px;margin-left:auto;margin-right:auto}}
+.hmini{position:relative;padding:0;overflow:hidden;aspect-ratio:340/150;margin-bottom:12px}
+.hmini .halo{position:absolute;left:50%;top:52%;width:58%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--grid) 13%,transparent) 0 50%,transparent 70%)}
+.hmini .house{position:absolute;left:8%;width:84%;bottom:8%}
+@media (min-width:800px){.hmini .house{left:22%;width:56%}}
+.hmini .hp{position:absolute;top:10px;padding:6px 11px;border-radius:13px;background:var(--card);border:1px solid var(--line);box-shadow:0 4px 14px var(--shadow)}
+.hmini .hp.l{left:10px} .hmini .hp.r{right:10px;text-align:right}
+.hmini .hp .k{font-size:.7rem;font-weight:700;color:var(--muted)} .hmini .hp .v{font-size:1.2rem;font-weight:800;white-space:nowrap}
+.fc{padding:16px 16px 12px}
+.fch{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.fcnow{display:flex;align-items:center;gap:10px} .fct{font-size:1.15rem;font-weight:800} .fcs{font-size:.8rem;color:var(--muted)}
+.fcday{text-align:right} .fcday .k{font-size:.72rem;font-weight:700;color:var(--muted)} .fcday .v{font-size:1.05rem;font-weight:800;white-space:nowrap}
+.fcdl{margin:14px 2px 0;font-size:.85rem;color:var(--muted)} .fcdl b{color:var(--fg);font-weight:800}
+.fcstrip{display:flex;gap:6px;overflow-x:auto;margin:8px -16px 4px;padding:2px 16px 6px;scrollbar-width:none;scroll-snap-type:x proximity;scroll-padding:0 16px}
+.fcstrip::-webkit-scrollbar{display:none}
+.fch1{flex:none;width:52px;padding:8px 0 7px;border-radius:14px;background:var(--sub);text-align:center;scroll-snap-align:start}
+.fch1.now{background:var(--accent-soft);outline:1.5px solid var(--accent);outline-offset:-1.5px}
+.fch1 .tm{font-size:.72rem;font-weight:700;color:var(--muted)} .fch1.now .tm{color:var(--accent-text)}
+.fch1 .ic{height:30px;display:grid;place-items:center;margin:3px 0}
+.fch1 .tp{font-size:.95rem;font-weight:800} .fch1 .tp.cold{color:var(--cold)} .fch1 .tp.warm{color:var(--warm)}
+.fch1 .pr{font-size:.66rem;font-weight:700;color:var(--grid);min-height:.9em}
+.fcsep{flex:none;width:22px;display:flex;align-items:center;justify-content:center;border-left:1.5px dashed var(--line);margin-left:4px}
+.fcsep span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.fcdays{border-top:1px solid var(--line);margin-top:8px;padding-top:4px}
+.fcd{display:flex;align-items:center;gap:10px;width:100%;padding:8px 6px;border:0;border-radius:10px;background:transparent;color:var(--fg);font:inherit;font-size:.9rem;cursor:pointer;text-align:left}
+.fcd.sel{background:var(--sub)} .fcd .k{flex:1;font-weight:700} .fcd .ic{width:26px;display:grid;place-items:center}
+.fcd .mm{width:54px;text-align:right;color:var(--grid);font-size:.78rem;font-weight:700} .fcd b{width:76px;text-align:right}
+.fcmore{width:100%;margin-top:2px;padding:11px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--accent-text);font:inherit;font-weight:700;cursor:pointer}
+.fcsrc{font-size:.68rem;color:var(--faint-t);text-align:right;margin-top:6px}
 </style>
 </head>
 <body>
@@ -636,7 +694,20 @@ body.noscroll{overflow:hidden}
   </section>
 
   <section class="panel" id="p-temperatur" role="tabpanel" aria-labelledby="t-temperatur" hidden>
-    <div class="card hero" id="outHero"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div><button class="wxbtn" id="wxBtn" type="button" aria-haspopup="dialog"><span class="wxbi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.8 11.2 3.5 3.5 0 0 0 7 18z"/></svg></span><span class="wxbl">Väderprognos</span><span class="wxbr">Prognos <span aria-hidden="true">›</span></span></button></div>
+    <div class="card hmini" id="hmK"><div class="halo"></div>
+      <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
+      <div class="hp l"><div class="k">Inne</div><div class="v num" id="hmIn" style="color:var(--warm)">–</div></div>
+      <div class="hp r"><div class="k">Ute</div><div class="v num" id="hmOut" style="color:var(--cold)">–</div></div></div>
+    <div class="card fc" id="fcCard">
+      <div class="fch"><div class="fcnow"><span id="fcIc"></span><div><div class="fct" id="fcTxt">Hämtar prognos…</div><div class="fcs" id="fcSub"></div></div></div>
+      <div class="fcday"><div class="k">Idag</div><div class="v num" id="fcToday">–</div></div></div>
+      <div class="fcdl" id="fcDayLbl"></div>
+      <div class="fcstrip" id="fcStrip"></div>
+      <div class="fcdays" id="fcDays"></div>
+      <button class="fcmore" id="fcMore" type="button">Hela prognosen <span aria-hidden="true">›</span></button>
+      <div class="fcsrc" id="fcSrc"></div>
+    </div>
+    <div class="card hero" id="outHero" hidden style="display:none"><div><div class="eyebrow">Ute</div><div class="big num" id="outT">–</div></div><div class="meta" id="outMeta"></div><button class="wxbtn" id="wxBtn" type="button" aria-haspopup="dialog"><span class="wxbi" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .4-7.98A5.5 5.5 0 0 0 6.8 11.2 3.5 3.5 0 0 0 7 18z"/></svg></span><span class="wxbl">Väderprognos</span><span class="wxbr">Prognos <span aria-hidden="true">›</span></span></button></div>
     <div class="h2">Värme</div>
     <div class="card" id="thermos"><div class="empty">Hämtar termostater…</div></div>
     <div class="h2 rumh">Rum</div>
@@ -646,6 +717,22 @@ body.noscroll{overflow:hidden}
   <section class="panel" id="p-energi" role="tabpanel" aria-labelledby="t-energi" hidden>
     <div class="card flow">
       <div class="h2" style="margin:2px 4px 6px">Just nu</div>
+      <div class="hv2" id="hv">
+        <div class="halo"></div>
+        <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
+        <svg class="arrows" viewBox="0 0 340 390" aria-hidden="true">
+          <defs><marker id="hvmSun" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--sun)"/></marker><marker id="hvmGrid" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--grid)"/></marker><marker id="hvmBatt" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--batt)"/></marker><marker id="hvmEv" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ev)"/></marker></defs>
+          <path class="hvar" id="hfSun" stroke="var(--sun)" marker-end="url(#hvmSun)" d="M115 52 H124 Q132 52 132 60 V104"/>
+          <path class="hvar" id="hfGrid" stroke="var(--grid)" marker-end="url(#hvmGrid)" d="M225 52 H216 Q208 52 208 60 V104"/>
+          <path class="hvar" id="hfBatt" stroke="var(--batt)" marker-end="url(#hvmBatt)" d="M58 271 V224 Q58 216 66 216 H106"/>
+          <path class="hvar" id="hfEv" stroke="var(--ev)" marker-end="url(#hvmEv)" d="M282 271 V224 Q282 216 274 216 H234"/>
+        </svg>
+        <button class="hvc2 tl" type="button" data-more="sol" style="--c:var(--sun)" id="hcSun"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg></span><div class="k">Solceller</div><div class="v num" id="hvSun">–</div><div class="s" id="hsSun"></div></button>
+        <button class="hvc2 tr" type="button" data-more="fas" style="--c:var(--grid)" id="hcGrid"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 8 22M12 2l4 20M6 7h12M5 12h14M9.5 7l5 5M14.5 7l-5 5M8.8 12l6.2 6M15.2 12l-6.2 6M7.5 18h9"/></svg></span><div class="k">Elnät</div><div class="v num" id="hvGrid">–</div><div class="s" id="hsGrid"></div></button>
+        <button class="hvc2 bl" type="button" data-more="batt" style="--c:var(--batt)" id="hcBatt"><span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="18" rx="2.5" fill="currentColor"/><rect x="9.5" y="2" width="5" height="3" rx="1" fill="currentColor"/><path d="M13 8l-3.5 5.2h3L11 18l3.6-5.4h-3z" fill="var(--card)"/></svg></span><div class="k"><span id="hlBatt">Batteri</span></div><div class="v num" id="hvBatt">–</div><div class="s" id="hsBatt"></div></button>
+        <button class="hvc2 br" type="button" data-more="ev" style="--c:var(--ev)" id="hcEv"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 11l1.7-4.3A2 2 0 0 1 8.6 5.4h6.8a2 2 0 0 1 1.9 1.3L19 11a2.5 2.5 0 0 1 2 2.4V17a1 1 0 0 1-1 1h-1v1.5a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V18H8.5v1.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V18H4a1 1 0 0 1-1-1v-3.6A2.5 2.5 0 0 1 5 11z" fill="currentColor"/><path d="M7 10.6l1.2-3.1h7.6l1.2 3.1z" fill="var(--card)" opacity=".85"/><circle cx="7" cy="14.2" r="1.3" fill="var(--card)"/><circle cx="17" cy="14.2" r="1.3" fill="var(--card)"/></svg></span><div class="k"><span id="hlEv">Elbil</span></div><div class="v num" id="hvEv">–</div><div class="s" id="hsEv"></div></button>
+        <div class="hvhome2"><div class="k">— HEMMA —</div><div class="v num" id="hvHome">–</div></div>
+      </div>
       <svg viewBox="0 0 340 352" role="img" aria-labelledby="flowT">
         <title id="flowT">Energiflöde mellan sol, nät, batteri, hus och laddbox</title>
         <path class="wire" d="M100.2 126.4 L126.2 147.1"/><path class="wire" d="M239.8 126.4 L213.8 147.1"/><path class="wire" d="M100.2 237.6 L126.2 216.9"/><path class="wire" d="M239.8 237.6 L213.8 216.9"/>
@@ -701,8 +788,8 @@ body.noscroll{overflow:hidden}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-14.46"></script>
-<script src="homey.js?v=2026-11-14.46"></script>
+<script src="config.js?v=2026-11-21.1"></script>
+<script src="homey.js?v=2026-11-21.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2390,10 +2477,10 @@ body.noscroll{overflow:hidden}
     if (!r.ok) throw new Error('SMHI HTTP ' + r.status);
     const j = await r.json(), ts = j.timeSeries || [];
     const ok = (v) => (v == null || v === 9999 || Number.isNaN(Number(v)) ? null : Number(v));
-    const today = new Date().toLocaleDateString('sv-SE'), tom = new Date(Date.now() + 864e5).toLocaleDateString('sv-SE');
+    const last = new Date(Date.now() + 4 * 864e5).toLocaleDateString('sv-SE');
     const H = { time: [], temperature_2m: [], apparent_temperature: [], precipitation: [], weather_code: [], wind_speed_10m: [], wind_gusts_10m: [], wind_direction_10m: [], is_day: [] };
     for (const e of ts) {
-      const ms = Date.parse(e.time || e.validTime), k = localKey(ms); if (k.slice(0, 10) !== today && k.slice(0, 10) !== tom) continue;
+      const ms = Date.parse(e.time || e.validTime), k = localKey(ms); if (k.slice(0, 10) > last) continue;   // idag + 4 dygn (2026-11-21, förut idag + imorgon)
       const d = e.data || {}, sym = ok(d.symbol_code);
       H.time.push(k); H.temperature_2m.push(ok(d.air_temperature)); H.apparent_temperature.push(ok(d.air_temperature));
       H.precipitation.push(ok(d.precipitation_amount_mean) || 0); H.weather_code.push(sym != null ? SMHI2WMO[Math.round(sym)] ?? 3 : 3);
@@ -2407,7 +2494,7 @@ body.noscroll{overflow:hidden}
   async function wxFetch(force) {
     if (!force && wxData && Date.now() - wxAt < WX_TTL) return wxData;
     if (wxBusy) return wxBusy;
-    const q = 'latitude=' + WX.lat + '&longitude=' + WX.lon + '&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FStockholm&forecast_days=2';
+    const q = 'latitude=' + WX.lat + '&longitude=' + WX.lon + '&hourly=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,is_day&daily=sunrise,sunset&wind_speed_unit=ms&timezone=Europe%2FStockholm&forecast_days=5';
     const get = async (model) => { const r = await fetch('https://api.open-meteo.com/v1/forecast?' + q + (model ? '&models=' + model : '')); if (!r.ok) throw new Error('HTTP ' + r.status); const j = await r.json(); if (!j.hourly || !j.hourly.time) throw new Error('tomt svar'); return j; };
     wxBusy = (async () => {
       let j; try { j = await wxSmhi(); } catch (e) { try { j = await get('metno_seamless'); j._src = 'Open-Meteo (MET Nordic)'; } catch (e2) { j = await get(''); j._src = 'Open-Meteo'; } }
@@ -2532,7 +2619,60 @@ body.noscroll{overflow:hidden}
     wxFetch().then(wxRender).catch(() => { const b = $('wxBody'); b.replaceChildren(mk('div', 'empty', 'Kunde inte hämta prognosen just nu. Försök igen om en stund.')); });
   }
   function wxClose() { $('wx').hidden = true; document.body.classList.remove('noscroll'); $('wxBtn').focus(); }
+  const fcDayName = (ds, i) => i === 0 ? 'Idag' : i === 1 ? 'Imorgon' : new Date(ds + 'T12:00').toLocaleDateString('sv-SE', { weekday: 'long' }).replace(/^./, (c) => c.toUpperCase());
+  let fcCur = -1;
+  function fcLabel(i) {
+    if (i === fcCur || !wxData || !wxData[i]) return; fcCur = i; const day = wxData[i];
+    $('fcDayLbl').replaceChildren(mk('b', '', fcDayName(day.d, i)), mk('span', 'num', ' ' + wxT(day.max) + ' / ' + wxT(day.min) + (day.pr >= 0.1 ? ' · ' + f1.format(day.pr) + ' mm' : '')));
+    document.querySelectorAll('#fcDays .fcd').forEach((e, k) => e.classList.toggle('sel', k === i));
+  }
+  function renderFc() {
+    if (!wxData || !wxData[0]) return;
+    const now = Date.now();
+    const cur = wxData.flatMap((x) => x.hours).find((x) => new Date(x.t).getTime() > now - 3600e3); if (!cur) return;
+    $('fcIc').replaceChildren(wxIcon(cur.code, cur.day, 46));
+    $('fcTxt').textContent = wxText(cur.code) || 'Väder';
+    $('fcSub').textContent = 'Vind ' + Math.round(cur.ws) + ' m/s' + (cur.wg > cur.ws + 2 ? ' (byar ' + Math.round(cur.wg) + ')' : '') + (cur.pr > 0 ? ' · ' + f1.format(cur.pr) + ' mm' : '');
+    const t = wxData[0]; $('fcToday').textContent = wxT(t.max) + ' / ' + wxT(t.min);
+    const st = $('fcStrip'), keep = st.scrollLeft; st.replaceChildren();
+    wxData.forEach((day, di) => {
+      // idag och imorgon timme för timme, sedan var tredje timme
+      const hs = day.hours.filter((x) => new Date(x.t).getTime() > now - 3600e3 && (di < 2 || x.h % 3 === 0));
+      if (!hs.length) return;
+      if (di > 0) { const sep = mk('div', 'fcsep'); sep.dataset.day = di; sep.append(mk('span', '', fcDayName(day.d, di).slice(0, 3))); st.append(sep); }
+      hs.forEach((x) => {
+        const isNow = x === cur, c = mk('div', 'fch1' + (isNow ? ' now' : '')); c.dataset.day = di;
+        c.append(mk('div', 'tm num', isNow ? 'Nu' : String(x.h).padStart(2, '0')));
+        const ic = mk('div', 'ic'); ic.append(wxIcon(x.code, x.day, 28)); c.append(ic);
+        c.append(mk('div', 'tp num' + (x.temp < 0 ? ' cold' : ' warm'), wxT(x.temp)));
+        c.append(mk('div', 'pr num', x.pr > 0 ? f1.format(x.pr) : ''));
+        st.append(c);
+      });
+    });
+    st.scrollLeft = keep;
+    const dl = $('fcDays'); dl.replaceChildren();
+    wxData.forEach((day, i) => {
+      const r = mk('button', 'fcd'); r.type = 'button';
+      r.append(mk('span', 'k', fcDayName(day.d, i)));
+      const ic = mk('span', 'ic'); ic.append(wxIcon(day.code, true, 24)); r.append(ic);
+      r.append(mk('span', 'mm num', day.pr >= 0.1 ? f1.format(day.pr) + ' mm' : ''), mk('b', 'num', wxT(day.max) + ' / ' + wxT(day.min)));
+      r.addEventListener('click', () => { const tgt = st.querySelector('[data-day="' + i + '"]'); if (tgt) st.scrollTo({ left: tgt.offsetLeft - st.offsetLeft - 16, behavior: 'smooth' }); });
+      dl.append(r);
+    });
+    fcCur = -1; fcScroll();
+    $('fcSrc').textContent = 'Källa: ' + (wxSrc || 'SMHI');
+  }
+  function fcScroll() {
+    const st = $('fcStrip'), x = st.scrollLeft + 24;
+    if (!st.clientWidth) { fcCur = -1; fcLabel(Number((st.firstChild && st.firstChild.dataset.day) || 0)); fcCur = -1; return; }
+    let di = 0; for (const c of st.children) { if (c.offsetLeft - st.offsetLeft > x) break; di = Number(c.dataset.day); }
+    fcLabel(di);
+  }
+  $('fcStrip').addEventListener('scroll', fcScroll, { passive: true });
+  document.getElementById('t-temperatur').addEventListener('click', () => setTimeout(fcScroll, 50));
+  $('fcMore').addEventListener('click', wxOpen);
   function wxBtnUpdate() {
+    renderFc();
     renderLightHero();
     const b = $('wxBtn'); if (!b) return;
     const lbl = b.querySelector('.wxbl');
@@ -2545,6 +2685,34 @@ body.noscroll{overflow:hidden}
   wxFetch().then(wxBtnUpdate).catch(() => {});
   setInterval(() => { if (!document.hidden) wxFetch().then(() => { wxBtnUpdate(); if (!$('wx').hidden) wxRender(); }).catch(() => {}); }, WX_TTL);
 
+
+  // Husvyn (2026-11-21): korten i Energi speglar den dolda flödesbilden som renderEnergy redan fyller i,
+  // fönstren lyser per våning när en lampa där är tänd, och dag-/kvällsbild väljs efter lux (som Ute-etiketten).
+  function heroSync() {
+    const t = (id) => ($(id) ? $(id).textContent.trim() : '');
+    const card = (c, v, s, f) => { $('hv' + c).textContent = t(v) || '–'; $('hs' + c).textContent = t(s); $('hc' + c).classList.toggle('off', $(f).classList.contains('idle')); };
+    if ($('hv')) {
+      card('Sun', 'vSun', 'sSun', 'fSun'); card('Grid', 'vGrid', 'sGrid', 'fGrid'); card('Batt', 'vBatt', 'vBattSt', 'fBatt'); card('Ev', 'vEv', 'sEv', 'fEv');
+      if (t('lBatt')) $('hlBatt').textContent = t('lBatt').replace(/^BATTERI/i, 'Batteri');
+      if (t('lEv')) $('hlEv').textContent = t('lEv').replace(/^([A-ZÅÄÖ0-9 ]+)/, (m) => m.charAt(0) + m.slice(1).toLowerCase()).replace(/^Ex(\d)/, 'EX$1');
+      $('hvHome').textContent = t('vHome') || '–';
+      [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'), mk_ = 'url(#hvm' + n + ')'; d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); d.setAttribute('marker-end', rev ? 'none' : mk_); d.setAttribute('marker-start', rev ? mk_ : 'none'); });   // pilen pekar åt det håll strömmen går
+    }
+    const L = lights().filter((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone || ''));
+    const lo = L.some((d) => /^Bottenvåning/i.test(floorOf(d.zone || ''))), hi = L.some((d) => /^Övervåning/i.test(floorOf(d.zone || '')));
+    document.querySelectorAll('div.house .lw.lo').forEach((e) => e.classList.toggle('on', lo));
+    document.querySelectorAll('div.house .lw.hi').forEach((e) => e.classList.toggle('on', hi));
+    const luxDev = devices.find((d) => has(d, 'measure_luminance') && OUTSIDE.test(d.zone || '')) || devices.find((d) => has(d, 'measure_luminance'));
+    const lux = luxDev ? Number(val(luxDev, 'measure_luminance')) : NaN;
+    const night = Number.isFinite(lux) ? lux < LUX_DAG : sunAlt(Date.now(), WX.lat, WX.lon) < -0.83;
+    document.querySelectorAll('.hv2, .hmini').forEach((e) => e.classList.toggle('is-night', night));
+    const it = indoorTemp(); if ($('hmIn')) $('hmIn').textContent = it && Number.isFinite(it.v) ? f1.format(it.v) + '°' : '–';
+    if ($('hmOut')) { $('hmOut').textContent = t('gOut') || '–'; $('hmOut').style.color = getComputedStyle($('gOut')).color; }
+  }
+  { const re = renderEnergy, rl = renderLights, rt = renderTemp;
+    renderEnergy = function () { const r = re.apply(this, arguments); try { heroSync(); } catch (e) {} return r; };
+    renderLights = function () { const r = rl.apply(this, arguments); try { heroSync(); } catch (e) {} return r; };
+    renderTemp = function () { const r = rt.apply(this, arguments); try { heroSync(); } catch (e) {} return r; }; }
   function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
   let solBusy = false;
   $('solBtn').addEventListener('click', async () => {

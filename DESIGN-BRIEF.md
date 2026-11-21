@@ -147,6 +147,7 @@ En ny design får möblera om fritt, men **ingen funktion får försvinna**. Kon
   - värmer = svagt rött, kyler = blått
   - fel = rött och varning = gult
 - Samma kontroll ska fungera likadant överallt. Till exempel är lägesrutan på/av-knappen i alla värmerader.
+- **Huset i appen (2026-11-21):** faluröd husbild (de bor i ett falurött hus) i Energi och Klimat. Fönstren ska lysa när lamporna på våningen är tända – ingen påhittad status. Översikten i Energi får gärna ta hela skärmen.
 - Han vill se att saker **lever**: tid för senaste data, gult/rött när data är gammal, pulserande larm.
 - Skrivs på svenska, med korta etiketter: "Tänt", "Ute", "Förbrukning", "Köpt", "Sålt", "Netto".
 
