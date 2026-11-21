@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.27">
+<meta name="app-version" content="2026-11-21.28">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -792,6 +792,13 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 @keyframes swIn{from{opacity:.4;transform:translateX(28px)}to{opacity:1;transform:none}}
 @keyframes swInR{from{opacity:.4;transform:translateX(-28px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.panel.swl,.panel.swr{animation:none}}
+/* 2026-11-21.28: datorskärm – huskorten (Klimat, Ljus, Städ) lika stora som Energi-huset (max 620 px, centrerade) i stället för hela bredden */
+@media (min-width:800px){
+  .hmini,.stadhus{width:100%;max-width:620px;margin-left:auto;margin-right:auto;justify-self:center}
+  .hmini{aspect-ratio:1/.575;height:auto}
+  .hmini .house{left:-36.75%;width:158.7%;bottom:.8%}
+  .stadhus .shw{aspect-ratio:1/.575} .stadhus .shi{left:-30%;width:160%}
+}
 </style>
 </head>
 <body>
@@ -942,8 +949,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.27"></script>
-<script src="homey.js?v=2026-11-21.27"></script>
+<script src="config.js?v=2026-11-21.28"></script>
+<script src="homey.js?v=2026-11-21.28"></script>
 <script>
 (() => {
   const S = 'Homey';
