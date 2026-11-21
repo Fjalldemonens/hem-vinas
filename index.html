@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.3">
+<meta name="app-version" content="2026-11-21.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -656,6 +656,20 @@ div.house .lw.on{opacity:1}
 .hv2 .nightbg{display:none;position:absolute;left:0;right:0;top:14%;height:39%;border-radius:20px;background:linear-gradient(180deg,#0A121C 0%,#132030 70%,#1A2838 100%)}
 .hv2.is-night .nightbg{display:block}
 .hv2.is-night .house{filter:none}
+
+/* Utebelysning i kvällsbilden (2026-11-21.4): utelampor → varmt sken vid entrén och gaveln, strålkastare → kallvitt ljus över fasad och mark */
+div.house .ol{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s ease;mix-blend-mode:screen}
+div.house .ol.on{opacity:1}
+div.house .ol.porch{background:
+  radial-gradient(ellipse 7% 20% at 37% 70%,rgba(255,196,120,.85),rgba(255,170,90,.25) 55%,transparent 75%),
+  radial-gradient(ellipse 16% 6% at 38% 95%,rgba(255,190,110,.75),transparent 72%),
+  radial-gradient(ellipse 3.5% 10% at 82.6% 76%,rgba(255,200,130,.8),transparent 75%),
+  radial-gradient(ellipse 8% 4% at 82% 95%,rgba(255,190,110,.6),transparent 72%)}
+div.house .ol.flood{background:
+  radial-gradient(ellipse 62% 16% at 50% 99%,rgba(236,242,255,.85),transparent 72%),
+  radial-gradient(ellipse 48% 55% at 52% 62%,rgba(205,220,255,.22),transparent 72%)}
+div.house img.fl{position:absolute;left:0;top:0;opacity:0;transition:opacity 1s ease;filter:saturate(.75) brightness(.92) hue-rotate(-6deg)}
+div.house img.fl.on{opacity:.55}
 </style>
 </head>
 <body>
@@ -804,8 +818,8 @@ div.house .lw.on{opacity:1}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.3"></script>
-<script src="homey.js?v=2026-11-21.3"></script>
+<script src="config.js?v=2026-11-21.4"></script>
+<script src="homey.js?v=2026-11-21.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2721,8 +2735,26 @@ div.house .lw.on{opacity:1}
     document.querySelectorAll('div.house .lw.hi').forEach((e) => e.classList.toggle('on', hi));
     const luxDev = devices.find((d) => has(d, 'measure_luminance') && OUTSIDE.test(d.zone || '')) || devices.find((d) => has(d, 'measure_luminance'));
     const lux = luxDev ? Number(val(luxDev, 'measure_luminance')) : NaN;
-    const night = Number.isFinite(lux) ? lux < LUX_DAG : sunAlt(Date.now(), WX.lat, WX.lon) < -0.83;
+    const wasNight = document.documentElement.getAttribute('data-theme') === 'dark';
+    const night = Number.isFinite(lux) ? (wasNight ? lux < LUX_DAG * 1.25 : lux < LUX_DAG * 0.75) : sunAlt(Date.now(), WX.lat, WX.lon) < -0.83;   // hysteres 300/500 lux
     document.querySelectorAll('.hv2, .hmini').forEach((e) => e.classList.toggle('is-night', night));
+    // Utebelysning i kvällsbilden: lampor i Utomhus (utom strålkastare) = varmt sken, strålkastare = kallvitt ljus över huset
+    const outL = lights().filter((d) => val(d, 'onoff') === true && OUTSIDE.test(d.zone || ''));
+    const flood = outL.some((d) => /strålkast/i.test((d.zone || '') + ' ' + d.name)), porch = outL.some((d) => !/strålkast/i.test((d.zone || '') + ' ' + d.name));
+    document.querySelectorAll('div.house.night').forEach((hn) => {
+      if (!hn.querySelector('.ol')) {
+        const fl = document.createElement('img'); fl.className = 'fl'; fl.src = 'img/hd-base.webp'; fl.alt = '';
+        const po = document.createElement('div'); po.className = 'ol porch'; const fo = document.createElement('div'); fo.className = 'ol flood';
+        hn.insertBefore(fl, hn.children[1]); hn.append(po, fo);
+      }
+      hn.querySelector('img.fl').classList.toggle('on', flood); hn.querySelector('.ol.flood').classList.toggle('on', flood); hn.querySelector('.ol.porch').classList.toggle('on', porch);
+    });
+    // Tema efter dagsljuset ute (2026-11-21.4): mörkt när huset visar kvällsbilden, oavsett telefonens inställning
+    const th = night ? 'dark' : 'light';
+    if (document.documentElement.getAttribute('data-theme') !== th) {
+      document.documentElement.setAttribute('data-theme', th);
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', night ? '#080F16' : '#F2F5F8'));
+    }
     if ($('hmL')) {
       const g = $('gLights').textContent.trim(), on = /^[1-9]/.test(g);
       $('hmLit').textContent = g || '–'; $('hmLit').classList.toggle('lit', on);
