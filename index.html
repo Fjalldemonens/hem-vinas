@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.4">
+<meta name="app-version" content="2026-11-21.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -670,6 +670,25 @@ div.house .ol.flood{background:
   radial-gradient(ellipse 48% 55% at 52% 62%,rgba(205,220,255,.22),transparent 72%)}
 div.house img.fl{position:absolute;left:0;top:0;opacity:0;transition:opacity 1s ease;filter:saturate(.75) brightness(.92) hue-rotate(-6deg)}
 div.house img.fl.on{opacity:.55}
+
+/* 2026-11-21.5: Energi-husvyn som rutnät – korten ovanför och under, huset stort och centrerat mellan dem, pilarna ritas efter korten (hvArrows) */
+.hv2{aspect-ratio:auto;display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"tl tr" "hs hs" "pl pl" "bl br";column-gap:10px;row-gap:0;margin:4px 0 2px}
+.hv2 > .hvc2{position:relative;left:auto;right:auto;top:auto;bottom:auto;width:auto;z-index:2}
+.hv2 > .hvc2.tl{grid-area:tl} .hv2 > .hvc2.tr{grid-area:tr} .hv2 > .hvc2.bl{grid-area:bl} .hv2 > .hvc2.br{grid-area:br}
+.hv2 > .halo{display:none}
+.hv2 > .nightbg{grid-area:hs;position:relative;top:auto;height:auto;left:auto;right:auto;margin:-14px 0 -26px;z-index:0}
+.hv2 > .house{grid-area:hs;position:relative;left:auto;top:auto;width:118%;margin:16px -9% 0;z-index:1}
+.hv2.is-night > .house.night{clip-path:inset(-30px 7.6% -40px 7.6% round 20px)}
+.hv2 > .hvhome2{grid-area:pl;position:relative;left:auto;top:auto;transform:none;justify-self:center;margin:-12px 0 14px;z-index:3}
+.hv2 > svg.arrows{z-index:2}
+@media (min-width:800px){.hv2{max-width:620px}}
+/* Huskorten i Ljus/Klimat: högre ruta, huset i full bredd under rutorna, mindre rutor */
+.hmini{aspect-ratio:340/190}
+.hmini .house{left:-3%;width:106%;bottom:2%}
+@media (min-width:800px){.hmini{aspect-ratio:auto;height:260px}.hmini .house{left:20%;width:60%}}
+.hmini .hp{padding:5px 10px;border-radius:12px}
+.hmini .hp .k{font-size:.66rem} .hmini .hp .v{font-size:1.05rem}
+.hmL .hp .s{font-size:.62rem}
 </style>
 </head>
 <body>
@@ -818,8 +837,8 @@ div.house img.fl.on{opacity:.55}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.4"></script>
-<script src="homey.js?v=2026-11-21.4"></script>
+<script src="config.js?v=2026-11-21.5"></script>
+<script src="homey.js?v=2026-11-21.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2719,6 +2738,26 @@ div.house img.fl.on{opacity:.55}
 
   // Husvyn (2026-11-21): korten i Energi speglar den dolda flödesbilden som renderEnergy redan fyller i,
   // fönstren lyser per våning när en lampa där är tänd, och dag-/kvällsbild väljs efter lux (som Ute-etiketten).
+
+  // Pilarna i Energi-husvyn ritas efter var korten faktiskt hamnar (2026-11-21.5)
+  function hvArrows() {
+    const hv = $('hv'); if (!hv || !hv.offsetWidth) return;
+    const R = hv.getBoundingClientRect(), rel = (e) => { const r = e.getBoundingClientRect(); return { l: r.left - R.left, t: r.top - R.top, r: r.right - R.left, b: r.bottom - R.top, w: r.width, h: r.height }; };
+    const hs = rel(hv.querySelector('.house.' + (hv.classList.contains('is-night') ? 'night' : 'day'))), pill = rel(hv.querySelector('.hvhome2'));
+    const sun = rel($('hcSun')), grid = rel($('hcGrid')), bat = rel($('hcBatt')), ev = rel($('hcEv'));
+    const cx = (o) => o.l + o.w / 2, my = (o) => o.t + o.h / 2;
+    const roofL = [hs.l + hs.w * 0.42, hs.t + hs.h * 0.30], roofR = [hs.l + hs.w * 0.60, hs.t + hs.h * 0.16];
+    const curve = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} C${x1.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+    const side = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} V${(y2 + 10).toFixed(1)} Q${x1.toFixed(1)} ${y2.toFixed(1)} ${(x1 + Math.sign(x2 - x1) * 10).toFixed(1)} ${y2.toFixed(1)} H${x2.toFixed(1)}`;
+    $('hfSun').setAttribute('d', curve(cx(sun), sun.b + 3, roofL[0], roofL[1]));
+    $('hfGrid').setAttribute('d', curve(cx(grid), grid.b + 3, roofR[0], roofR[1]));
+    $('hfBatt').setAttribute('d', side(cx(bat), bat.t - 4, pill.l - 6, my(pill)));
+    $('hfEv').setAttribute('d', side(cx(ev), ev.t - 4, pill.r + 6, my(pill)));
+    const svg = hv.querySelector('svg.arrows'); svg.setAttribute('viewBox', `0 0 ${R.width.toFixed(1)} ${R.height.toFixed(1)}`);
+  }
+  if (window.ResizeObserver && $('hv')) new ResizeObserver(() => { try { hvArrows(); } catch (e) {} }).observe($('hv'));   // även när fliken Energi visas
+  else window.addEventListener('resize', () => { try { hvArrows(); } catch (e) {} });
+  document.querySelectorAll('#hv img').forEach((im) => im.addEventListener('load', () => { try { hvArrows(); } catch (e) {} }));
   function heroSync() {
     const t = (id) => ($(id) ? $(id).textContent.trim() : '');
     const card = (c, v, s, f) => { $('hv' + c).textContent = t(v) || '–'; $('hs' + c).textContent = t(s); $('hc' + c).classList.toggle('off', $(f).classList.contains('idle')); };
@@ -2749,6 +2788,7 @@ div.house img.fl.on{opacity:.55}
       }
       hn.querySelector('img.fl').classList.toggle('on', flood); hn.querySelector('.ol.flood').classList.toggle('on', flood); hn.querySelector('.ol.porch').classList.toggle('on', porch);
     });
+    try { hvArrows(); } catch (e) {}
     // Tema efter dagsljuset ute (2026-11-21.4): mörkt när huset visar kvällsbilden, oavsett telefonens inställning
     const th = night ? 'dark' : 'light';
     if (document.documentElement.getAttribute('data-theme') !== th) {
