@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.21">
+<meta name="app-version" content="2026-11-21.22">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -772,15 +772,14 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 .rb.run::before{opacity:1;animation:rbGlow 1.6s ease-in-out infinite alternate}
 .rb .led{fill:#5BE08F} .rb.idle .led{fill:#F5C542} .rb.off .led{fill:#8A93A3}
 .rb.idle,.rb.off{opacity:.9}
-.rb.dn{left:33%;top:85%} .rb.up{left:30%;top:50.8%}
+.rb.dn{left:35%;top:82.7%} .rb.up{left:30%;top:49.4%}
 .rb.dn.run{animation:rbDn 34s linear infinite} .rb.up.run{animation:rbUp 26s linear infinite}
 .rb.run svg{animation:rbBob .5s ease-in-out infinite alternate}
 .rb.paused,.rb.paused svg,.rb.paused::before{animation-play-state:paused}
 @keyframes rbGlow{from{opacity:.55}to{opacity:1}}
 @keyframes rbBob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
-@keyframes rbDn{0%{left:33%;top:85%}12%{left:42%;top:87.5%}24%{left:50%;top:89%}36%{left:60%;top:87%}48%{left:67%;top:84.5%}
-  56%{left:58%;top:86%}64%{left:52%;top:87.8%}74%{left:44%;top:86.2%}86%{left:37%;top:87.6%}100%{left:33%;top:85%}}
-@keyframes rbUp{0%{left:30%;top:50.8%}22%{left:40%;top:50.8%}45%{left:50%;top:50.8%}50%{left:52%;top:50.8%}72%{left:69%;top:50.8%}78%{left:66%;top:50.8%}100%{left:30%;top:50.8%}}
+@keyframes rbDn{0%{left:35%;top:82.7%}12%{left:42%;top:85.1%}24%{left:48%;top:87.5%}31%{left:52%;top:87.5%}43%{left:58%;top:85.1%}55%{left:64%;top:82.7%}64%{left:57%;top:83.7%}74%{left:50%;top:85.7%}87%{left:43%;top:83.7%}100%{left:35%;top:82.7%}}
+@keyframes rbUp{0%{left:30%;top:49.4%}22%{left:40%;top:49.4%}45%{left:50%;top:49.4%}50%{left:52%;top:49.4%}72%{left:69%;top:49.4%}78%{left:66%;top:49.4%}100%{left:30%;top:49.4%}}
 </style>
 </head>
 <body>
@@ -931,8 +930,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.21"></script>
-<script src="homey.js?v=2026-11-21.21"></script>
+<script src="config.js?v=2026-11-21.22"></script>
+<script src="homey.js?v=2026-11-21.22"></script>
 <script>
 (() => {
   const S = 'Homey';
