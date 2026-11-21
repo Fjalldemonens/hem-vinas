@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.2">
+<meta name="app-version" content="2026-11-21.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -649,6 +649,13 @@ div.house .lw.on{opacity:1}
 .hmL .wxr{display:flex;align-items:center;gap:6px;justify-content:flex-end}
 .hmL .wxr .ic{display:grid;place-items:center}
 .hmL .hp .s{font-size:.68rem;font-weight:600;color:var(--muted)}
+
+/* Kvällsbilden är frilagd mot mörk bakgrund – vid mörker får huset en kvällshimmel bakom sig även i ljust läge (2026-11-21.3) */
+.hmini.is-night{background:linear-gradient(180deg,#0A121C 0%,#132030 70%,#1A2838 100%)}
+.hmini.is-night .halo,.hv2.is-night .halo{background:radial-gradient(circle,rgba(105,174,244,.12) 0 45%,transparent 70%)}
+.hv2 .nightbg{display:none;position:absolute;left:0;right:0;top:14%;height:39%;border-radius:20px;background:linear-gradient(180deg,#0A121C 0%,#132030 70%,#1A2838 100%)}
+.hv2.is-night .nightbg{display:block}
+.hv2.is-night .house{filter:none}
 </style>
 </head>
 <body>
@@ -727,7 +734,7 @@ div.house .lw.on{opacity:1}
     <div class="card flow">
       <div class="h2" style="margin:2px 4px 6px">Just nu</div>
       <div class="hv2" id="hv">
-        <div class="halo"></div>
+        <div class="halo"></div><div class="nightbg"></div>
         <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
         <svg class="arrows" viewBox="0 0 340 390" aria-hidden="true">
           <defs><marker id="hvmSun" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--sun)"/></marker><marker id="hvmGrid" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--grid)"/></marker><marker id="hvmBatt" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--batt)"/></marker><marker id="hvmEv" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--ev)"/></marker></defs>
@@ -797,8 +804,8 @@ div.house .lw.on{opacity:1}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.2"></script>
-<script src="homey.js?v=2026-11-21.2"></script>
+<script src="config.js?v=2026-11-21.3"></script>
+<script src="homey.js?v=2026-11-21.3"></script>
 <script>
 (() => {
   const S = 'Homey';
