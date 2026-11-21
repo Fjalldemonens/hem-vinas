@@ -1628,7 +1628,7 @@ div.house img.fl.on{opacity:.55}
     const col = battLevelColor(p, dk), g = mk('div', 'sgx ' + (el.id === 'soc' ? 'sgx-b' : 'sgx-c'));
     if (el.id === 'soc') { const ic = mk('div', 'ic'); ic.innerHTML = battIconSvg(p, col, charging, dk); g.append(ic); }
     else { const ic = mk('div', 'ic' + (charging ? ' chg' : '')); ic.innerHTML = '<img src="img/bil.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>'; g.append(ic); drawCarCells(ic.querySelector('canvas'), p, col); }
-    const t = mk('div', 'sgx-t num'); t.style.color = col; t.textContent = (charging ? '⚡ ' : '') + f0.format(p) + ' %'; g.append(t);
+    const t = mk('div', 'sgx-t num'); t.style.color = col; t.textContent = (charging && el.id === 'soc' ? '⚡ ' : '') + f0.format(p) + ' %'; g.append(t);
     el.prepend(g);
   }
   // Batterityp vid lågt batteri (2026-11-14.8): drivrutinens uppgift i Homey, annars känd modell. SNZB-02P = CR2477 (SONOFF:s produktsida, Zigbee2MQTT).
