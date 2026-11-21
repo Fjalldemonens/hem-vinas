@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.19">
+<meta name="app-version" content="2026-11-21.20">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -759,6 +759,28 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 .hv2 > .hvhome2{margin:-14px 0 8px}
 .hvhome2{padding:6px 12px}
 .hvhome2 .v{font-size:clamp(1.15rem,5.2vw,1.5rem)}
+/* Städ: genomskinligt hus med robotar (2026-11-21.20) */
+.stadhus{padding:0;overflow:hidden;background:#1B212D;border-color:#2A3242;color:#EEF2F8;margin-bottom:12px}
+.stadhus .shw{position:relative;aspect-ratio:1/.575;overflow:hidden}
+.stadhus .shi{position:absolute;top:0;left:-30%;width:160%;aspect-ratio:1100/395}
+.stadhus .shi>img{width:100%;height:100%;display:block}
+@media (min-width:800px){.stadhus .shw{aspect-ratio:1100/395}.stadhus .shi{left:0;width:100%}}
+.rb{position:absolute;width:5%;transform:translate(-50%,-72%);z-index:2}
+.rb svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.65))}
+.rb::before{content:"";position:absolute;left:50%;top:78%;width:260%;aspect-ratio:3/1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side,rgba(140,230,190,.45),rgba(140,230,190,0));opacity:0;transition:opacity .6s}
+.rb.run::before{opacity:1;animation:rbGlow 1.6s ease-in-out infinite alternate}
+.rb .led{fill:#5BE08F} .rb.idle .led{fill:#F5C542} .rb.off .led{fill:#8A93A3}
+.rb.idle,.rb.off{opacity:.9}
+.rb.dn{left:33%;top:85%} .rb.up{left:30%;top:50.8%}
+.rb.dn.run{animation:rbDn 34s linear infinite} .rb.up.run{animation:rbUp 26s linear infinite}
+.rb.run svg{animation:rbBob .5s ease-in-out infinite alternate}
+.rb.paused,.rb.paused svg,.rb.paused::before{animation-play-state:paused}
+@keyframes rbGlow{from{opacity:.55}to{opacity:1}}
+@keyframes rbBob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
+@keyframes rbDn{0%{left:33%;top:85%}12%{left:42%;top:87.5%}24%{left:50%;top:89%}36%{left:60%;top:87%}48%{left:67%;top:84.5%}
+  56%{left:58%;top:86%}64%{left:52%;top:87.8%}74%{left:44%;top:86.2%}86%{left:37%;top:87.6%}100%{left:33%;top:85%}}
+@keyframes rbUp{0%{left:30%;top:50.8%}22%{left:40%;top:50.8%}45%{left:50%;top:50.8%}50%{left:52%;top:50.8%}72%{left:69%;top:50.8%}78%{left:66%;top:50.8%}100%{left:30%;top:50.8%}}
 </style>
 </head>
 <body>
@@ -897,6 +919,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
   </section>
 
   <section class="panel" id="p-stad" role="tabpanel" aria-labelledby="t-stad" hidden>
+    <div class="card stadhus" id="shCard" hidden><div class="shw"><div class="shi"><img src="img/stad-hus.webp" alt="Genomskinligt hus där robotarna syns när de städar">
+      <div class="rb up off" id="rbUp" hidden></div><div class="rb dn off" id="rbDn" hidden></div></div></div></div>
     <div class="panel" id="robots"><div class="skel"></div></div>
   </section>
 
@@ -907,8 +931,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.19"></script>
-<script src="homey.js?v=2026-11-21.19"></script>
+<script src="config.js?v=2026-11-21.20"></script>
+<script src="homey.js?v=2026-11-21.20"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -3040,6 +3064,30 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
     renderEnergy = function () { const r = re.apply(this, arguments); try { heroSync(); } catch (e) {} return r; };
     renderLights = function () { const r = rl.apply(this, arguments); try { heroSync(); } catch (e) {} return r; };
     renderTemp = function () { const r = rt.apply(this, arguments); try { heroSync(); } catch (e) {} return r; }; }
+  // Städ: genomskinligt hus – Saros på bottenvåningen, Q7 på övervåningen (2026-11-21.20). Roboten hittas via zonens våning.
+  const RB_SVG = (light) => '<svg viewBox="0 0 40 24" aria-hidden="true"><ellipse cx="20" cy="15.5" rx="18" ry="7.2" fill="' + (light ? '#B9C0CA' : '#15181D') + '"/>'
+    + '<ellipse cx="20" cy="12.5" rx="18" ry="7.2" fill="' + (light ? '#F4F6F8' : '#3A3F47') + '"/><ellipse cx="20" cy="12.5" rx="17" ry="6.6" fill="none" stroke="' + (light ? '#D5DAE0' : '#535A64') + '" stroke-width=".6"/>'
+    + '<ellipse cx="20" cy="10.6" rx="5.2" ry="2.3" fill="' + (light ? '#D8DDE3' : '#23272D') + '"/><ellipse cx="20" cy="9.4" rx="5.2" ry="2.3" fill="' + (light ? '#FFFFFF' : '#4A5059') + '"/>'
+    + '<circle class="led" cx="29" cy="14" r="1.3"/></svg>';
+  function stadHus() {
+    const card = $('shCard'); if (!card) return;
+    const all = devices.filter((d) => d.type === 'vacuumcleaner');
+    const rrNames = new Set(all.filter(isRR).map((d) => String(d.name).trim().toLowerCase()));
+    const R = all.filter((d) => isRR(d) || !rrNames.has(String(d.name).trim().toLowerCase()));
+    const pick = (re) => R.find((d) => re.test(floorOf(d.zone)));
+    const up = pick(/över|ovan|uppe/i), dn = pick(/botten|nedre|entré/i);
+    card.hidden = !(up || dn);
+    if (card.hidden) return;
+    [[dn, $('rbDn'), 'Bottenvåning', false], [up, $('rbUp'), 'Övervåning', true]].forEach(([d, el, fl, light]) => {
+      if (!d) { el.hidden = true; return; }
+      const [st, c] = robStat(d), run = st === 'Städar', paused = st === 'Pausad';
+      if (!el.firstChild) el.innerHTML = RB_SVG(light);
+      el.hidden = false;
+      el.className = 'rb ' + (fl === 'Övervåning' ? 'up' : 'dn') + (run || paused ? ' run' : st === 'Ej nåbar' ? ' off' : ' idle') + (paused ? ' paused' : '');
+      el.title = String(d.name).trim() + ': ' + st;
+    });
+  }
+  { const rr = renderRobot; renderRobot = function () { const r = rr.apply(this, arguments); try { stadHus(); } catch (e) {} return r; }; }
   function renderAll() { renderLights(); renderTemp(); renderEnergy(); renderRobot(); }
   let solBusy = false;
   $('solBtn').addEventListener('click', async () => {
