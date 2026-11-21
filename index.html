@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.23">
+<meta name="app-version" content="2026-11-21.24">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -780,6 +780,13 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 @keyframes rbBob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
 @keyframes rbDn{0%{left:35%;top:82.7%}12%{left:42%;top:85.1%}24%{left:48%;top:87.5%}31%{left:52%;top:87.5%}43%{left:58%;top:85.1%}55%{left:64%;top:82.7%}64%{left:57%;top:83.7%}74%{left:50%;top:85.7%}87%{left:43%;top:83.7%}100%{left:35%;top:82.7%}}
 @keyframes rbUp{0%{left:30%;top:49.4%}22%{left:40%;top:49.4%}45%{left:50%;top:49.4%}50%{left:52%;top:49.4%}72%{left:69%;top:49.4%}78%{left:66%;top:49.4%}100%{left:30%;top:49.4%}}
+/* 2026-11-21.24: samma husstorlek i Energi, Klimat och Ljus – huskroppen (inkl. garage) ≈ 97 % av kortets bredd och centrerad, som i Städ.
+   Bild 1244 px bred, huskroppen x 300–1060 (mitt 54,66 %). Kortbredd = #hv + 2×10 px padding. */
+.hmini .house{left:-36.75%;width:158.7%;bottom:.8%}
+.hv2 > .house{width:calc(158.7% + 31.7px);margin:6px 0 0 calc(-36.75% - 17.3px)}
+.hv2.is-night > .house.night{clip-path:inset(-30px calc(13.83% + 10px) -40px calc(23.16% + 9.96px) round 20px)}
+.hv2 > .hvhome2{margin:-46px 0 8px}
+.hv2 > .nightbg{margin:-10px 0 -8px}
 </style>
 </head>
 <body>
@@ -930,8 +937,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.23"></script>
-<script src="homey.js?v=2026-11-21.23"></script>
+<script src="config.js?v=2026-11-21.24"></script>
+<script src="homey.js?v=2026-11-21.24"></script>
 <script>
 (() => {
   const S = 'Homey';
