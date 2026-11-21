@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.24">
+<meta name="app-version" content="2026-11-21.25">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -787,6 +787,11 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 .hv2.is-night > .house.night{clip-path:inset(-30px calc(13.83% + 10px) -40px calc(23.16% + 9.96px) round 20px)}
 .hv2 > .hvhome2{margin:-46px 0 8px}
 .hv2 > .nightbg{margin:-10px 0 -8px}
+/* Svep mellan flikar (2026-11-21.25) */
+.panel.swl{animation:swIn .26s ease-out} .panel.swr{animation:swInR .26s ease-out}
+@keyframes swIn{from{opacity:.4;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes swInR{from{opacity:.4;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.panel.swl,.panel.swr{animation:none}}
 </style>
 </head>
 <body>
@@ -937,8 +942,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.24"></script>
-<script src="homey.js?v=2026-11-21.24"></script>
+<script src="config.js?v=2026-11-21.25"></script>
+<script src="homey.js?v=2026-11-21.25"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1014,6 +1019,37 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
   }
   document.querySelectorAll('.glance .gl[data-v]').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }));
   document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { const v = b.dataset.v; if (location.hash !== '#' + v) location.hash = v; else show(v); window.scrollTo(0, 0); }));
+  // Svep vänster/höger för att byta flik (2026-11-21.25). Hoppar över drag som börjar i något som själv tar vågräta drag:
+  // touch-action pan-y (ljusstyrkespår, elprisgraf, batterihistorik), vågräta scrollytor (prognosremsan), reglage och öppna blad.
+  {
+    let sx = 0, sy = 0, st = 0, ok = false;
+    const ownsX = (el) => {
+      for (let e = el; e && e !== document.body; e = e.parentElement) {
+        if (e.matches && e.matches('input, select, textarea, [role=slider], .wx')) return true;
+        const cs = getComputedStyle(e);
+        if (/pan-y|none/.test(cs.touchAction) && cs.touchAction !== 'auto') return true;
+        if (/(auto|scroll)/.test(cs.overflowX) && e.scrollWidth > e.clientWidth + 2) return true;
+      }
+      return false;
+    };
+    const main = document.querySelector('main');
+    main.addEventListener('touchstart', (e) => {
+      ok = e.touches.length === 1 && !SH.key && !ownsX(e.target);
+      if (!ok) return; sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now();
+    }, { passive: true });
+    main.addEventListener('touchend', (e) => {
+      if (!ok) return; ok = false;
+      const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Date.now() - st > 800 || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+      const cur = VIEWS.findIndex((x) => $('t-' + x).getAttribute('aria-selected') === 'true');
+      const ni = cur + (dx < 0 ? 1 : -1); if (ni < 0 || ni >= VIEWS.length) return;
+      const nx = VIEWS[ni], pn = $('p-' + nx);
+      pn.classList.remove('swl', 'swr'); void pn.offsetWidth; pn.classList.add(dx < 0 ? 'swl' : 'swr');
+      setTimeout(() => pn.classList.remove('swl', 'swr'), 300);
+      if (location.hash !== '#' + nx) location.hash = nx; else show(nx);
+      window.scrollTo(0, 0);
+    }, { passive: true });
+  }
   $('pill').parentElement.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     const cur = VIEWS.findIndex((x) => $('t-' + x).getAttribute('aria-selected') === 'true');
