@@ -1,6 +1,9 @@
 # Hem Vinäs – designbrief för en ny design
 
-Den här filen är skriven för en AI-agent (eller designer) som ska ta fram ett **nytt utseende** för Hem Vinäs. Den beskriver vad appen gör, vilken data som finns, vilka ramar som gäller och vad användaren gillar. Läs den här först. Teknisk detalj finns i `CLAUDE.md`, och den nuvarande koden ligger i `index.html`.
+Den här filen är skriven för en AI-agent (eller designer) som ska ta fram ett **förslag på nytt utseende** för Hem Vinäs.
+
+> **Viktigast av allt:** du gör **bara en mock** (en fristående prototyp med låtsasdata). Du ändrar **ingenting** i den riktiga appen – inte `index.html`, `homey.js`, `config.js`, `CLAUDE.md` eller något annat befintligt – och du rör aldrig den riktiga Homey. Den skarpa appen ändras bara av Claude, efter att användaren har godkänt designen. Se §8.
+ Den beskriver vad appen gör, vilken data som finns, vilka ramar som gäller och vad användaren gillar. Läs den här först. Teknisk detalj finns i `CLAUDE.md`, och den nuvarande koden ligger i `index.html`.
 
 Repo: https://github.com/Fjalldemonens/hem-vinas (publikt) · Live: https://fjalldemonens.github.io/hem-vinas/
 
@@ -155,18 +158,29 @@ En ny design får möblera om fritt, men **ingen funktion får försvinna**. Kon
 - Semantiska variabler i `:root`, bland annat `--sun`, `--grid`, `--batt`, `--ev`, `--danger`, `--warn`, `--ok`, `--cold`, `--warm`, `--price` och `--amber`. JS-koden använder variabelnamnen, så behåll namnen eller byt överallt.
 - Appikon (användarens egen): grön diagonal gradient #17B394 → #0A7A67, vitt hus i linjestil och en orange sol (#F5A623).
 
-## 8. Så levererar du en ny design
+## 8. Så levererar du – i två steg
 
-Välj en av två nivåer och säg vilken:
+### Steg 1: Mock (det enda du bygger)
+- Bygg en fristående prototyp i en **egen mapp**, t.ex. `design/<ditt-namn>/index.html`, som laddar `../mock-homey.js` (eller en egen kopia av den) och visar **alla fyra vyerna** med låtsasdata, inklusive bladen (batteri, laddbox, elpris imorgon, schemaredigering, färgval).
+- Prototypen ska visa **utseende och känsla**. Klick och reglage får gärna fungera mot låtsasdatan, men ingen riktig styrning behövs.
+- **Absolut förbjudet:** ändra befintliga filer i repot, pusha till `main`, logga in mot eller skicka kommandon till den riktiga Homey, byta variabelnamn eller dataformat. Har du skrivrätt till repot: lägg mocken i en egen gren eller lämna filerna direkt till användaren i stället.
+- Testa i 390 px (iPhone), 820 px (iPad) och 1280 px (dator), ljust och mörkt läge, och lämna skärmbilder (`design/<ditt-namn>/screens/`).
+- Användaren tittar och säger om han gillar den. Gör justeringar i mocken tills han är nöjd.
 
-1. **Prototyp:** en fristående `design/<namn>/index.html` som laddar `../mock-homey.js` och visar alla fyra vyerna med låtsasdata. Inga ändringar i den riktiga appen. Det här är enklast att jämföra.
-2. **Full ersättning:** ny `index.html` som pratar med riktiga `homey.js`. Då gäller hela §5, alla skrivoperationer måste fungera (`setCaps`, `setVariable`, `setMood`), versionen höjs, och den gamla versionen finns kvar i git.
+### Steg 2: Underlag till Claude (bara om användaren godkänner)
+Bygg inte om appen själv. Skriv i stället ett underlag, `design/<ditt-namn>/UNDERLAG.md`, som Claude använder för att föra över designen till den riktiga appen. Det ska innehålla:
+1. **Designsystem:** alla färger (ljust + mörkt) som CSS-variabler, typsnitt, storlekar, avstånd, rundningar, skuggor, animationer. Ange vilka av dagens variabler (§7) som byts mot vad.
+2. **Komponent för komponent:** för varje del i §5 – hur den ska se ut och bete sig, med hänvisning till skärmbild och till motsvarande ställe i mocken (CSS-klass/fil). Säg uttryckligen när något ska se ut **som idag**.
+3. **Layout per skärmstorlek:** telefon, iPad, dator (och gärna väggpanel).
+4. **Ändringar i struktur eller navigation** (t.ex. flyttade kort, nya blad, annan flikrad) – och var varje befintlig funktion hamnar, så att ingen försvinner (stäm av mot listan i §5).
+5. **Ikoner och grafik:** SVG-koden eller filer, inga bibliotek.
+6. **Öppna frågor och avvägningar** du gjorde, så användaren kan ta ställning.
 
-Testa i 390 px (iPhone), 820 px (iPad) och 1280 px (dator), i både ljust och mörkt läge. Lägg till skärmbilder i `design/<namn>/screens/`.
+Bifoga mockens filer och skärmbilderna. Claude inför sedan ändringarna stegvis i den riktiga appen, testar med riktig data och behåller allt som fungerar idag.
 
-**Gör inte:**
-- Skicka kommandon till den riktiga Homey när du testar.
+**Gör inte (gäller båda stegen):**
+- Ändra den riktiga appen eller skicka kommandon till den riktiga Homey.
 - Ändra variabelnamn eller JSON-format.
-- Lägga till bibliotek eller byggsteg.
+- Lägga till bibliotek eller byggsteg (mocken får inte heller bero på dem – den ska kunna föras över).
 - Lägga till en av/på-knapp för kyl, disk eller tvätt.
-- Ta bort funktioner för att designen ska bli renare. Göm dem hellre bakom en knapp.
+- Ta bort funktioner för att designen ska bli renare – göm hellre bakom en knapp.
