@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.4">
+<meta name="app-version" content="2026-11-22.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -600,7 +600,8 @@ div.house .lw.on{opacity:1}
 .hv2 svg.arrows{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;overflow:visible}   /* max-width: gamla .flow svg (400 px) sköt pilarna fel på datorn */
 .hvar{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 6;animation:hvdash 1.2s linear infinite}
 .hvar.rev{animation-direction:reverse} .hv2 .hvar.idle{display:inline;animation:none;opacity:.45;stroke:var(--faint-t)}   /* vilande: stilla streckad grå linje utan pil (2026-11-21.14) */
-@media (prefers-reduced-motion:reduce){.hvar{animation:none}}
+/* 2026-11-22.5: inga pilspetsar – strecken som rinner visar riktningen, så de rör sig även med iOS Reducera rörelse (annars syns inte åt vilket håll strömmen går) */
+@media (prefers-reduced-motion:reduce){.hvar:not(.idle){animation:hvdash 1.2s linear infinite!important}.hvar.rev:not(.idle){animation-direction:reverse!important}}
 .hvc2{position:absolute;width:31%;box-sizing:border-box;padding:10px 6px 9px;border-radius:18px;text-align:center;font:inherit;color:var(--fg);
   background:var(--card);border:1px solid var(--line);box-shadow:0 6px 18px var(--shadow);cursor:pointer}
 .hvc2.tl{left:1%;top:1%} .hvc2.tr{right:1%;top:1%} .hvc2.bl{left:1%;bottom:0} .hvc2.br{right:1%;bottom:0}
@@ -925,11 +926,10 @@ div.house.night img.fl.on{opacity:.9}
         <div class="halo"></div><div class="nightbg"></div>
         <div class="house day" aria-hidden="true"><img src="img/hd-base.webp" alt=""><img class="lw lo" src="img/hd-lo.webp" alt=""><img class="lw hi" src="img/hd-hi.webp" alt=""></div><div class="house night" aria-hidden="true"><img src="img/hn-base.webp" alt=""><img class="lw lo" src="img/hn-lo.webp" alt=""><img class="lw hi" src="img/hn-hi.webp" alt=""></div>
         <svg class="arrows" viewBox="0 0 340 390" aria-hidden="true">
-          <defs><marker id="hvmSun" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--sun)"/></marker><marker id="hvmGrid" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--gridc,var(--grid))"/></marker><marker id="hvmBatt" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--battc,var(--batt))"/></marker><marker id="hvmEv" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--evc,var(--ev))"/></marker></defs>
-          <path class="hvar" id="hfSun" stroke="var(--sun)" marker-end="url(#hvmSun)" d="M115 52 H124 Q132 52 132 60 V104"/>
-          <path class="hvar" id="hfGrid" stroke="var(--gridc,var(--grid))" marker-end="url(#hvmGrid)" d="M225 52 H216 Q208 52 208 60 V104"/>
-          <path class="hvar" id="hfBatt" stroke="var(--battc,var(--batt))" marker-end="url(#hvmBatt)" d="M58 271 V224 Q58 216 66 216 H106"/>
-          <path class="hvar" id="hfEv" stroke="var(--evc,var(--ev))" marker-end="url(#hvmEv)" d="M282 271 V224 Q282 216 274 216 H234"/>
+          <path class="hvar" id="hfSun" stroke="var(--sun)" d="M115 52 H124 Q132 52 132 60 V104"/>
+          <path class="hvar" id="hfGrid" stroke="var(--gridc,var(--grid))" d="M225 52 H216 Q208 52 208 60 V104"/>
+          <path class="hvar" id="hfBatt" stroke="var(--battc,var(--batt))" d="M58 271 V224 Q58 216 66 216 H106"/>
+          <path class="hvar" id="hfEv" stroke="var(--evc,var(--ev))" d="M282 271 V224 Q282 216 274 216 H234"/>
         </svg>
         <button class="hvc2 tl" type="button" data-more="sol" style="--c:var(--sun)" id="hcSun"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.6" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></g></svg></span><div class="k">Solceller</div><div class="v num" id="hvSun">–</div><div class="s" id="hsSun"></div></button>
         <button class="hvc2 tr" type="button" data-more="fas" style="--c:var(--gridc,var(--grid))" id="hcGrid"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2 8 22M12 2l4 20M6 7h12M5 12h14M9.5 7l5 5M14.5 7l-5 5M8.8 12l6.2 6M15.2 12l-6.2 6M7.5 18h9"/></svg></span><div class="k">Elnät</div><div class="v num" id="hvGrid">–</div><div class="s" id="hsGrid"></div></button>
@@ -994,8 +994,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.4"></script>
-<script src="homey.js?v=2026-11-22.4"></script>
+<script src="config.js?v=2026-11-22.5"></script>
+<script src="homey.js?v=2026-11-22.5"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2956,15 +2956,15 @@ div.house.night img.fl.on{opacity:.9}
     // Takets överkant över solpanelerna (uppmätt i husbilden, bråkdelar av bredd/höjd) – skorstenen vid 0,53 hoppas över
     const ROOF = [[0.29, 0.379], [0.32, 0.309], [0.35, 0.243], [0.38, 0.196], [0.41, 0.178], [0.44, 0.158], [0.47, 0.139], [0.50, 0.119]];
     { const sx = cx(sun), fx = (sx - hs.l) / hs.w;
-      if (fx > 0.30 && fx < 0.50) $('hfSun').setAttribute('d', `M${sx.toFixed(1)} ${(sun.b + 3).toFixed(1)} V${(hs.t + hs.h * lerpT(ROOF, fx) - 4).toFixed(1)}`);
+      if (fx > 0.30 && fx < 0.50) $('hfSun').setAttribute('d', `M${sx.toFixed(1)} ${(sun.b + 3).toFixed(1)} V${(hs.t + hs.h * lerpT(ROOF, fx)).toFixed(1)}`);
       else $('hfSun').setAttribute('d', elbow(sx, sun.b + 3, roofL[0], roofL[1])); }
     // Elnät-pilen rakt ned på gavelns takfot (2026-11-22.3). Takfoten i bildens bråkdelar: nock (0,624; 0,053) → hörn (0,745; 0,48)
     { const gx = cx(grid), fx = (gx - hs.l) / hs.w;
-      if (fx > 0.63 && fx < 0.74) { const fy = 0.053 + (fx - 0.624) / (0.745 - 0.624) * (0.48 - 0.053), gy = hs.t + hs.h * fy - 4;
+      if (fx > 0.63 && fx < 0.74) { const fy = 0.053 + (fx - 0.624) / (0.745 - 0.624) * (0.48 - 0.053), gy = hs.t + hs.h * fy;
         $('hfGrid').setAttribute('d', `M${gx.toFixed(1)} ${(grid.b + 3).toFixed(1)} V${gy.toFixed(1)}`); }
       else $('hfGrid').setAttribute('d', elbow(gx, grid.b + 3, roofR[0], roofR[1])); }
-    $('hfBatt').setAttribute('d', side(cx(bat), bat.t - 4, pill.l - 6, my(pill)));
-    $('hfEv').setAttribute('d', side(cx(ev), ev.t - 4, pill.r + 6, my(pill)));
+    $('hfBatt').setAttribute('d', side(cx(bat), bat.t - 2, pill.l - 2, my(pill)));
+    $('hfEv').setAttribute('d', side(cx(ev), ev.t - 2, pill.r + 2, my(pill)));
     const svg = hv.querySelector('svg.arrows'); svg.setAttribute('viewBox', `0 0 ${R.width.toFixed(1)} ${R.height.toFixed(1)}`);
   }
   if (window.ResizeObserver && $('hv')) new ResizeObserver(() => { try { hvArrows(); } catch (e) {} }).observe($('hv'));   // även när fliken Energi visas
@@ -3084,7 +3084,7 @@ div.house.night img.fl.on{opacity:.9}
       if (t('lBatt')) $('hlBatt').textContent = t('lBatt').replace(/^BATTERI/i, 'Batteri');
       if (t('lEv')) $('hlEv').textContent = t('lEv').replace(/^([A-ZÅÄÖ0-9 ]+)/, (m) => m.charAt(0) + m.slice(1).toLowerCase()).replace(/^Ex(\d)/, 'EX$1');
       $('hvHome').textContent = t('vHome') || '–';
-      [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'), mk_ = 'url(#hvm' + n + ')'; d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); const idle = s.classList.contains('idle'); d.setAttribute('marker-end', idle || rev ? 'none' : mk_); d.setAttribute('marker-start', !idle && rev ? mk_ : 'none'); });   // pilen pekar åt det håll strömmen går
+      [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'); d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); d.removeAttribute('marker-end'); d.removeAttribute('marker-start'); });   // ingen pilspets sedan 2026-11-22.5 – strecken rinner åt det håll strömmen går (rev = mot kortet)
     }
     const L = lights().filter((d) => val(d, 'onoff') === true && !OUTSIDE.test(d.zone || ''));
     const lo = L.some((d) => /^Bottenvåning/i.test(floorOf(d.zone || ''))), hi = L.some((d) => /^Övervåning/i.test(floorOf(d.zone || '')));
