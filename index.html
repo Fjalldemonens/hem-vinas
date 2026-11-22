@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.5">
+<meta name="app-version" content="2026-11-22.6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -842,6 +842,11 @@ div.house.night img.fl.on{opacity:.9}
 :root[data-theme="dark"] .stadhus .shi>img.dag{opacity:calc(var(--dusk,0) * .6)}
 :root[data-theme="light"] .stadhus{background:var(--card);border-color:var(--line)}
 :root[data-theme="light"] .stadhus .shi>img.dag{filter:brightness(var(--dayb,1))}
+/* 2026-11-22.6: släckta våningar i Städ-huset (kvällsbilden har tänt inne) – mörka lager per våning, som husets lo/hi. Allt släckt → även skenet ute dämpas */
+.stadhus .shi>img.av{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.stadhus .shi>img.av.on{opacity:1}
+.stadhus .shi>img.nat{transition:filter .9s ease}
+.stadhus .shi>img.nat.dark{filter:brightness(.78) saturate(.7)}
 </style>
 </head>
 <body>
@@ -982,7 +987,7 @@ div.house.night img.fl.on{opacity:.9}
   </section>
 
   <section class="panel" id="p-stad" role="tabpanel" aria-labelledby="t-stad" hidden>
-    <div class="card stadhus" id="shCard" hidden><div class="shw"><div class="shi"><img src="img/stad-hus.webp" alt="Genomskinligt hus där robotarna syns när de städar"><img class="dag" src="img/stad-hus-dag.webp" alt="">
+    <div class="card stadhus" id="shCard" hidden><div class="shw"><div class="shi"><img class="nat" src="img/stad-hus.webp" alt="Genomskinligt hus där robotarna syns när de städar"><img class="av lo" src="img/stad-lo-av.webp" alt=""><img class="av hi" src="img/stad-hi-av.webp" alt=""><img class="dag" src="img/stad-hus-dag.webp" alt="">
       <div class="rb up off" id="rbUp" hidden></div><div class="rb dn off" id="rbDn" hidden></div></div></div></div>
     <div class="panel" id="robots"><div class="skel"></div></div>
   </section>
@@ -994,8 +999,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.5"></script>
-<script src="homey.js?v=2026-11-22.5"></script>
+<script src="config.js?v=2026-11-22.6"></script>
+<script src="homey.js?v=2026-11-22.6"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -3090,6 +3095,8 @@ div.house.night img.fl.on{opacity:.9}
     const lo = L.some((d) => /^Bottenvåning/i.test(floorOf(d.zone || ''))), hi = L.some((d) => /^Övervåning/i.test(floorOf(d.zone || '')));
     document.querySelectorAll('div.house .lw.lo').forEach((e) => e.classList.toggle('on', lo));
     document.querySelectorAll('div.house .lw.hi').forEach((e) => e.classList.toggle('on', hi));
+    document.querySelectorAll('.stadhus img.av.lo').forEach((e) => e.classList.toggle('on', !lo)); document.querySelectorAll('.stadhus img.av.hi').forEach((e) => e.classList.toggle('on', !hi));
+    document.querySelectorAll('.stadhus img.nat').forEach((e) => e.classList.toggle('dark', !lo && !hi));
     const luxDev = devices.find((d) => has(d, 'measure_luminance') && OUTSIDE.test(d.zone || '')) || devices.find((d) => has(d, 'measure_luminance'));
     const lux = luxDev ? Number(val(luxDev, 'measure_luminance')) : NaN;
     const wasNight = document.documentElement.getAttribute('data-theme') === 'dark';
