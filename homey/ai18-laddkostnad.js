@@ -1,7 +1,9 @@
-// AI 18 · Laddkostnad (2026-11-15, passlogik ändrad 2026-11-20). Laddboxens förbrukning och kostnad: effekten varje minut ×
+// AI 18 · Laddkostnad (2026-11-15, passlogik ändrad 2026-11-20 och 2026-11-22). Laddboxens förbrukning och kostnad: effekten varje minut ×
 // köppriset för kvarten (AI Elpriser, imp). Uppskattning: sol- och batterienergi räknas också till köppris, Grid Rewards ingår inte.
-// Ett pass = från första Laddar tills bilen nått laddmålet eller kabeln dragits ur bilen. Smartladdningens stopp och start
-// emellan hör till samma pass. Kabel/laddmål/laddnivå hämtas från bilens enhet (Volvo: ev_charging_state, measure_battery,
+// Ett pass = från första Laddar tills kabeln dras ur bilen. Smartladdningens stopp och start emellan hör till samma pass.
+// När laddmålet nås flyttas passet till "senaste", men laddar bilen igen innan kabeln dragits ur (påfyllning, förvärmning,
+// höjt laddmål) öppnas samma pass igen – som Tibber räknar. Förut (2026-11-20) räknades påfyllningen som ett nytt pass och
+// skrev över det stora (2026-11-22: 47 → 92 %, 52 kWh blev "0,5 kWh, 89 → 90 %"). Kabel/laddmål/laddnivå hämtas från bilens enhet (Volvo: ev_charging_state, measure_battery,
 // charging_target_level, charging_system_status). Saknas bilen gäller reservregeln: laddningen still i IDLE_MIN min = klart.
 // Skriver variabeln AI Laddkostnad.
 // === KONFIG (husspecifikt) ===
@@ -62,8 +64,15 @@ const eaOut = st === 'plugged_out';
 const unplugged = car && cst != null ? cst === 'plugged_out' : eaOut;   // kabeln ur: bilens enhet först, annars laddboxen
 S.out = unplugged ? (S.out || 0) + 1 : 0;                                // två körningar i rad (ca 2 min) mot flimmer
 const atTgt = soc != null && tgt != null && soc >= tgt;
-if (S.lock && (S.out >= 2 || !atTgt)) S.lock = false;                    // spärren efter laddmål släpps vid urdragen kabel eller höjt laddmål
-if (dk > 0 && !S.cur && !S.lock) S.cur = { start: t, kwh: 0, kr: 0, from: soc != null ? Math.round(soc) : null };
+// Engångsrättning 2026-11-22: passet 21–22 nov skrevs över av en påfyllning. Värden från Tibbers tidslinje (52,48 kWh, 47 → 92 %),
+// kr = Tibbers elkostnad 50,52 + nätavgift 30,96 (utan Grid Rewards, som AI 18 räknar).
+if (S.fix1122 !== 1) { S.fix1122 = 1; if (S.last && S.last.kwh < 1) S.last = { start: Date.parse('2026-11-21T15:45:00Z'), end: Date.parse('2026-11-22T07:25:00Z'), kwh: 52.48, kr: 81.48, from: 47, to: 92 }; }
+if (S.lock && S.out >= 2) { S.lock = false; S.prevLast = null; }        // kabeln ur: nästa laddning är ett nytt pass
+if (dk > 0 && !S.cur && S.lock && S.last) {                              // laddar igen med kabeln i: öppna samma pass igen
+  S.cur = { start: S.last.start, kwh: S.last.kwh, kr: S.last.kr, from: S.last.from, seen: t };
+  S.last = S.prevLast || null; S.lock = false;
+}
+if (dk > 0 && !S.cur) S.cur = { start: t, kwh: 0, kr: 0, from: soc != null ? Math.round(soc) : null };
 if (S.cur && dk > 0) { S.cur.kwh += dk; S.cur.kr += dr; S.cur.seen = t; }
 if (S.cur && dk === 0) {
   const idleMs = t - S.cur.seen;
@@ -73,8 +82,8 @@ if (S.cur && dk === 0) {
   else if (!car && idleMs > IDLE_MIN * 60000) why = 'still';
   else if (idleMs > MAX_OPEN_H * 3600000) why = 'ur';
   if (why) {
-    if (S.cur.kwh > 0.05) S.last = { start: S.cur.start, end: S.cur.seen, kwh: r3(S.cur.kwh), kr: r2(S.cur.kr), from: S.cur.from == null ? null : S.cur.from, to: soc != null ? Math.round(soc) : null };
-    if (why === 'mal') S.lock = true;
+    if (S.cur.kwh > 0.05) { S.prevLast = S.last || null; S.last = { start: S.cur.start, end: S.cur.seen, kwh: r3(S.cur.kwh), kr: r2(S.cur.kr), from: S.cur.from == null ? null : S.cur.from, to: soc != null ? Math.round(soc) : null }; }
+    S.lock = why === 'mal' && S.cur.kwh > 0.05;                          // kabeln kvar: en ny laddning hör till samma pass
     S.cur = null;
   }
 }
