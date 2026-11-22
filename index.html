@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-21.30">
+<meta name="app-version" content="2026-11-22.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -815,6 +815,27 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
   #p-stad > #robots{max-width:none}
   #p-temperatur > #sensors{margin-top:40px}
 }
+/* 2026-11-22.1: temat glider med ljuset ute. heroSync sätter --mx (0–100) efter lux: i mörkt tema ljusnar ytorna mot skymning (max 22 % mot ljust),
+   i ljust tema mörknar de en aning en grå dag (max 12 % mot mörkt). Texten byter fortfarande bara vid gränsen 300/500 lux, så den alltid syns. */
+@supports (color: color-mix(in srgb, red, blue)){
+  :root[data-theme="dark"]{
+    --bg:color-mix(in srgb,#080F16,#F2F5F8 calc(var(--mx,0) * 1%)); --bg-2:color-mix(in srgb,#101B25,#EDF2F6 calc(var(--mx,0) * 1%));
+    --card:color-mix(in srgb,#101B25,#FFFFFF calc(var(--mx,0) * 1%)); --card-2:color-mix(in srgb,#152431,#F8FAFC calc(var(--mx,0) * 1%));
+    --sub:color-mix(in srgb,#152431,#EDF2F6 calc(var(--mx,0) * 1%)); --line:color-mix(in srgb,#263B49,#DCE4EA calc(var(--mx,0) * 1%))}
+  :root[data-theme="light"]{
+    --bg:color-mix(in srgb,#F2F5F8,#080F16 calc(var(--mx,0) * 1%)); --bg-2:color-mix(in srgb,#EDF2F6,#101B25 calc(var(--mx,0) * 1%));
+    --card:color-mix(in srgb,#FFFFFF,#101B25 calc(var(--mx,0) * 1%)); --card-2:color-mix(in srgb,#F8FAFC,#152431 calc(var(--mx,0) * 1%));
+    --sub:color-mix(in srgb,#EDF2F6,#152431 calc(var(--mx,0) * 1%)); --line:color-mix(in srgb,#DCE4EA,#263B49 calc(var(--mx,0) * 1%))}
+}
+/* Kvällsbilden ljusnar i gryning/skymning: dagbilden (img.fl) tonas in efter --dusk (0–1), dagbilden dämpas en grå dag (--dayb) */
+div.house.night img.fl{opacity:calc(var(--dusk,0) * .6)}
+div.house.night img.fl.on{opacity:.9}
+.hv2:not(.is-night) .house.day img,.hmini:not(.is-night) .house.day img{filter:brightness(var(--dayb,1))}
+/* Robotarna åker även med iOS "Reducera rörelse" påslaget – rörelsen är själva informationen (2026-11-22.1) */
+@media (prefers-reduced-motion: reduce){
+  .rb.dn.run{animation:rbDn 34s linear infinite!important} .rb.up.run{animation:rbUp 26s linear infinite!important}
+  .rb.paused{animation-play-state:paused!important}
+}
 </style>
 </head>
 <body>
@@ -968,8 +989,8 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-21.30"></script>
-<script src="homey.js?v=2026-11-21.30"></script>
+<script src="config.js?v=2026-11-22.1"></script>
+<script src="homey.js?v=2026-11-22.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -3084,6 +3105,12 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
     try { hvArrows(); } catch (e) {}
     // Tema efter dagsljuset ute (2026-11-21.4): mörkt när huset visar kvällsbilden, oavsett telefonens inställning
     const th = night ? 'dark' : 'light';
+    // Steglöst (2026-11-22.1): ytornas ljushet och kvällsbildens gryning följer lux på logaritmisk skala
+    { const R = document.documentElement.style, lg = Number.isFinite(lux) ? Math.log10(Math.max(lux, 0.1)) : NaN, cl = (x) => Math.max(0, Math.min(1, x));
+      if (Number.isFinite(lg)) {
+        if (night) { const d = cl(lg / Math.log10(300)); R.setProperty('--mx', (22 * d).toFixed(1)); R.setProperty('--dusk', d.toFixed(3)); R.setProperty('--dayb', 1); }
+        else { const d2 = cl((lg - Math.log10(300)) / (Math.log10(20000) - Math.log10(300))); R.setProperty('--mx', (12 * (1 - d2)).toFixed(1)); R.setProperty('--dusk', 0); R.setProperty('--dayb', (0.86 + 0.14 * d2).toFixed(3)); }
+      } else { R.setProperty('--mx', 0); R.setProperty('--dusk', 0); R.setProperty('--dayb', 1); } }
     if (document.documentElement.getAttribute('data-theme') !== th) {
       document.documentElement.setAttribute('data-theme', th);
       document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', night ? '#080F16' : '#F2F5F8'));
