@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.2">
+<meta name="app-version" content="2026-11-22.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -994,8 +994,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.2"></script>
-<script src="homey.js?v=2026-11-22.2"></script>
+<script src="config.js?v=2026-11-22.3"></script>
+<script src="homey.js?v=2026-11-22.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2949,7 +2949,11 @@ div.house.night img.fl.on{opacity:.9}
     const curve = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} C${x1.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
     const side = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} V${(y2 + 10).toFixed(1)} Q${x1.toFixed(1)} ${y2.toFixed(1)} ${(x1 + Math.sign(x2 - x1) * 10).toFixed(1)} ${y2.toFixed(1)} H${x2.toFixed(1)}`;
     $('hfSun').setAttribute('d', curve(cx(sun), sun.b + 3, roofL[0], roofL[1]));
-    $('hfGrid').setAttribute('d', curve(cx(grid), grid.b + 3, roofR[0], roofR[1]));
+    // Elnät-pilen rakt ned på gavelns takfot (2026-11-22.3, förut en S-kurva som svängde in mot nocken). Takfoten i bildens bråkdelar: nock (0,624; 0,053) → hörn (0,745; 0,48)
+    { const gx = cx(grid), fx = (gx - hs.l) / hs.w;
+      if (R.width < 520 && fx > 0.63 && fx < 0.74) { const fy = 0.053 + (fx - 0.624) / (0.745 - 0.624) * (0.48 - 0.053), gy = hs.t + hs.h * fy - 4;
+        $('hfGrid').setAttribute('d', `M${gx.toFixed(1)} ${(grid.b + 3).toFixed(1)} V${gy.toFixed(1)}`); }
+      else $('hfGrid').setAttribute('d', curve(gx, grid.b + 3, roofR[0], roofR[1])); }
     $('hfBatt').setAttribute('d', side(cx(bat), bat.t - 4, pill.l - 6, my(pill)));
     $('hfEv').setAttribute('d', side(cx(ev), ev.t - 4, pill.r + 6, my(pill)));
     const svg = hv.querySelector('svg.arrows'); svg.setAttribute('viewBox', `0 0 ${R.width.toFixed(1)} ${R.height.toFixed(1)}`);
