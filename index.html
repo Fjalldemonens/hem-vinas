@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.3">
+<meta name="app-version" content="2026-11-22.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -597,7 +597,7 @@ body.noscroll{overflow:hidden}
 div.house img{display:block;width:100%}
 div.house .lw{position:absolute;left:0;top:0;opacity:0;transition:opacity .9s ease}
 div.house .lw.on{opacity:1}
-.hv2 svg.arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hv2 svg.arrows{position:absolute;inset:0;width:100%;height:100%;max-width:none;margin:0;overflow:visible}   /* max-width: gamla .flow svg (400 px) sköt pilarna fel på datorn */
 .hvar{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:5 6;animation:hvdash 1.2s linear infinite}
 .hvar.rev{animation-direction:reverse} .hv2 .hvar.idle{display:inline;animation:none;opacity:.45;stroke:var(--faint-t)}   /* vilande: stilla streckad grå linje utan pil (2026-11-21.14) */
 @media (prefers-reduced-motion:reduce){.hvar{animation:none}}
@@ -994,8 +994,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.3"></script>
-<script src="homey.js?v=2026-11-22.3"></script>
+<script src="config.js?v=2026-11-22.4"></script>
+<script src="homey.js?v=2026-11-22.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2946,14 +2946,23 @@ div.house.night img.fl.on{opacity:.9}
     const sun = rel($('hcSun')), grid = rel($('hcGrid')), bat = rel($('hcBatt')), ev = rel($('hcEv'));
     const cx = (o) => o.l + o.w / 2, my = (o) => o.t + o.h / 2;
     const roofL = [hs.l + hs.w * 0.42, hs.t + hs.h * 0.30], roofR = [hs.l + hs.w * 0.60, hs.t + hs.h * 0.16];
-    const curve = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} C${x1.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${((y1 + y2) / 2).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
     const side = (x1, y1, x2, y2) => `M${x1.toFixed(1)} ${y1.toFixed(1)} V${(y2 + 10).toFixed(1)} Q${x1.toFixed(1)} ${y2.toFixed(1)} ${(x1 + Math.sign(x2 - x1) * 10).toFixed(1)} ${y2.toFixed(1)} H${x2.toFixed(1)}`;
-    $('hfSun').setAttribute('d', curve(cx(sun), sun.b + 3, roofL[0], roofL[1]));
-    // Elnät-pilen rakt ned på gavelns takfot (2026-11-22.3, förut en S-kurva som svängde in mot nocken). Takfoten i bildens bråkdelar: nock (0,624; 0,053) → hörn (0,745; 0,48)
+    // Raka/vinkelräta pilar överallt (2026-11-22.4): Solceller och Elnät går rakt ned på taket. Ligger kortets mitt utanför taket blir det en
+    // trappa med rundade hörn (ned – vågrätt – ned) i stället för den gamla S-kurvan, så alla linjer har samma stil som batteri/bil.
+    const elbow = (x1, y1, x2, y2) => { if (Math.abs(x2 - x1) < 2) return `M${x1.toFixed(1)} ${y1.toFixed(1)} V${y2.toFixed(1)}`;
+      const m = (y1 + y2) / 2, s = Math.sign(x2 - x1), r = Math.min(10, Math.abs(x2 - x1) / 2, (y2 - y1) / 2);
+      return `M${x1.toFixed(1)} ${y1.toFixed(1)} V${(m - r).toFixed(1)} Q${x1.toFixed(1)} ${m.toFixed(1)} ${(x1 + s * r).toFixed(1)} ${m.toFixed(1)} H${(x2 - s * r).toFixed(1)} Q${x2.toFixed(1)} ${m.toFixed(1)} ${x2.toFixed(1)} ${(m + r).toFixed(1)} V${y2.toFixed(1)}`; };
+    const lerpT = (T, f) => { for (let i = 1; i < T.length; i++) if (f <= T[i][0]) return T[i - 1][1] + (f - T[i - 1][0]) / (T[i][0] - T[i - 1][0]) * (T[i][1] - T[i - 1][1]); return T[T.length - 1][1]; };
+    // Takets överkant över solpanelerna (uppmätt i husbilden, bråkdelar av bredd/höjd) – skorstenen vid 0,53 hoppas över
+    const ROOF = [[0.29, 0.379], [0.32, 0.309], [0.35, 0.243], [0.38, 0.196], [0.41, 0.178], [0.44, 0.158], [0.47, 0.139], [0.50, 0.119]];
+    { const sx = cx(sun), fx = (sx - hs.l) / hs.w;
+      if (fx > 0.30 && fx < 0.50) $('hfSun').setAttribute('d', `M${sx.toFixed(1)} ${(sun.b + 3).toFixed(1)} V${(hs.t + hs.h * lerpT(ROOF, fx) - 4).toFixed(1)}`);
+      else $('hfSun').setAttribute('d', elbow(sx, sun.b + 3, roofL[0], roofL[1])); }
+    // Elnät-pilen rakt ned på gavelns takfot (2026-11-22.3). Takfoten i bildens bråkdelar: nock (0,624; 0,053) → hörn (0,745; 0,48)
     { const gx = cx(grid), fx = (gx - hs.l) / hs.w;
-      if (R.width < 520 && fx > 0.63 && fx < 0.74) { const fy = 0.053 + (fx - 0.624) / (0.745 - 0.624) * (0.48 - 0.053), gy = hs.t + hs.h * fy - 4;
+      if (fx > 0.63 && fx < 0.74) { const fy = 0.053 + (fx - 0.624) / (0.745 - 0.624) * (0.48 - 0.053), gy = hs.t + hs.h * fy - 4;
         $('hfGrid').setAttribute('d', `M${gx.toFixed(1)} ${(grid.b + 3).toFixed(1)} V${gy.toFixed(1)}`); }
-      else $('hfGrid').setAttribute('d', curve(gx, grid.b + 3, roofR[0], roofR[1])); }
+      else $('hfGrid').setAttribute('d', elbow(gx, grid.b + 3, roofR[0], roofR[1])); }
     $('hfBatt').setAttribute('d', side(cx(bat), bat.t - 4, pill.l - 6, my(pill)));
     $('hfEv').setAttribute('d', side(cx(ev), ev.t - 4, pill.r + 6, my(pill)));
     const svg = hv.querySelector('svg.arrows'); svg.setAttribute('viewBox', `0 0 ${R.width.toFixed(1)} ${R.height.toFixed(1)}`);
