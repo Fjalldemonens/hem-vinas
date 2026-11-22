@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.1">
+<meta name="app-version" content="2026-11-22.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -765,21 +765,21 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 .stadhus .shi{position:absolute;top:0;left:-30%;width:160%;aspect-ratio:1100/395}
 .stadhus .shi>img{width:100%;height:100%;display:block}
 @media (min-width:800px){.stadhus .shw{aspect-ratio:1100/395}.stadhus .shi{left:0;width:100%}}
-.rb{position:absolute;width:5%;transform:translate(-50%,-72%);z-index:2}
+.rb{position:absolute;width:4.6%;transform:translate(-50%,-72%);z-index:2}
 .rb svg{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 1.5px 1.5px rgba(0,0,0,.65))}
 .rb::before{content:"";position:absolute;left:50%;top:78%;width:260%;aspect-ratio:3/1;transform:translate(-50%,-50%);border-radius:50%;
   background:radial-gradient(closest-side,rgba(140,230,190,.45),rgba(140,230,190,0));opacity:0;transition:opacity .6s}
 .rb.run::before{opacity:1;animation:rbGlow 1.6s ease-in-out infinite alternate}
 .rb .led{fill:#5BE08F} .rb.idle .led{fill:#F5C542} .rb.off .led{fill:#8A93A3}
 .rb.idle,.rb.off{opacity:.9}
-.rb.dn{left:35%;top:82.7%} .rb.up{left:30%;top:49.4%}
+.rb.dn{left:26%;top:83.2%} .rb.up{left:25%;top:50.5%}
 .rb.dn.run{animation:rbDn 34s linear infinite} .rb.up.run{animation:rbUp 26s linear infinite}
 .rb.run svg{animation:rbBob .5s ease-in-out infinite alternate}
 .rb.paused,.rb.paused svg,.rb.paused::before{animation-play-state:paused}
 @keyframes rbGlow{from{opacity:.55}to{opacity:1}}
 @keyframes rbBob{from{transform:translateY(0)}to{transform:translateY(-1.5px)}}
-@keyframes rbDn{0%{left:35%;top:82.7%}12%{left:42%;top:85.1%}24%{left:48%;top:87.5%}31%{left:52%;top:87.5%}43%{left:58%;top:85.1%}55%{left:64%;top:82.7%}64%{left:57%;top:83.7%}74%{left:50%;top:85.7%}87%{left:43%;top:83.7%}100%{left:35%;top:82.7%}}
-@keyframes rbUp{0%{left:30%;top:49.4%}22%{left:40%;top:49.4%}45%{left:50%;top:49.4%}50%{left:52%;top:49.4%}72%{left:69%;top:49.4%}78%{left:66%;top:49.4%}100%{left:30%;top:49.4%}}
+@keyframes rbDn{0%{left:26%;top:83.2%}9%{left:33%;top:85.8%}18%{left:40%;top:88.5%}26%{left:46%;top:88.8%}35%{left:52%;top:86.6%}44%{left:58%;top:84.7%}50%{left:61%;top:83.5%}59%{left:54%;top:85.7%}68%{left:47%;top:87.0%}77%{left:40%;top:86.4%}88%{left:33%;top:84.8%}100%{left:26%;top:83.2%}}
+@keyframes rbUp{0%{left:25%;top:50.5%}22%{left:34%;top:50.5%}45%{left:42%;top:50.5%}50%{left:46%;top:50.5%}72%{left:61%;top:50.5%}78%{left:58%;top:50.5%}100%{left:25%;top:50.5%}}
 /* 2026-11-21.24: samma husstorlek i Energi, Klimat och Ljus – huskroppen (inkl. garage) ≈ 97 % av kortets bredd och centrerad, som i Städ.
    Bild 1244 px bred, huskroppen x 300–1060 (mitt 54,66 %). Kortbredd = #hv + 2×10 px padding. */
 .hmini .house{left:-36.75%;width:158.7%;bottom:.8%}
@@ -836,6 +836,11 @@ div.house.night img.fl.on{opacity:.9}
   .rb.dn.run{animation:rbDn 34s linear infinite!important} .rb.up.run{animation:rbUp 26s linear infinite!important}
   .rb.paused{animation-play-state:paused!important}
 }
+/* 2026-11-22.2: Städ-huset är faluröd med glasväggar (Grok, dag + kväll i samma utsnitt). Dagbilden ligger ovanpå och tonas efter ljuset ute som de andra husen. */
+.stadhus .shi>img.dag{position:absolute;inset:0;opacity:1;transition:opacity 1s ease}
+:root[data-theme="dark"] .stadhus .shi>img.dag{opacity:calc(var(--dusk,0) * .6)}
+:root[data-theme="light"] .stadhus{background:var(--card);border-color:var(--line)}
+:root[data-theme="light"] .stadhus .shi>img.dag{filter:brightness(var(--dayb,1))}
 </style>
 </head>
 <body>
@@ -977,7 +982,7 @@ div.house.night img.fl.on{opacity:.9}
   </section>
 
   <section class="panel" id="p-stad" role="tabpanel" aria-labelledby="t-stad" hidden>
-    <div class="card stadhus" id="shCard" hidden><div class="shw"><div class="shi"><img src="img/stad-hus.webp" alt="Genomskinligt hus där robotarna syns när de städar">
+    <div class="card stadhus" id="shCard" hidden><div class="shw"><div class="shi"><img src="img/stad-hus.webp" alt="Genomskinligt hus där robotarna syns när de städar"><img class="dag" src="img/stad-hus-dag.webp" alt="">
       <div class="rb up off" id="rbUp" hidden></div><div class="rb dn off" id="rbDn" hidden></div></div></div></div>
     <div class="panel" id="robots"><div class="skel"></div></div>
   </section>
@@ -989,8 +994,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.1"></script>
-<script src="homey.js?v=2026-11-22.1"></script>
+<script src="config.js?v=2026-11-22.2"></script>
+<script src="homey.js?v=2026-11-22.2"></script>
 <script>
 (() => {
   const S = 'Homey';
