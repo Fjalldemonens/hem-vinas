@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-23.1">
+<meta name="app-version" content="2026-11-23.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -999,8 +999,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-23.1"></script>
-<script src="homey.js?v=2026-11-23.1"></script>
+<script src="config.js?v=2026-11-23.2"></script>
+<script src="homey.js?v=2026-11-23.2"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -2444,9 +2444,15 @@ div.house.night img.fl.on{opacity:.9}
     if (!has(d, 'clean_last') && !has(d, 'clean_area')) return null;
     const card = mk('div', 'card');
     const rows = [];
-    if (has(d, 'clean_last') && val(d, 'clean_last') >= 0) {
-      const end = Date.now() - val(d, 'clean_last') * 36e5;
-      rows.push(['Avslutad', when(end)]);
+    // 2026-11-23.2: Roborock-appen i Homey gav Q7 L5 clean_last = 6 623 h (februari) fast den städade 20/11. AI 13 noterar nu själv när en
+    // robot slutar städa (variabeln AI Städning klar). Senaste av de två gäller; Homeys värde används inte om det är äldre än 30 dygn.
+    let klar = null; try { klar = (JSON.parse(varVal('AI Städning klar') || '{}') || {})[d.id] || null; } catch (e) {}
+    const hEnd = has(d, 'clean_last') && val(d, 'clean_last') >= 0 && val(d, 'clean_last') <= 720 ? Date.now() - val(d, 'clean_last') * 36e5 : null;
+    const kEnd = klar && klar.end > 0 && klar.end <= Date.now() + 6e4 ? klar.end : null;
+    if (hEnd || kEnd || has(d, 'clean_last')) {
+      const end = Math.max(hEnd || 0, kEnd || 0);
+      rows.push(['Avslutad', end ? when(end) : 'Okänt']);
+      if (!(has(d, 'clean_time') && val(d, 'clean_time') > 0) && klar && klar.min > 0) rows.push(['Tid', dur(klar.min / 60)]);
       if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Tid', dur(val(d, 'clean_time'))]);
     } else if (has(d, 'clean_time') && val(d, 'clean_time') > 0) rows.push(['Tid', dur(val(d, 'clean_time'))]);
     if (has(d, 'clean_area') && val(d, 'clean_area') > 0) rows.push(['Yta', f0.format(val(d, 'clean_area')) + ' m²']);

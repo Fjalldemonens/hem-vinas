@@ -93,6 +93,35 @@ for (const devId of Object.keys(S)) {
     started++;
   } catch (err) { note(d.name.trim() + ': FEL ' + (err && err.message)); }
 }
+// 3. Städning klar (2026-11-23): Roborock-appen i Homey ger fel clean_last för Q7 L5 (6 623 h sedan = februari, fast den
+//    städade 20/11). Här noteras själv när en robot slutar städa: is_cleaning true → false. Tid och yta tas från clean_time/
+//    clean_area när de ändrats sedan starten (de uppdateras ungefär samtidigt, ca var 5:e min), annars efter 10 min med det som finns.
+//    Skrivs till variabeln AI Städning klar {robot-id:{end,min,m2}} och en rad i AI Städlogg. Klockslaget kan vara upp till ca 5 min fel.
+const vKlar = vars.find((x) => x.name === 'AI Städning klar');
+let K = {}; try { K = JSON.parse((vKlar && vKlar.value) || '{}') || {}; } catch (e) {}
+let kChanged = false;
+for (const devId of Object.keys(S)) {
+  try {
+    const d = await Homey.devices.getDevice({ id: devId });
+    const c = d.capabilitiesObj || {};
+    const val = (k) => (c[k] ? c[k].value : null);
+    let R = {}; try { R = JSON.parse(global.get('stadrun_' + devId) || '{}') || {}; } catch (e) {}
+    const on = val('is_cleaning') === true, ct = val('clean_time'), ca = val('clean_area');
+    if (on && !R.on) R = { on: true, ct0: ct, ca0: ca };
+    else if (!on && R.on) R = { on: false, end: Date.now(), ct0: R.ct0, ca0: R.ca0 };
+    if (!R.on && R.end) {
+      const fresh = ct !== R.ct0 || ca !== R.ca0;
+      if (fresh || Date.now() - R.end > 10 * 60000) {
+        const min = ct != null ? Math.round(Number(ct) * 60) : null, m2 = ca != null ? Math.round(Number(ca)) : null;
+        K[devId] = { end: R.end, min, m2 }; kChanged = true;
+        note(d.name.trim() + ': klar' + (min != null ? ' · ' + min + ' min' : '') + (m2 != null ? ' · ' + m2 + ' m²' : ''));
+        R = { on: false };
+      }
+    }
+    global.set('stadrun_' + devId, JSON.stringify(R));
+  } catch (err) {}
+}
+if (kChanged && vKlar) await Homey.logic.updateVariable({ id: vKlar.id, variable: { value: JSON.stringify(K) } });
 if (logLines.length && vLog) {
   const old = String(vLog.value || '').split('\n').filter((x) => x && x !== '-');
   await Homey.logic.updateVariable({ id: vLog.id, variable: { value: logLines.concat(old).slice(0, 15).join('\n') } });
