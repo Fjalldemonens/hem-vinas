@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-22.6">
+<meta name="app-version" content="2026-11-23.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -999,8 +999,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-22.6"></script>
-<script src="homey.js?v=2026-11-22.6"></script>
+<script src="config.js?v=2026-11-23.1"></script>
+<script src="homey.js?v=2026-11-23.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1133,7 +1133,7 @@ div.house.night img.fl.on{opacity:.9}
     if (lastErr) status('err', lastErr + (age ? ' · ' + age : ''));
     else status(sec > 60 ? 'stale' : 'on', where + ' · ' + age);
   }
-  setInterval(tick, 1000);
+  (function sec() { tick(); setTimeout(sec, 1000 - (Date.now() % 1000) + 5); })();   // på hela sekunder, i takt med klockan
   function banner(t) { const b = $('banner'); b.hidden = !t; b.textContent = t || ''; }
   function parseList(p, key) {
     if (p && Array.isArray(p[key])) return p[key];
@@ -3227,7 +3227,7 @@ div.house.night img.fl.on{opacity:.9}
   /* ---------- live data ---------- */
   let busy = false, timers = [];
   function showLogin(msg) {
-    timers.forEach(clearInterval); timers = [];
+    timers.forEach((t) => t.stop()); timers = [];
     $('appMain').hidden = true; $('login').hidden = false;
     $('loginMsg').textContent = msg || ''; $('loginMsg').hidden = !msg;
   }
@@ -3254,7 +3254,15 @@ div.house.night img.fl.on{opacity:.9}
   function start() {
     $('login').hidden = true; $('appMain').hidden = false;
     refresh(); slow();
-    timers = [setInterval(refresh, 15000), setInterval(slow, 120000)];
+    timers.forEach((t) => t.stop());
+    timers = [onClock(15000, refresh), onClock(120000, slow)];
+  }
+  // Hämtningar i takt med klockan (2026-11-23.1, användarens önskan): var 15:e s på :00, :15, :30, :45 och var 2:a min på jämna minuter,
+  // i stället för 15 s räknat från när appen öppnades. Ny setTimeout mot nästa hela intervall varje gång, så det glider inte.
+  function onClock(ms, fn) {
+    let h = 0, on = true;
+    const next = () => { if (!on) return; h = setTimeout(() => { if (!on) return; fn(); next(); }, ms - (Date.now() % ms) + 50); };
+    next(); return { stop() { on = false; clearTimeout(h); } };
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden && api.loggedIn()) { refresh(); slow(); } });
   $('live').addEventListener('click', () => {
