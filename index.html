@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-24.1">
+<meta name="app-version" content="2026-11-24.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -702,8 +702,8 @@ div.house img.fl.on{opacity:.9}   /* 2026-11-21.27: ännu ljusare strålkastare 
 /* 2026-11-24.1: röntgenbilen följer temat – i ljust läge (dag) negativ bild: ljus skärm med mörka linjer, cellerna i nivåfärg utan glöd */
 #hcEv .ic,.sgx-c .ic{transition:background .6s}
 #hcEv .ic img,.sgx-c .ic img{transition:filter .6s}
-:root[data-theme="light"] #hcEv .ic,:root[data-theme="light"] .sgx-c .ic{background:#eef3f6}
-:root[data-theme="light"] #hcEv .ic img,:root[data-theme="light"] .sgx-c .ic img{filter:invert(1) hue-rotate(180deg) saturate(1.4) contrast(1.15) brightness(1.02)}
+:root[data-theme="light"] #hcEv .ic,:root[data-theme="light"] .sgx-c .ic{background:transparent}   /* .2: bilden multipliceras mot kortets egen färg i stället för en egen vit ruta */
+:root[data-theme="light"] #hcEv .ic img,:root[data-theme="light"] .sgx-c .ic img{filter:invert(1) hue-rotate(180deg) saturate(1.4) contrast(1.15) brightness(1.02);mix-blend-mode:multiply}
 #hcEv .ic canvas,.sgx-c .ic canvas{filter:drop-shadow(0 0 3px var(--cc,#55d5a6)) drop-shadow(0 0 8px var(--cc,#55d5a6))}
 :root[data-theme="light"] #hcEv .ic canvas,:root[data-theme="light"] .sgx-c .ic canvas{mix-blend-mode:multiply;filter:saturate(1.3) brightness(.92)}
 #hcEv .ic .bolt{position:absolute;right:6px;top:5px;font-size:.8rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,220,80,.9));display:none}
@@ -1006,8 +1006,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-24.1"></script>
-<script src="homey.js?v=2026-11-24.1"></script>
+<script src="config.js?v=2026-11-24.2"></script>
+<script src="homey.js?v=2026-11-24.2"></script>
 <script>
 (() => {
   const S = 'Homey';
