@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-24.2">
+<meta name="app-version" content="2026-11-24.3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -701,11 +701,13 @@ div.house img.fl.on{opacity:.9}   /* 2026-11-21.27: ännu ljusare strålkastare 
 #hcEv .ic.chg canvas{animation:cellPulse 1.8s ease-in-out infinite}
 /* 2026-11-24.1: röntgenbilen följer temat – i ljust läge (dag) negativ bild: ljus skärm med mörka linjer, cellerna i nivåfärg utan glöd */
 #hcEv .ic,.sgx-c .ic{transition:background .6s}
-#hcEv .ic img,.sgx-c .ic img{transition:filter .6s}
-:root[data-theme="light"] #hcEv .ic,:root[data-theme="light"] .sgx-c .ic{background:transparent}   /* .2: bilden multipliceras mot kortets egen färg i stället för en egen vit ruta */
-:root[data-theme="light"] #hcEv .ic img,:root[data-theme="light"] .sgx-c .ic img{filter:invert(1) hue-rotate(180deg) saturate(1.4) contrast(1.15) brightness(1.02);mix-blend-mode:multiply}
+/* .3: blandningslägen gav vit platta på iPhone – i stället en färdig genomskinlig ljus bild (img/bil-ljus.webp, negativ av bil.webp med alfa), så kortets färg syns igenom */
+#hcEv .ic img.lt,.sgx-c .ic img.lt{display:none}
+:root[data-theme="light"] #hcEv .ic,:root[data-theme="light"] .sgx-c .ic{background:transparent}
+:root[data-theme="light"] #hcEv .ic img:not(.lt),:root[data-theme="light"] .sgx-c .ic img:not(.lt){display:none}
+:root[data-theme="light"] #hcEv .ic img.lt,:root[data-theme="light"] .sgx-c .ic img.lt{display:block}
 #hcEv .ic canvas,.sgx-c .ic canvas{filter:drop-shadow(0 0 3px var(--cc,#55d5a6)) drop-shadow(0 0 8px var(--cc,#55d5a6))}
-:root[data-theme="light"] #hcEv .ic canvas,:root[data-theme="light"] .sgx-c .ic canvas{mix-blend-mode:multiply;filter:saturate(1.3) brightness(.92)}
+:root[data-theme="light"] #hcEv .ic canvas,:root[data-theme="light"] .sgx-c .ic canvas{mix-blend-mode:normal;filter:saturate(1.3) brightness(.85);opacity:.9}
 #hcEv .ic .bolt{position:absolute;right:6px;top:5px;font-size:.8rem;line-height:1;filter:drop-shadow(0 0 4px rgba(255,220,80,.9));display:none}
 #hcEv .ic.chg .bolt{display:block}
 @keyframes cellPulse{0%,100%{opacity:1}50%{opacity:.62}}
@@ -1006,8 +1008,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-24.2"></script>
-<script src="homey.js?v=2026-11-24.2"></script>
+<script src="config.js?v=2026-11-24.3"></script>
+<script src="homey.js?v=2026-11-24.3"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1796,7 +1798,7 @@ div.house.night img.fl.on{opacity:.9}
     const dk = document.documentElement.getAttribute('data-theme') === 'dark' || (!document.documentElement.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
     const col = battLevelColor(p, dk), g = mk('div', 'sgx ' + (el.id === 'soc' ? 'sgx-b' : 'sgx-c'));
     if (el.id === 'soc') { const ic = mk('div', 'ic'); ic.innerHTML = battIconSvg(p, col, charging, dk); g.append(ic); }
-    else { const ic = mk('div', 'ic' + (charging ? ' chg' : '')); ic.innerHTML = '<img src="img/bil.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>'; g.append(ic); drawCarCells(ic.querySelector('canvas'), p, col); }
+    else { const ic = mk('div', 'ic' + (charging ? ' chg' : '')); ic.innerHTML = '<img src="img/bil.webp" alt=""><img class="lt" src="img/bil-ljus.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>'; g.append(ic); drawCarCells(ic.querySelector('canvas'), p, col); }
     const t = mk('div', 'sgx-t num'); t.style.color = col; t.textContent = (charging && el.id === 'soc' ? '⚡ ' : '') + f0.format(p) + ' %'; g.append(t);
     el.prepend(g);
   }
@@ -3172,7 +3174,7 @@ div.house.night img.fl.on{opacity:.9}
         if (Number.isFinite(pct)) {
           const col = battLevelColor(pct, dk), key = [Math.round(pct), tgt, col, chg].join('|');
           $('hv').style.setProperty('--evc', col);   // linje, pil och statustext i bilens nivåfärg (2026-11-21.19)
-          if (!ic.querySelector('canvas')) ic.innerHTML = '<img src="img/bil.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>';
+          if (!ic.querySelector('canvas')) ic.innerHTML = '<img src="img/bil.webp" alt=""><img class="lt" src="img/bil-ljus.webp" alt=""><canvas></canvas><span class="bolt" aria-hidden="true">⚡</span>';
           ic.classList.toggle('chg', chg);
           if (ic.dataset.k !== key) { drawCarCells(ic.querySelector('canvas'), pct, col); ic.dataset.k = key; }
         }
