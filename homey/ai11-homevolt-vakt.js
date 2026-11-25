@@ -56,8 +56,19 @@ const stopQuiet = Object.values(IGNORE).some((dt) => today <= dt);   // känt fe
 // 2026-11-25: efter modulbytet stod BAT01 i Suspending (nya BAT00 på 1 %, systemet utjämnar) medan batteriet levererade effekt –
 // det larmade som fel. Nu räknas bara Fault/Error/alarm som modulfel; andra lägen (Standby, Suspending …) bara om systemet står still.
 const hardBad = (m) => /fault|error|fail/i.test(m.state_str || '') || Number(m.alarm) !== 0;
-const bad = (mods || []).filter((m) => !ignored(m) && (hardBad(m) || (m.state_str !== 'Connected' && stopNow)));
-const why = bad.map((m) => name(m) + ' ' + (m.state_str || 'okänd status') + ((m.alarm_str || []).length ? ' (' + m.alarm_str.map(short).join(', ') + ')' : '')).join('; ');
+// Modullägen följs över tid (2026-11-25, efter bytet – fel kommer ofta tillbaka): varje lägesbyte loggas (utan push) som underlag,
+// och en modul som inte är Connected längre än SOFT_MAX_H räknas som fel även om systemet går (t.ex. fast i Suspending).
+const SOFT_MAX_H = 24;
+let MS = {}; try { MS = JSON.parse(global.get('hvModState') || '{}') || {}; } catch (e) {}
+const modChanges = [];
+for (const m of mods || []) {
+  const k = String(m.id), st = m.state_str || 'okänd';
+  if (!MS[k] || MS[k].s !== st) { if (MS[k]) modChanges.push(name(m) + ' ' + MS[k].s + ' → ' + st + (m.soc != null ? ' (' + Math.round(Number(m.soc) / 100) + ' %)' : '')); MS[k] = { s: st, since: Date.now() }; }
+}
+if (mods) global.set('hvModState', JSON.stringify(MS));
+const softLong = (m) => m.state_str !== 'Connected' && MS[String(m.id)] && Date.now() - MS[String(m.id)].since >= SOFT_MAX_H * 3600e3;
+const bad = (mods || []).filter((m) => !ignored(m) && (hardBad(m) || (m.state_str !== 'Connected' && (stopNow || softLong(m)))));
+const why = bad.map((m) => name(m) + ' ' + (m.state_str || 'okänd status') + ((m.alarm_str || []).length ? ' (' + m.alarm_str.map(short).join(', ') + ')' : '') + (softLong(m) ? ' sedan ' + fmt(MS[String(m.id)].since) : '')).join('; ');
 const sus = !down && bad.length > 0;
 if (sus && !global.get('hvSusSince')) global.set('hvSusSince', Date.now());
 if (!sus) global.set('hvSusSince', null);
@@ -113,6 +124,7 @@ if (emsErr && emsErrSince && Date.now() - emsErrSince >= EMS_QUIET_MIN * 60000 &
   global.set('hvEmsErrSince', null);
 }
 
+if (modChanges.length) quiet.push('Modulläge: ' + modChanges.join('; ') + '.');
 const ignList = (mods || []).filter(ignored).map((m) => name(m) + ' ignoreras t.o.m. ' + IGNORE[m.id]).join(', ');
 await setVar('AI Homevolt status',
   down ? 'Ingen kontakt sedan ' + (last ? fmt(last) : 'okänt')
