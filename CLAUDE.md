@@ -79,7 +79,7 @@ Fakta om nya huset är planer per 2026-11-06 och bekräftas när enheterna finns
 | Homey | Homey Pro (Early 2023) | Samma Homey Pro | Flöden/variabler följer med |
 | Elhandel | Tibber (Pulse = elmätaren i Homey) | **Inte Tibber.** Leverantör ej vald | Prisformelns påslag (0,0998) och fallbacken i AI 14 (`d4736f20-…` `measure_price_total`) måste bytas. Ny elmätare i Homey behövs (Pulse följer inte med i rollen) → `GRID` i AI 14 |
 | Elnät | Ellevio (Mora, reducerad energiskatt) | **Ellevio, kvar** | Överföring/energiskatt i prisformeln (0,59) och `NAT_PROD` kontrolleras mot gällande avtal vid flytten, inte mot dagens siffror |
-| Batteri | Homevolt (`bb92dcb1-…`, lokalt `192.168.1.168/ems.json`) | SigenStor Neo, < 20 kWh i garaget | AI 11 ersätts av en Sigen-vakt som skriver samma statusformat |
+| Batteri | Homevolt (`bb92dcb1-…`, lokalt `192.168.1.168/ems.json`), 13,3 kWh tillgängligt efter modulbytet 2026-11-25 (BAT00 ny) | SigenStor Neo, < 20 kWh i garaget | AI 11 ersätts av en Sigen-vakt som skriver samma statusformat |
 | Solceller | Befintliga (via Homevolt/Homey) | Ca 12–13 kWp via SigenStor Neo | Appen hittar `solarpanel` själv om Sigen-appen exponerar typen |
 | Värmepump | Thermia Diplomat Inverter L ("Bergvärmepump", Thermia Online, skrivskyddat kort) | Nibe S735 | Kortet ska bygga på standardvärden (börvärde, ärvärde, varmvatten), inte Thermia-specifika |
 | Kyl/disk/tvätt | Shelly Plug M Gen3 (`DEV` i AI 14) | Shelly (modell ej vald) | Nya id i `DEV` |
