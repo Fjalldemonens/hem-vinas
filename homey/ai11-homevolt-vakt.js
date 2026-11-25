@@ -9,7 +9,7 @@
 // Skapad 2026-11-02. Modulvakt 2026-11-05 (BAT00 trasig, byte bokat 2026-11-25). Systemvakt 2026-11-05.
 const ID = 'bb92dcb1-6a8b-4ce3-ad55-57eec631ec8c';
 const EMS_URL = 'http://192.168.1.168/ems.json';
-const IGNORE = { 0: '2026-11-25' };   // modul-id: ignoreras t.o.m. detta datum
+const IGNORE = {};                    // modul-id: ignoreras t.o.m. datum, t.ex. { 0: '2026-11-25' } (BAT00 byttes 2026-11-25)
 const LIMIT_MIN = 15;                 // kontaktvakt
 const STOP_MIN = 15;                  // systemvakt: stoppet måste hålla i sig så här länge
 const FAULT_MIN = 60;                 // modulvakt: felet måste hålla i sig så här länge
@@ -53,7 +53,10 @@ const stop = stopNow && stopSince && Date.now() - stopSince >= STOP_MIN * 60000;
 const name = (m) => 'BAT0' + m.id;
 const ignored = (m) => IGNORE[m.id] && today <= IGNORE[m.id];
 const stopQuiet = Object.values(IGNORE).some((dt) => today <= dt);   // känt fel, väntar på byte
-const bad = (mods || []).filter((m) => !ignored(m) && (m.state_str !== 'Connected' || Number(m.alarm) !== 0));
+// 2026-11-25: efter modulbytet stod BAT01 i Suspending (nya BAT00 på 1 %, systemet utjämnar) medan batteriet levererade effekt –
+// det larmade som fel. Nu räknas bara Fault/Error/alarm som modulfel; andra lägen (Standby, Suspending …) bara om systemet står still.
+const hardBad = (m) => /fault|error|fail/i.test(m.state_str || '') || Number(m.alarm) !== 0;
+const bad = (mods || []).filter((m) => !ignored(m) && (hardBad(m) || (m.state_str !== 'Connected' && stopNow)));
 const why = bad.map((m) => name(m) + ' ' + (m.state_str || 'okänd status') + ((m.alarm_str || []).length ? ' (' + m.alarm_str.map(short).join(', ') + ')' : '')).join('; ');
 const sus = !down && bad.length > 0;
 if (sus && !global.get('hvSusSince')) global.set('hvSusSince', Date.now());
