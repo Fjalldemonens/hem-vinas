@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-25.1">
+<meta name="app-version" content="2026-11-26.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1008,8 +1008,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-25.1"></script>
-<script src="homey.js?v=2026-11-25.1"></script>
+<script src="config.js?v=2026-11-26.1"></script>
+<script src="homey.js?v=2026-11-26.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -3105,6 +3105,10 @@ div.house.night img.fl.on{opacity:.9}
       card('Sun', 'vSun', 'sSun', 'fSun'); card('Grid', 'vGrid', 'sGrid', 'fGrid'); card('Batt', 'vBatt', 'vBattSt', 'fBatt'); card('Ev', 'vEv', 'sEv', 'fEv');
       if (t('lBatt')) $('hlBatt').textContent = t('lBatt').replace(/^BATTERI/i, 'Batteri');
       if (t('lEv')) $('hlEv').textContent = t('lEv').replace(/^([A-ZÅÄÖ0-9 ]+)/, (m) => m.charAt(0) + m.slice(1).toLowerCase()).replace(/^Ex(\d)/, 'EX$1');
+      // Räckvidd (2026-11-26.1, användarens önskan): bilens range_battery (Volvo) efter procenten, t.ex. "EX90 · 23 % · 75 km"
+      try { const cr = (typeof devices !== 'undefined' ? devices : []).find((d) => has(d, 'charging_target_level') && has(d, 'measure_battery') && has(d, 'range_battery'));
+        const km = cr ? Number(val(cr, 'range_battery')) : NaN;
+        if (t('lEv') && isFinite(km) && km >= 0) $('hlEv').textContent += ' · ' + Math.round(km) + ' km'; } catch (e) {}
       $('hvHome').textContent = t('vHome') || '–';
       [['Sun', 'fSun'], ['Grid', 'fGrid'], ['Batt', 'fBatt'], ['Ev', 'fEv']].forEach(([n, f]) => { const s = $(f), d = $('hf' + n); const rev = s.classList.contains('rev'); d.classList.toggle('idle', s.classList.contains('idle')); d.classList.toggle('rev', rev); d.removeAttribute('marker-end'); d.removeAttribute('marker-start'); });   // ingen pilspets sedan 2026-11-22.5 – strecken rinner åt det håll strömmen går (rev = mot kortet)
     }

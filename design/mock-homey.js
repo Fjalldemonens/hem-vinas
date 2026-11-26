@@ -42,7 +42,7 @@
     dev('e2', 'Solceller', 'Hem > Energi', 'solarpanel', { measure_power: 1240, meter_power: 4.8, 'meter_power.YEAR': 11180, 'meter_power.TOTAL': 43890 }, { measure_power: cap('Effekt', 'number', { units: 'W' }) }),
     dev('e3', 'Homevolt', 'Hem > Energi', 'battery', { measure_battery: 64, measure_power: -820, 'meter_power.available': 8.2, measure_temperature: 24.1, measure_frequency: 50.01, battery_status: 'Laddar ur', target_power_mode: 'partner' }, { measure_power: cap('Effekt', 'number', { units: 'W', at: now - 30000 }) }),
     dev('e4', 'Laddbox', 'Hem > Energi', 'evcharger', { charger_status: 'Charging', measure_power: 3200, 'meter_power.lastCharge': 21.4, evcharger_charging: true, evcharger_charging_state: 'plugged_in_charging', target_charger_current: 16 }, {}),
-    dev('e5', 'EX90 / 2025', 'Hem > Garage', 'car', { measure_battery: 72, charging_target_level: 90, ev_charging_state: 'plugged_in_charging' }, {}),
+    dev('e5', 'EX90 / 2025', 'Hem > Garage', 'car', { measure_battery: 72, charging_target_level: 90, range_battery: 245, ev_charging_state: 'plugged_in_charging' }, {}),
     dev('e6', 'Elpris', 'Hem > Energi', 'other', { measure_price_total: 2.09 }, {}),
     // Vitvaror
     dev('v1', 'Kylskåp ', 'Hem > Bottenvåningen > Kök', 'socket', { onoff: true, measure_power: 85, meter_power: 4.2 }, {}),
