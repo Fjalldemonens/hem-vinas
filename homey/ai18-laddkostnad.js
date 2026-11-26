@@ -5,7 +5,7 @@
 // höjt laddmål) öppnas samma pass igen – som Tibber räknar. Förut (2026-11-20) räknades påfyllningen som ett nytt pass och
 // skrev över det stora (2026-11-22: 47 → 92 %, 52 kWh blev "0,5 kWh, 89 → 90 %"). Kabel/laddmål/laddnivå hämtas från bilens enhet (Volvo: ev_charging_state, measure_battery,
 // charging_target_level, charging_system_status). Saknas bilen gäller reservregeln: laddningen still i IDLE_MIN min = klart.
-// Skriver variabeln AI Laddkostnad.
+// Skriver variabeln AI Laddkostnad. Sedan 2026-11-26 även runs = laddperioder [start, slut] ms senaste 48 h (elprisgrafens gröna fält).
 // === KONFIG (husspecifikt) ===
 const EV = '';            // laddboxens id; tomt = hittas på klass evcharger med measure_power
 const CAR = '';           // bilens id; tomt = hittas på enhet med charging_target_level + measure_battery
@@ -74,6 +74,11 @@ if (dk > 0 && !S.cur && S.lock && S.last) {                              // ladd
 }
 if (dk > 0 && !S.cur) S.cur = { start: t, kwh: 0, kr: 0, from: soc != null ? Math.round(soc) : null };
 if (S.cur && dk > 0) { S.cur.kwh += dk; S.cur.kr += dr; S.cur.seen = t; }
+// Laddperioder (2026-11-26) för elprisgrafen i appen (grönt fält som i Volvo-appen): [start, slut] i ms när laddboxen faktiskt laddade.
+// Glapp < 3 min slås ihop. Bara perioder som slutat de senaste 48 h sparas.
+if (S.runsSeed !== 1) { S.runsSeed = 1; S.runs = [[Date.parse('2026-11-26T11:17:00Z'), Date.parse('2026-11-26T11:45:00Z')], [Date.parse('2026-11-26T17:02:00Z'), Date.parse('2026-11-26T18:28:00Z')]]; }   // engångs: dagens perioder ur Insights
+S.runs = (S.runs || []).filter((r) => t - r[1] < 48 * 3600e3);
+if (dk > 0) { const lr = S.runs[S.runs.length - 1]; if (lr && t - lr[1] <= 3 * 60000) lr[1] = t; else S.runs.push([t - Math.round(dtH * 3.6e6), t]); }
 if (S.cur && dk === 0) {
   const idleMs = t - S.cur.seen;
   let why = null;
@@ -89,6 +94,6 @@ if (S.cur && dk === 0) {
 }
 global.set('evk', JSON.stringify(S));
 const out = { u: t, p: price, last: S.last || null, cur: S.cur ? { kwh: r3(S.cur.kwh), kr: r2(S.cur.kr), from: S.cur.from == null ? null : S.cur.from, pause: dk === 0 } : null,
-  month: { m: S.mon, kwh: r3(S.mk), kr: r2(S.mr), from: S.from || null }, prevMonth: S.pm || null };
+  month: { m: S.mon, kwh: r3(S.mk), kr: r2(S.mr), from: S.from || null }, prevMonth: S.pm || null, runs: S.runs };
 await Homey.logic.updateVariable({ id: vOut.id, variable: { value: JSON.stringify(out) } });
 return true;

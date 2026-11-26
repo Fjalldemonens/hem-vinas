@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-26.1">
+<meta name="app-version" content="2026-11-27.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -364,6 +364,26 @@ body.noscroll{overflow:hidden}
 .pchart{touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:crosshair}
 .pchart:focus{outline:none}
 .pchart .scrl{stroke:var(--fg);stroke-width:1.5;opacity:.55}
+/* Elprisgraf i Volvo-stil (2026-11-27.1) */
+:root{--vblue:#3346E0;--vgreen:#22A35A}
+:root[data-theme="dark"]{--vblue:#7C8BFF;--vgreen:#4ED38A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--vblue:#7C8BFF;--vgreen:#4ED38A}}
+.vchart .vln{fill:none;stroke-width:2;stroke-linejoin:miter}
+.vchart .vln.past{stroke:var(--muted);opacity:.7}
+.vchart .vband{fill:var(--vgreen);opacity:.16}
+.vchart .vref{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:1 5;stroke-linecap:round;opacity:.8}
+.vchart .vrefl{font-size:11px;font-weight:700;fill:var(--muted);font-family:var(--f-body)}
+.vchart .vbase{stroke:var(--line);stroke-width:1}
+.vchart .ax{font-size:11px;font-weight:600}
+.vchart .vnow{stroke:var(--card);stroke-width:2}
+.vchart .vscl{stroke-width:1.6}
+.vchart .vhalo{fill:var(--card);opacity:.9}
+.vchart .vdot{stroke:var(--card);stroke-width:2.5}
+.vchart .vbub{fill:var(--card);stroke:var(--line);stroke-width:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.18))}
+.vchart .vbt1{font-size:15px;font-weight:800;fill:var(--fg);font-family:var(--f-body)}
+.vchart .vbt2{font-size:11.5px;font-weight:600;fill:var(--muted);font-family:var(--f-body)}
+.vleg{display:flex;gap:12px;font-size:12px;color:var(--muted);margin:2px 2px 0}
+.vleg .vlg::before{content:'';display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--vgreen);opacity:.45;margin-right:6px;vertical-align:-1px}
 .price .big{font-family:var(--f-disp);font-size:40px;font-weight:500;letter-spacing:-.03em;line-height:1.05;overflow-wrap:anywhere}
 .price .big2{font-size:28px;font-weight:500;letter-spacing:-.02em;line-height:1.05;color:var(--green-ink);margin-top:8px;overflow-wrap:anywhere}
 .price .big small,.price .big2 small{font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0;display:inline-block}
@@ -1008,8 +1028,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-26.1"></script>
-<script src="homey.js?v=2026-11-26.1"></script>
+<script src="config.js?v=2026-11-27.1"></script>
+<script src="homey.js?v=2026-11-27.1"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1939,69 +1959,93 @@ div.house.night img.fl.on{opacity:.9}
     return 'rgb(216,55,44)';
   }
   let pcId = 0;
-  function priceChart(day, kind, nowIdx, onScrub) {
-    const arr = day[kind], other = day[kind === 'imp' ? 'exp' : 'imp'];
-    const W = 340, H = 160, L = 34, R = 6, T = 10, B = 22;
-    const all = arr.concat(other), lo = Math.min(0, ...all), hi = Math.max(...all) * 1.08 || 1;
-    const mn = Math.min(...arr), mx = Math.max(...arr);
-    const x = (i) => L + (W - L - R) * i / arr.length, y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
-    const step = (a) => 'M' + x(0).toFixed(1) + ' ' + y(a[0]).toFixed(1) + a.map((v, k) => ' H' + x(k).toFixed(1) + ' V' + y(v).toFixed(1)).join('') + ' H' + x(a.length).toFixed(1);
+  // Haptik under drag (2026-11-27.1, som i Volvo-appen). Android: navigator.vibrate. iPhone har ingen vibrations-API för webben;
+  // iOS 18+ ger ett litet "tick" när en <input type=checkbox switch> slås om via sin etikett – inofficiellt knep, kan sluta fungera.
+  let hapEl = null;
+  function haptic() {
+    try { if (navigator.vibrate) { navigator.vibrate(6); return; } } catch (e) {}
+    try {
+      if (!hapEl) {
+        const lb = document.createElement('label'), cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.setAttribute('switch', ''); cb.tabIndex = -1; cb.setAttribute('aria-hidden', 'true');
+        lb.append(cb); lb.style.cssText = 'position:fixed;left:-99px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden';
+        document.body.append(lb); hapEl = lb;
+      }
+      hapEl.click();
+    } catch (e) {}
+  }
+  // Elprisgraf i Volvo-stil (2026-11-27.1, användarens önskan): idag + imorgon på samma tidsaxel, trappstegslinje med yta,
+  // passerad tid grå, laddperioder (AI Laddkostnad runs, faktisk laddning) som grönt fält, prickade linjer för "billigt"/"dyrt"
+  // (33:e/90:e percentilen), priser i öre, bubbla överst med pris + tid medan man drar. onScrub(dag, kvart) / onScrub(-1).
+  const DAYN = ['sön', 'mån', 'tis', 'ons', 'tors', 'fre', 'lör'];
+  function priceChart(P, kind, onScrub, runs) {
+    const days = P.days, arr = [], ts = [], dIdx = [];
+    days.forEach((d, di) => { const t0 = new Date(d.s).getTime(), iv = (d.iv || 15) * 60000; (d[kind] || []).forEach((v, k) => { arr.push(Number(v)); ts.push(t0 + k * iv); dIdx.push([di, k]); }); });
+    const ivMs = (days[0].iv || 15) * 60000, n = arr.length, now = Date.now();
+    const W = 340, H = 196, L = 4, R = 4, T = 50, B = 20;
+    const mn = Math.min(...arr), mx = Math.max(...arr), span = Math.max(mx - mn, 0.05);
+    const lo = Math.max(Math.min(0, mn), mn - span * 0.35), hi = mx + span * 0.06;
+    const x = (i) => L + (W - L - R) * i / n, y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
     const ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'pchart'); svg.setAttribute('role', 'img');
-    svg.setAttribute('aria-label', (kind === 'imp' ? 'Importpris' : 'Exportpris') + ' per kvart, ' + f2.format(mn) + ' till ' + f2.format(mx) + ' kr per kWh');
-    const mkEl = (n, a, parent) => { const e = document.createElementNS(ns, n); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); (parent || svg).append(e); return e; };
-    const el = (n, a) => mkEl(n, a);
-    // Lugnare graf (överlämningen): en färg per serie – orange för köp, grön för sälj – med mjuk yta som tonas ut nedåt
-    const cc = kind === 'imp' ? 'var(--price)' : 'var(--green)';
-    const id = 'pc' + (++pcId), defs = el('defs', {});
-    const fg = mkEl('linearGradient', { id: id + 'f', gradientUnits: 'userSpaceOnUse', x1: 0, x2: 0, y1: y(mx), y2: y(lo) }, defs);
-    mkEl('stop', { offset: '0%', 'stop-color': '#fff', 'stop-opacity': '1' }, fg); mkEl('stop', { offset: '100%', 'stop-color': '#fff', 'stop-opacity': '0' }, fg);
-    const mask = mkEl('mask', { id: id + 'm' }, defs); mkEl('rect', { x: 0, y: 0, width: W, height: H, fill: 'url(#' + id + 'f)' }, mask);
-    const ticks = []; const stepv = hi > 3 ? 1 : 0.5; for (let v = Math.ceil(lo / stepv) * stepv; v <= hi; v += stepv) ticks.push(v);
-    ticks.forEach((v) => { el('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'gl' }); const t = el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'ax' }); t.textContent = f1.format(v); });
-    [0, 6, 12, 18, 24].forEach((hh) => { const t = el('text', { x: x(arr.length * hh / 24), y: H - 6, 'text-anchor': hh === 0 ? 'start' : hh === 24 ? 'end' : 'middle', class: 'ax' }); t.textContent = String(hh).padStart(2, '0'); });
-    el('path', { d: step(other), class: 'oth' });
-    el('path', { d: step(arr) + ' V' + y(lo) + ' H' + x(0) + ' Z', fill: cc, mask: 'url(#' + id + 'm)', class: 'area' });
-    el('path', { d: step(arr), stroke: cc, class: 'ln' });
-    if (nowIdx >= 0 && nowIdx < arr.length) {
-      const cx = x(nowIdx + 0.5), cy = y(arr[nowIdx]), col = cc;
-      const ng = mkEl('g', { class: 'nowg' }); const el = (n, a) => mkEl(n, a, ng);
-      el('line', { x1: cx, x2: cx, y1: T, y2: H - B, class: 'nowl' });
-      el('circle', { cx, cy, r: 14, fill: col, class: 'nowh' });
-      el('circle', { cx, cy, r: 8.5, class: 'nowr' });
-      el('circle', { cx, cy, r: 6, fill: col, class: 'nowd' });
-      // Pris just nu som etikett ovanför punkten (flyttas in om den hamnar vid kanten)
-      const lx = Math.min(Math.max(cx, L + 22), W - R - 22), ly = cy - 20 < T + 8 ? cy + 30 : cy - 20;
-      el('rect', { x: lx - 21, y: ly - 12, width: 42, height: 17, rx: 8.5, class: 'nowbg' });
-      const tx = el('text', { x: lx, y: ly + 1, 'text-anchor': 'middle', class: 'nowt' }); tx.textContent = f2.format(arr[nowIdx]);
-    }
-    // Dra med fingret i sidled (som i Tibber/Homey): markör följer med och visar kvartens tid och pris.
-    // touch-action: pan-y gör att lodrätt drag fortfarande scrollar sidan.
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('class', 'pchart vchart'); svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', (kind === 'imp' ? 'Köppris' : 'Säljpris') + ' per kvart ' + (days.length > 1 ? 'idag och imorgon' : 'idag') + ', ' + Math.round(mn * 100) + ' till ' + Math.round(mx * 100) + ' öre per kWh');
+    const mkEl = (nm, a, parent) => { const e = document.createElementNS(ns, nm); Object.entries(a).forEach(([k, v]) => e.setAttribute(k, v)); (parent || svg).append(e); return e; };
+    const id = 'pc' + (++pcId), defs = mkEl('defs', {});
+    const col = kind === 'imp' ? 'var(--vblue)' : 'var(--vgreen)';
+    const nowI = Math.max(0, Math.min(n, ts.findIndex((t) => t + ivMs > now) < 0 ? n : ts.findIndex((t) => t + ivMs > now)));
+    // Ytor tonas ut nedåt
+    const grad = (gid, c) => { const g = mkEl('linearGradient', { id: gid, x1: 0, x2: 0, y1: 0, y2: 1 }, defs); mkEl('stop', { offset: '0%', 'stop-color': c, 'stop-opacity': '.32' }, g); mkEl('stop', { offset: '100%', 'stop-color': c, 'stop-opacity': '.03' }, g); };
+    grad(id + 'f', kind === 'imp' ? '#4b5bf0' : '#2fa866'); grad(id + 'p', '#8a93a6');
+    const stepPath = (a, b) => { if (b <= a) return ''; let d = 'M' + x(a).toFixed(1) + ' ' + y(arr[a]).toFixed(1); for (let k = a; k < b; k++) d += ' V' + y(arr[k]).toFixed(1) + ' H' + x(k + 1).toFixed(1); return d; };
+    const areaPath = (a, b) => b <= a ? '' : stepPath(a, b) + ' V' + (H - B) + ' H' + x(a).toFixed(1) + ' Z';
+    // Laddperioder (grönt fält) – bara de som syns i grafen
+    const t0 = ts[0], tEnd = ts[n - 1] + ivMs, xt = (t) => L + (W - L - R) * (t - t0) / (tEnd - t0);
+    const bands = (runs || []).filter((r) => Array.isArray(r) && r[1] > t0 && r[0] < tEnd).map((r) => [Math.max(r[0], t0), Math.min(r[1], tEnd)]);
+    const clip = mkEl('clipPath', { id: id + 'c' }, defs);
+    bands.forEach(([a, b]) => { const x1 = xt(a), w = Math.max(2, xt(b) - x1); mkEl('rect', { x: x1, y: T - 6, width: w, height: H - B - T + 6, class: 'vband' }); mkEl('rect', { x: x1, y: 0, width: w, height: H }, clip); });
+    // Referenslinjer (prickade) med etikett i öre
+    const srt = arr.slice().sort((a, b) => a - b), q = (f) => srt[Math.floor(f * (srt.length - 1))];
+    [q(0.33), q(0.9)].forEach((v) => { mkEl('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), class: 'vref' }); const t = mkEl('text', { x: L + 2, y: y(v) - 3, class: 'vrefl' }); t.textContent = String(Math.round(v * 100)); });
+    // Passerat (grått) och kommande (blått)
+    mkEl('path', { d: areaPath(0, nowI), fill: 'url(#' + id + 'p)' });
+    mkEl('path', { d: areaPath(nowI, n), fill: 'url(#' + id + 'f)' });
+    mkEl('path', { d: stepPath(0, Math.min(n, nowI + 1)), class: 'vln past' });
+    mkEl('path', { d: stepPath(nowI, n), class: 'vln', stroke: col });
+    if (bands.length) mkEl('path', { d: stepPath(0, n), class: 'vln', stroke: 'var(--vgreen)', 'clip-path': 'url(#' + id + 'c)' });
+    // Tidsaxel: var 4:e timme, 00 vid dygnsskifte
+    const lbl = mkEl('g', {});
+    ts.forEach((t, k) => { const hh = new Date(t).getHours(), mm = new Date(t).getMinutes(); if (mm === 0 && hh % 4 === 0) { const tx = mkEl('text', { x: x(k), y: H - 5, 'text-anchor': k === 0 ? 'start' : 'middle', class: 'ax' }, lbl); tx.textContent = String(hh).padStart(2, '0'); } });
+    { const tx = mkEl('text', { x: W - R, y: H - 5, 'text-anchor': 'end', class: 'ax' }, lbl); tx.textContent = '00'; }
+    mkEl('line', { x1: L, x2: W - R, y1: H - B, y2: H - B, class: 'vbase' });
+    // Nu-punkt
+    if (nowI < n) { const ng = mkEl('g', { class: 'nowg' }); mkEl('circle', { cx: x(nowI + 0.5), cy: y(arr[nowI]), r: 4.5, class: 'vnow', fill: col }, ng); }
+    // Drag: linje + punkt + bubbla överst (pris i öre, veckodag och kvart)
     const sg = mkEl('g', { class: 'scrg', style: 'display:none', 'pointer-events': 'none' });
-    const sLine = mkEl('line', { y1: T, y2: H - B, class: 'scrl' }, sg);
-    const sHalo = mkEl('circle', { r: 14, class: 'nowh' }, sg), sRing = mkEl('circle', { r: 8.5, class: 'nowr' }, sg), sDot = mkEl('circle', { r: 6, class: 'nowd' }, sg);
-    const sBg = mkEl('rect', { height: 17, rx: 8.5, class: 'nowbg' }, sg), sTx = mkEl('text', { 'text-anchor': 'middle', class: 'nowt' }, sg);
-    const t0 = new Date(day.s).getTime(), ivMs = (day.iv || 15) * 60000;
+    const sLine = mkEl('line', { y1: T - 8, y2: H - B, class: 'vscl' }, sg);
+    const sHalo = mkEl('circle', { r: 11, class: 'vhalo' }, sg), sDot = mkEl('circle', { r: 6, class: 'vdot' }, sg);
+    const bw = 124, sBg = mkEl('rect', { y: 2, width: bw, height: 40, rx: 9, class: 'vbub' }, sg);
+    const sT1 = mkEl('text', { y: 19, 'text-anchor': 'middle', class: 'vbt1' }, sg), sT2 = mkEl('text', { y: 35, 'text-anchor': 'middle', class: 'vbt2' }, sg);
     let cur = -1;
     const show = (i) => {
-      i = Math.min(arr.length - 1, Math.max(0, i));
-      if (i === cur) return; cur = i;
-      const cx = x(i + 0.5), cy = y(arr[i]), col = cc;
-      sLine.setAttribute('x1', cx); sLine.setAttribute('x2', cx);
-      [sHalo, sRing, sDot].forEach((c) => { c.setAttribute('cx', cx); c.setAttribute('cy', cy); });
-      sHalo.setAttribute('fill', col); sDot.setAttribute('fill', col);
-      const w = 76, lx = Math.min(Math.max(cx, L + w / 2), W - R - w / 2), ly = cy - 20 < T + 8 ? cy + 30 : cy - 20;
-      sBg.setAttribute('x', lx - w / 2); sBg.setAttribute('y', ly - 12); sBg.setAttribute('width', w);
-      sTx.setAttribute('x', lx); sTx.setAttribute('y', ly + 1); sTx.textContent = hm(t0 + i * ivMs) + ' · ' + f2.format(arr[i]);
+      i = Math.min(n - 1, Math.max(0, i)); if (i === cur) return;
+      if (cur >= 0) haptic(); cur = i;
+      const cx = x(i + 0.5), cy = y(arr[i]), past = i < nowI, inBand = bands.some(([a, b]) => ts[i] + ivMs / 2 >= a && ts[i] + ivMs / 2 <= b);
+      const c = inBand ? 'var(--vgreen)' : past ? 'var(--muted)' : col;
+      sLine.setAttribute('x1', cx); sLine.setAttribute('x2', cx); sLine.setAttribute('stroke', c);
+      [sHalo, sDot].forEach((e) => { e.setAttribute('cx', cx); e.setAttribute('cy', cy); }); sDot.setAttribute('fill', c);
+      const bx = Math.min(Math.max(cx - bw / 2, L), W - R - bw);
+      sBg.setAttribute('x', bx); sT1.setAttribute('x', bx + bw / 2); sT2.setAttribute('x', bx + bw / 2);
+      sT1.textContent = Math.round(arr[i] * 100) + ' öre';
+      sT2.textContent = DAYN[new Date(ts[i]).getDay()] + ' ' + hm(ts[i]) + '–' + hm(ts[i] + ivMs);
       sg.style.display = ''; const ng = svg.querySelector('.nowg'); if (ng) ng.style.display = 'none';
-      onScrub && onScrub(i);
+      onScrub && onScrub(dIdx[i][0], dIdx[i][1]);
     };
     const hide = () => {
       if (cur < 0) return; cur = -1; sg.style.display = 'none';
       const ng = svg.querySelector('.nowg'); if (ng) ng.style.display = '';
       onScrub && onScrub(-1);
     };
-    const idxAt = (ev) => { const r = svg.getBoundingClientRect(); const vx = (ev.clientX - r.left) / r.width * W; return Math.floor((vx - L) / (W - L - R) * arr.length); };
+    const idxAt = (ev) => { const r = svg.getBoundingClientRect(); const vx = (ev.clientX - r.left) / r.width * W; return Math.floor((vx - L) / (W - L - R) * n); };
     let down = false;
     svg.addEventListener('pointerdown', (ev) => { down = true; try { svg.setPointerCapture(ev.pointerId); } catch (e) {} show(idxAt(ev)); });
     svg.addEventListener('pointermove', (ev) => { if (down || ev.pointerType === 'mouse') show(idxAt(ev)); });
@@ -2009,10 +2053,9 @@ div.house.night img.fl.on{opacity:.9}
     ['pointerup', 'pointercancel'].forEach((t) => svg.addEventListener(t, end));
     svg.addEventListener('pointerleave', () => { if (!down) hide(); });
     svg.addEventListener('contextmenu', (ev) => ev.preventDefault());
-    // Tangentbord: pilar flyttar markören, Esc släpper
     svg.setAttribute('tabindex', '0');
     svg.addEventListener('keydown', (ev) => {
-      const start = cur >= 0 ? cur : nowIdx >= 0 ? nowIdx : 0;
+      const start = cur >= 0 ? cur : Math.min(nowI, n - 1);
       if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { ev.preventDefault(); show(start + (ev.key === 'ArrowRight' ? 1 : -1) * (ev.shiftKey ? 4 : 1)); }
       else if (ev.key === 'Escape') hide();
     });
@@ -2072,19 +2115,24 @@ div.house.night img.fl.on{opacity:.9}
     };
     showDefault();
     // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
-    const onScrub = (i) => {
-      if (i < 0) {
+    // Grafen visar idag + imorgon (Volvo-stil, 2026-11-27.1): kvarten under fingret kan ligga i vilket dygn som helst
+    const onScrub = (d, i) => {
+      if (d < 0) {
         priceScrubbing = false; showDefault();
-        if (pricePending !== null) { const d = pricePending; pricePending = null; renderPrice(d); }
+        if (pricePending !== null) { const dv = pricePending; pricePending = null; renderPrice(dv); }
         return;
       }
       priceScrubbing = true;
-      const st = dayT0 + i * iv;
-      setHead(arr[i], day[otherK][i], 'skillnad ' + diff(i) + ' kr', level(day.imp[i]), (priceDay === 0 ? 'Idag ' : 'Imorgon ') + hm(st) + '–' + hm(st + iv));
+      const D = P.days[d], st = new Date(D.s).getTime() + i * iv;
+      const sI = D.imp.slice().sort((a, b) => a - b), qd = (f) => sI[Math.floor(f * (sI.length - 1))];
+      const lv = (v) => v >= qd(0.9) ? ['Mycket dyrt', 'price'] : v >= qd(0.66) ? ['Dyrt', 'price'] : v <= qd(0.33) ? ['Billigt', 'ok'] : ['Normalt', 'plain'];
+      setHead(D[priceKind][i], D[otherK][i], 'skillnad ' + f2.format(D.imp[i] - D.exp[i]) + ' kr', lv(D.imp[i]), (d === 0 ? 'Idag ' : 'Imorgon ') + hm(st) + '–' + hm(st + iv));
     };
     const ctl = mk('div', 'pair');
-    ctl.append(mk('span', 'ptit', (priceKind === 'imp' ? 'Köppris' : 'Säljpris') + ' per timme'), segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
-    pc.append(head, ctl, priceChart(day, priceKind, priceDay === 0 ? idx : -1, onScrub));
+    ctl.append(mk('span', 'ptit', (priceKind === 'imp' ? 'Köppris' : 'Säljpris') + ' per kvart'), segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
+    let LKr = null; try { LKr = (JSON.parse(varVal('AI Laddkostnad') || '') || {}).runs || null; } catch (e) {}
+    pc.append(head, ctl, priceChart(P, priceKind, onScrub, LKr));
+    if (LKr && LKr.length) { const lg = mk('div', 'vleg'); lg.append(mk('span', 'vlg', 'Bilen laddade')); pc.append(lg); }
     // Lägst/högst under grafen för både idag och imorgon
     const foot = mk('div', 'rangel num');
     foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slotStart(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slotStart(mx)));
