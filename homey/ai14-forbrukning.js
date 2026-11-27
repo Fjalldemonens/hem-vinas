@@ -35,6 +35,9 @@ if (price == null) {
 const NAT_PROD = 0.032;
 const pSpotExp = slot(t, 'exp'), pExp = pSpotExp == null ? null : pSpotExp + NAT_PROD;
 let S = {}; try { S = JSON.parse(global.get('elf') || '{}') || {}; } catch (e) {}
+// Engångsrättning 2026-11-27: vid bytet Matter → Wi-Fi räknades hela mätarställningen in i dagens disk (6,09 kWh) och tvätt (8,40 kWh).
+// Inget disk-/tvättpass kördes den dagen, så dagens värden nollas.
+if (!S.fix1127) { for (const k of ['disk', 'tvatt']) { const x = S[k]; if (x && x.day === '2026-11-27' && x.dkwh > 5) { x.dkwh = 0; x.dkr = 0; } } S.fix1127 = 1; }
 const r3 = (x) => Math.round(x * 1000) / 1000, r2 = (x) => Math.round(x * 100) / 100;
 const out = { u: t, p: price, pe: pExp, ps: src };
 for (const [k, id] of Object.entries(DEV)) {
@@ -48,7 +51,10 @@ for (const [k, id] of Object.entries(DEV)) {
   if (kwh != null) {
     let dk = s.last == null ? 0 : kwh - s.last;
     if (dk < 0) dk = kwh;            // mätaren nollställd
-    s.last = kwh;
+    // Skydd mot orimliga hopp (t.ex. ny enhet eller mätare som tillfälligt visar 0): högst 4 kW sedan förra körningen
+    const dkMax = 4 * Math.max(t - (s.lt || t - 60000), 60000) / 3.6e6 + 0.01;
+    if (dk > dkMax) { log('Hopp ignorerat', k, dk.toFixed(3), 'kWh'); dk = 0; }
+    s.last = kwh; s.lt = t;
     const kr = price == null ? 0 : dk * price;
     // Bara hela dygn (midnatt–midnatt) redovisas (sedan 2026-11-06). Ett dygn som började mitt på dagen (dfrom satt)
     // räknas men slängs vid midnatt: blir varken "igår" eller del av månaden. Månaden = avslutade hela dygn (mkwh) + idag om det är helt.
