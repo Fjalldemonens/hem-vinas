@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-27.1">
+<meta name="app-version" content="2026-11-27.2">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -749,7 +749,7 @@ div.house img.fl.on{opacity:.9}   /* 2026-11-21.27: ännu ljusare strålkastare 
 .sgx-c .ic.chg canvas{animation:cellPulse 1.8s ease-in-out infinite}
 .sgx-c .ic .bolt{position:absolute;right:8px;top:6px;font-size:1rem;filter:drop-shadow(0 0 4px rgba(255,220,80,.9));display:none}
 .sgx-c .ic.chg .bolt{display:block}
-.sgx-c{position:relative} .sgx-c .sgx-t{position:absolute;left:12px;top:10px;font-size:1.7rem;text-shadow:0 0 10px #000,0 0 3px #000}
+.sgx-c{position:relative} .sgx-c .sgx-t{position:static;font-size:2.3rem;line-height:1;margin-top:2px;text-shadow:none}   /* 2026-11-27.2: procenten under bilen i stället för ovanpå (svårläst mot bilden) */
 
 /* Solceller-bladet (2026-11-21.16): Groks tak med paneler; panelerna lyser solgult efter effekten (mask img/sol-mask.png), ljus sveper över när de producerar, måne/sol i hörnet */
 .solv{position:relative;aspect-ratio:1100/532;border-radius:14px;overflow:hidden;background:#000;margin:4px 0 10px}
@@ -1028,8 +1028,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-27.1"></script>
-<script src="homey.js?v=2026-11-27.1"></script>
+<script src="config.js?v=2026-11-27.2"></script>
+<script src="homey.js?v=2026-11-27.2"></script>
 <script>
 (() => {
   const S = 'Homey';
