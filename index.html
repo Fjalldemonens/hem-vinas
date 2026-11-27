@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-27.2">
+<meta name="app-version" content="2026-11-27.4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -372,10 +372,13 @@ body.noscroll{overflow:hidden}
 .vchart .vln.past{stroke:var(--muted);opacity:.7}
 .vchart .vband{fill:var(--vgreen);opacity:.16}
 .vchart .vref{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:1 5;stroke-linecap:round;opacity:.8}
-.vchart .vrefl{font-size:11px;font-weight:700;fill:var(--muted);font-family:var(--f-body)}
+.vchart .vrefl{font-size:11px;font-weight:700;fill:var(--muted);font-family:var(--f-body);stroke:var(--card);stroke-width:4px;stroke-linejoin:round;paint-order:stroke}
 .vchart .vbase{stroke:var(--line);stroke-width:1}
 .vchart .ax{font-size:11px;font-weight:600}
-.vchart .vnow{stroke:var(--card);stroke-width:2}
+.vchart .vnowr{fill:#fff;stroke:none;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35))}
+.vchart .vnowh{opacity:.28;transform-box:fill-box;transform-origin:center;animation:vnowp 2.2s ease-in-out infinite}
+.vchart .vnowl{stroke:var(--fg);stroke-width:1;stroke-dasharray:2 4;opacity:.35}
+@keyframes vnowp{0%,100%{transform:scale(.75);opacity:.35}50%{transform:scale(1.15);opacity:.12}}
 .vchart .vscl{stroke-width:1.6}
 .vchart .vhalo{fill:var(--card);opacity:.9}
 .vchart .vdot{stroke:var(--card);stroke-width:2.5}
@@ -1028,8 +1031,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-27.2"></script>
-<script src="homey.js?v=2026-11-27.2"></script>
+<script src="config.js?v=2026-11-27.4"></script>
+<script src="homey.js?v=2026-11-27.4"></script>
 <script>
 (() => {
   const S = 'Homey';
@@ -1993,6 +1996,7 @@ div.house.night img.fl.on{opacity:.9}
     const id = 'pc' + (++pcId), defs = mkEl('defs', {});
     const col = kind === 'imp' ? 'var(--vblue)' : 'var(--vgreen)';
     const nowI = Math.max(0, Math.min(n, ts.findIndex((t) => t + ivMs > now) < 0 ? n : ts.findIndex((t) => t + ivMs > now)));
+    const hasNow = now >= ts[0] && now < ts[n - 1] + ivMs; // nu-punkten bara när nu ligger i visat dygn (inte imorgon)
     // Ytor tonas ut nedåt
     const grad = (gid, c) => { const g = mkEl('linearGradient', { id: gid, x1: 0, x2: 0, y1: 0, y2: 1 }, defs); mkEl('stop', { offset: '0%', 'stop-color': c, 'stop-opacity': '.32' }, g); mkEl('stop', { offset: '100%', 'stop-color': c, 'stop-opacity': '.03' }, g); };
     grad(id + 'f', kind === 'imp' ? '#4b5bf0' : '#2fa866'); grad(id + 'p', '#8a93a6');
@@ -2018,7 +2022,12 @@ div.house.night img.fl.on{opacity:.9}
     { const tx = mkEl('text', { x: W - R, y: H - 5, 'text-anchor': 'end', class: 'ax' }, lbl); tx.textContent = '00'; }
     mkEl('line', { x1: L, x2: W - R, y1: H - B, y2: H - B, class: 'vbase' });
     // Nu-punkt
-    if (nowI < n) { const ng = mkEl('g', { class: 'nowg' }); mkEl('circle', { cx: x(nowI + 0.5), cy: y(arr[nowI]), r: 4.5, class: 'vnow', fill: col }, ng); }
+    // Nu-punkt (2026-11-27.3: tydligare – pulserande gloria, vit ring och punkt i seriens färg, prickad nu-linje)
+    if (hasNow && nowI < n) { const ng = mkEl('g', { class: 'nowg' }), cx = x(nowI + 0.5), cy = y(arr[nowI]);
+      mkEl('line', { x1: cx, x2: cx, y1: T - 4, y2: H - B, class: 'vnowl' }, ng);
+      mkEl('circle', { cx, cy, r: 13, fill: col, class: 'vnowh' }, ng);
+      mkEl('circle', { cx, cy, r: 8, class: 'vnowr' }, ng);
+      mkEl('circle', { cx, cy, r: 5.5, fill: col }, ng); }
     // Drag: linje + punkt + bubbla överst (pris i öre, veckodag och kvart)
     const sg = mkEl('g', { class: 'scrg', style: 'display:none', 'pointer-events': 'none' });
     const sLine = mkEl('line', { y1: T - 8, y2: H - B, class: 'vscl' }, sg);
@@ -2055,7 +2064,7 @@ div.house.night img.fl.on{opacity:.9}
     svg.addEventListener('contextmenu', (ev) => ev.preventDefault());
     svg.setAttribute('tabindex', '0');
     svg.addEventListener('keydown', (ev) => {
-      const start = cur >= 0 ? cur : Math.min(nowI, n - 1);
+      const start = cur >= 0 ? cur : hasNow ? Math.min(nowI, n - 1) : 0;
       if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') { ev.preventDefault(); show(start + (ev.key === 'ArrowRight' ? 1 : -1) * (ev.shiftKey ? 4 : 1)); }
       else if (ev.key === 'Escape') hide();
     });
@@ -2115,8 +2124,9 @@ div.house.night img.fl.on{opacity:.9}
     };
     showDefault();
     // Under drag i grafen: stora siffran visar vald kvart, som i Tibber
-    // Grafen visar idag + imorgon (Volvo-stil, 2026-11-27.1): kvarten under fingret kan ligga i vilket dygn som helst
+    // Grafen visar valt dygn (Idag/Imorgon, sedan 2026-11-27.4 – förut båda dygnen, då såg knapparna likadana ut)
     const onScrub = (d, i) => {
+      if (d >= 0) d = priceDay;
       if (d < 0) {
         priceScrubbing = false; showDefault();
         if (pricePending !== null) { const dv = pricePending; pricePending = null; renderPrice(dv); }
@@ -2131,8 +2141,9 @@ div.house.night img.fl.on{opacity:.9}
     const ctl = mk('div', 'pair');
     ctl.append(mk('span', 'ptit', (priceKind === 'imp' ? 'Köppris' : 'Säljpris') + ' per kvart'), segBtns([['imp', 'Köp'], ['exp', 'Sälj']], priceKind, (v) => { priceKind = v; renderPrice(dev); }));
     let LKr = null; try { LKr = (JSON.parse(varVal('AI Laddkostnad') || '') || {}).runs || null; } catch (e) {}
-    pc.append(head, ctl, priceChart(P, priceKind, onScrub, LKr));
-    if (LKr && LKr.length) { const lg = mk('div', 'vleg'); lg.append(mk('span', 'vlg', 'Bilen laddade')); pc.append(lg); }
+    pc.append(head, ctl, priceChart(Object.assign({}, P, { days: [day] }), priceKind, onScrub, LKr));
+    const dEnd = dayT0 + arr.length * iv;
+    if (LKr && LKr.some((r) => Array.isArray(r) && r[1] > dayT0 && r[0] < dEnd)) { const lg = mk('div', 'vleg'); lg.append(mk('span', 'vlg', 'Bilen laddade')); pc.append(lg); }
     // Lägst/högst under grafen för både idag och imorgon
     const foot = mk('div', 'rangel num');
     foot.append(mk('span', '', 'Lägst ' + f2.format(mn) + ' kl ' + slotStart(mn)), mk('span', '', 'Högst ' + f2.format(mx) + ' kl ' + slotStart(mx)));
