@@ -1,6 +1,7 @@
 // Förbrukning och kostnad för kylskåp, diskmaskin och tvättmaskin (Shelly Plug M Gen3), samt köpt/sålt el idag.
 // Körs varje minut: mätarens ökning sedan förra minuten × elpriset för just den kvarten.
-const DEV = { kyl: '73e322a0-197e-40fa-adc0-75cddff530be', disk: 'aa436302-665d-4f51-a89c-fe2e959dd2c6', tvatt: '3c4ab65f-c279-4e6e-b9c2-6cd4a4322471' };
+// 2026-11-27: pluggarna bytte från Matter till Shelly-appen (Wi-Fi) i Homey → nya id. Gamla Matter-id: kyl 73e322a0-…, disk aa436302-…, tvätt 3c4ab65f-…
+const DEV = { kyl: '0eca9cc4-2a52-4aa6-b485-2dbc58953ed2', disk: '0cde2c38-a871-464d-b266-dda197c5ab47', tvatt: 'ee3e7b86-6740-4e3d-8d04-7cd08a09d505' };
 // Ett disk-/tvättpass börjar över "on" W och är klart när effekten legat under "off" W i "idle" minuter.
 const CYCLE = { disk: { on: 8, off: 3, idle: 30 }, tvatt: { on: 8, off: 3, idle: 20 } };
 // Mönster per pass (sedan 2026-11-05): toppeffekt, minuter med värme (≥ HOT W), värmeminuter efter LATE min
@@ -39,7 +40,9 @@ const out = { u: t, p: price, pe: pExp, ps: src };
 for (const [k, id] of Object.entries(DEV)) {
   let d; try { d = await Homey.devices.getDevice({ id }); } catch (e) { continue; }
   const c = d.capabilitiesObj || {};
-  const kwh = c.meter_power && c.meter_power.value != null ? Number(c.meter_power.value) : null;
+  // Matter gav meter_power, Shelly-appen ger meter_power.imported (+ .total) – ta den som finns
+  const mp = ['meter_power', 'meter_power.imported', 'meter_power.total'].map((n) => c[n]).find((x) => x && x.value != null);
+  const kwh = mp ? Number(mp.value) : null;
   const w = c.measure_power ? Number(c.measure_power.value) || 0 : 0;
   const s = S[k] || (S[k] = { since: t, last: kwh });
   if (kwh != null) {
