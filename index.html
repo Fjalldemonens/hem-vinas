@@ -7,7 +7,7 @@
 <meta name="description" content="Belysning, temperatur, energi och städning från Homey Pro.">
 <meta name="theme-color" content="#F2F5F8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#080F16" media="(prefers-color-scheme: dark)">
-<meta name="app-version" content="2026-11-27.4">
+<meta name="app-version" content="2026-11-27.5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -864,6 +864,13 @@ div.house .taks{background:linear-gradient(115deg,transparent 38%,rgba(255,255,2
 div.house.night img.fl{opacity:calc(var(--dusk,0) * .6)}
 div.house.night img.fl.on{opacity:.9}
 .hv2:not(.is-night) .house.day img,.hmini:not(.is-night) .house.day img{filter:brightness(var(--dayb,1))}
+/* 2026-11-27.5: himlen bakom kvällshuset ljusnar också med --dusk (natt → gryningsblått med ljus horisont), som resten av appen */
+@supports (background:color-mix(in srgb,red,blue 50%)){
+  .hv2 .nightbg,.hmini.is-night{background:linear-gradient(180deg,
+    color-mix(in srgb,#0A121C,#4F6E92 calc(var(--dusk,0) * 100%)) 0%,
+    color-mix(in srgb,#132030,#7F9AB8 calc(var(--dusk,0) * 100%)) 70%,
+    color-mix(in srgb,#1A2838,#B9AFA6 calc(var(--dusk,0) * 100%)) 100%)}
+}
 /* Robotarna åker även med iOS "Reducera rörelse" påslaget – rörelsen är själva informationen (2026-11-22.1) */
 @media (prefers-reduced-motion: reduce){
   .rb.dn.run{animation:rbDn 34s linear infinite!important} .rb.up.run{animation:rbUp 26s linear infinite!important}
@@ -1031,8 +1038,8 @@ div.house.night img.fl.on{opacity:.9}
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 
-<script src="config.js?v=2026-11-27.4"></script>
-<script src="homey.js?v=2026-11-27.4"></script>
+<script src="config.js?v=2026-11-27.5"></script>
+<script src="homey.js?v=2026-11-27.5"></script>
 <script>
 (() => {
   const S = 'Homey';
