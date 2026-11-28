@@ -101,7 +101,9 @@ const plug = await val(CHARGER, 'evcharger_charging_state');
 const socRaw = await val(CAR, 'measure_battery'), tgtRaw = await val(CAR, 'charging_target_level');
 const soc = Number.isFinite(Number(socRaw)) && socRaw !== null ? Math.round(Number(socRaw)) : null;
 const tgt = Number.isFinite(Number(tgtRaw)) && tgtRaw !== null ? Math.round(Number(tgtRaw)) : null;
-const carFull = soc !== null && tgt !== null && soc >= tgt;
+// Volvo-värdena kan vara gamla: drar laddboxen över 1 kW laddar bilen uppenbarligen, då räknas den inte som full
+// (2026-11-28: Homey visade 90 % → 90 % men Tibber laddade mot 100 % med 10,6 kW, och solknappen avbröts med "redan full").
+const carFull = soc !== null && tgt !== null && soc >= tgt && chg < 1000;
 const carTxt = soc !== null ? ' · Bil ' + soc + ' %' + (tgt !== null ? ' → ' + tgt + ' %' : '') : '';
 // Bilen först: det bilen tar nu + det batteriet laddar − det vi köper.
 const surplus = Math.round(chg + bat - grid); // batteri som laddar räknas som ledigt, batteri som laddar ur räknas bort
